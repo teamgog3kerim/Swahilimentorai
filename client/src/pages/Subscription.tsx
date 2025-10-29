@@ -1,26 +1,82 @@
-import { useQuery } from "@tanstack/react-query";
-import { Check, CreditCard, Sparkles, Lock, Zap } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Check, CreditCard, Sparkles, Lock, Zap, Copy, CheckCircle2, QrCode } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Subscription, User } from "@shared/schema";
+import binanceQrImage from "@assets/binance-usdt-qr.jpg";
+import { BookOpen } from "lucide-react";
 
 export default function SubscriptionPage() {
   const { user } = useAuth() as { user: User | null };
   const { toast } = useToast();
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const WALLET_ADDRESS = "TCdeZjG39zU9SjtoLwfXmcedJhnXyNd8zB";
+  const NETWORK = "Tron (TRC20)";
+  const AMOUNT = "90 USDT";
 
   const { data: subscription } = useQuery<Subscription>({
     queryKey: ["/api/subscription"],
   });
 
-  const handleSubscribe = () => {
+  const paymentMutation = useMutation({
+    mutationFn: async (data: { transactionId: string }) => {
+      const res = await apiRequest("POST", "/api/subscription/verify-payment", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "支付已提交",
+        description: "我们正在验证你的支付。通常在1-2小时内完成验证。",
+      });
+      setShowPaymentDialog(false);
+      setTransactionId("");
+      queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+    },
+    onError: () => {
+      toast({
+        title: "提交失败",
+        description: "请检查交易ID是否正确，或稍后重试。",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCopyAddress = async () => {
+    await navigator.clipboard.writeText(WALLET_ADDRESS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
     toast({
-      title: "即将推出",
-      description: "Binance Pay集成即将推出 - 请联系客服",
+      title: "已复制",
+      description: "钱包地址已复制到剪贴板",
     });
+  };
+
+  const handleOpenPayment = () => {
+    setShowPaymentDialog(true);
+  };
+
+  const handleSubmitPayment = () => {
+    if (!transactionId.trim()) {
+      toast({
+        title: "请输入交易ID",
+        description: "交易ID不能为空",
+        variant: "destructive",
+      });
+      return;
+    }
+    paymentMutation.mutate({ transactionId: transactionId.trim() });
   };
 
   const premiumFeatures = [
@@ -113,7 +169,7 @@ export default function SubscriptionPage() {
               <>
                 <Separator />
                 <Button
-                  onClick={handleSubscribe}
+                  onClick={handleOpenPayment}
                   className="w-full"
                   size="lg"
                   data-testid="button-subscribe"
@@ -180,8 +236,107 @@ export default function SubscriptionPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-md" data-testid="dialog-payment">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5" />
+              支付订阅费用
+            </DialogTitle>
+            <DialogDescription>
+              使用Binance扫描二维码或复制钱包地址发送USDT
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="flex justify-center">
+              <div className="bg-white p-4 rounded-lg">
+                <img 
+                  src={binanceQrImage} 
+                  alt="Binance USDT QR Code" 
+                  className="w-64 h-64 object-contain"
+                  data-testid="img-qr-code"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-muted p-4 rounded-md space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">网络</span>
+                  <span className="font-medium">{NETWORK}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">金额</span>
+                  <span className="font-medium text-primary">{AMOUNT}</span>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="wallet-address" className="text-sm text-muted-foreground">钱包地址</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    id="wallet-address"
+                    value={WALLET_ADDRESS}
+                    readOnly
+                    className="font-mono text-sm"
+                    data-testid="input-wallet-address"
+                  />
+                  <Button
+                    onClick={handleCopyAddress}
+                    size="icon"
+                    variant="outline"
+                    data-testid="button-copy-address"
+                  >
+                    {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label htmlFor="transaction-id">支付后请输入交易ID</Label>
+                <Input
+                  id="transaction-id"
+                  placeholder="例如: 0x1234abcd..."
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  data-testid="input-transaction-id"
+                />
+                <p className="text-xs text-muted-foreground">
+                  完成支付后，在Binance钱包中查找交易ID并粘贴到这里
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSubmitPayment}
+                  disabled={!transactionId.trim() || paymentMutation.isPending}
+                  className="flex-1"
+                  data-testid="button-submit-payment"
+                >
+                  {paymentMutation.isPending ? "提交中..." : "提交支付"}
+                </Button>
+                <Button
+                  onClick={() => setShowPaymentDialog(false)}
+                  variant="outline"
+                  data-testid="button-cancel-payment"
+                >
+                  取消
+                </Button>
+              </div>
+
+              <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-900">
+                <p className="text-xs text-blue-900 dark:text-blue-100">
+                  ⓘ 提交后我们会在1-2小时内验证你的支付并激活高级会员
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-import { BookOpen } from "lucide-react";

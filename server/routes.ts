@@ -363,7 +363,55 @@ Follow these rules:
     }
   });
 
-  // POST /api/subscription/create - Create subscription
+  // POST /api/subscription/verify-payment - Submit payment for verification
+  app.post('/api/subscription/verify-payment', isAuthenticated, async (req: any, res) => {
+    try {
+      const replitUserId = req.user.claims.sub;
+      const user = await storage.getUserByReplitId(replitUserId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const validation = subscriptionCreateSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
+      }
+
+      const { transactionId } = validation.data;
+
+      // Calculate dates
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + 30); // 30 days from now
+
+      // Create pending subscription (for manual verification)
+      // For MVP, we'll auto-approve and set to active
+      // In production, this would be "pending" status and require admin verification
+      const subscriptionData = {
+        userId: user.id,
+        status: "active", // Auto-approve for MVP - change to "pending" for manual verification
+        amount: 90,
+        currency: "USDT",
+        paymentMethod: "Binance Pay (TRC20)",
+        startDate,
+        endDate,
+        transactionId,
+      };
+
+      const subscription = await storage.createSubscription(subscriptionData);
+
+      // Update user premium status immediately for MVP
+      // In production, this would happen after admin verification
+      await storage.updateUserPremiumStatus(user.id, true, endDate);
+
+      res.json(subscription);
+    } catch (error) {
+      console.error("Error verifying payment:", error);
+      res.status(500).json({ message: "Failed to verify payment" });
+    }
+  });
+
+  // POST /api/subscription/create - Create subscription (deprecated - use verify-payment)
   app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
     try {
       const replitUserId = req.user.claims.sub;
