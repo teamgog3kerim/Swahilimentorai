@@ -372,6 +372,15 @@ Follow these rules:
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Check if user already has an active subscription
+      const existingSubscription = await storage.getUserActiveSubscription(user.id);
+      if (existingSubscription && existingSubscription.status === "active") {
+        return res.status(400).json({ 
+          message: "You already have an active subscription",
+          subscription: existingSubscription 
+        });
+      }
+
       const validation = subscriptionCreateSchema.safeParse(req.body);
       if (!validation.success) {
         return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
@@ -379,17 +388,31 @@ Follow these rules:
 
       const { transactionId } = validation.data;
 
-      // Calculate dates
+      // Validate transaction ID format (basic validation for TRC20)
+      // TRC20 transaction IDs are typically 64-character hexadecimal strings
+      if (!transactionId || transactionId.trim().length < 10) {
+        return res.status(400).json({ message: "Transaction ID must be at least 10 characters" });
+      }
+
+      // Check for duplicate transaction ID submissions
+      const existingTxSubscription = await storage.getSubscriptionByTransactionId(transactionId);
+      if (existingTxSubscription) {
+        return res.status(400).json({ 
+          message: "This transaction ID has already been submitted",
+          duplicate: true 
+        });
+      }
+
+      // Calculate dates (for when subscription is approved)
       const startDate = new Date();
       const endDate = new Date();
       endDate.setDate(endDate.getDate() + 30); // 30 days from now
 
-      // Create pending subscription (for manual verification)
-      // For MVP, we'll auto-approve and set to active
-      // In production, this would be "pending" status and require admin verification
+      // Create PENDING subscription - requires manual admin verification
+      // Admin must verify the transaction on Binance before activating
       const subscriptionData = {
         userId: user.id,
-        status: "active", // Auto-approve for MVP - change to "pending" for manual verification
+        status: "pending", // Pending verification - admin must approve
         amount: 90,
         currency: "USDT",
         paymentMethod: "Binance Pay (TRC20)",
@@ -400,11 +423,13 @@ Follow these rules:
 
       const subscription = await storage.createSubscription(subscriptionData);
 
-      // Update user premium status immediately for MVP
-      // In production, this would happen after admin verification
-      await storage.updateUserPremiumStatus(user.id, true, endDate);
+      // DO NOT update user premium status - this happens after admin verification
+      // await storage.updateUserPremiumStatus(user.id, true, endDate);
 
-      res.json(subscription);
+      res.json({ 
+        ...subscription, 
+        message: "Payment submitted for verification. We'll activate your subscription within 1-2 hours after confirming the transaction." 
+      });
     } catch (error) {
       console.error("Error verifying payment:", error);
       res.status(500).json({ message: "Failed to verify payment" });

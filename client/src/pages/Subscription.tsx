@@ -35,19 +35,26 @@ export default function SubscriptionPage() {
       const res = await apiRequest("POST", "/api/subscription/verify-payment", data);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast({
         title: "支付已提交",
-        description: "我们正在验证你的支付。通常在1-2小时内完成验证。",
+        description: data.message || "我们正在验证你的支付。通常在1-2小时内完成验证。",
       });
       setShowPaymentDialog(false);
       setTransactionId("");
       queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
-    onError: () => {
+    onError: (error: any) => {
+      const message = error.message?.includes("already have an active subscription")
+        ? "你已经有一个活跃的订阅"
+        : error.message?.includes("already been submitted")
+        ? "此交易ID已提交过"
+        : "请检查交易ID是否正确，或稍后重试。";
+      
       toast({
         title: "提交失败",
-        description: "请检查交易ID是否正确，或稍后重试。",
+        description: message,
         variant: "destructive",
       });
     },
