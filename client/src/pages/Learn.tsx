@@ -21,7 +21,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   const { data: lessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
-    queryKey: selectedLevel ? ["/api/lessons/level", selectedLevel] : ["/api/lessons"],
+    queryKey: selectedLevel ? [`/api/lessons/level/${selectedLevel}`] : ["/api/lessons"],
     enabled: !!selectedLevel,
   });
 

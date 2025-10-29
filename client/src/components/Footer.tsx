@@ -47,10 +47,8 @@ export function Footer() {
             <ul className="space-y-2">
               {productLinks.map((link, index) => (
                 <li key={index}>
-                  <Link href={link.href}>
-                    <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
-                      {link.label}
-                    </a>
+                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -62,10 +60,8 @@ export function Footer() {
             <ul className="space-y-2">
               {resourceLinks.map((link, index) => (
                 <li key={index}>
-                  <Link href={link.href}>
-                    <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
-                      {link.label}
-                    </a>
+                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
+                    {link.label}
                   </Link>
                 </li>
               ))}
@@ -95,10 +91,8 @@ export function Footer() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
               {legalLinks.map((link, index) => (
-                <Link key={index} href={link.href}>
-                  <a className="hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
-                    {link.label}
-                  </a>
+                <Link key={index} href={link.href} className="hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
+                  {link.label}
                 </Link>
               ))}
             </div>
