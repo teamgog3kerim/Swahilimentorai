@@ -141,3 +141,46 @@ Preferred communication style: Simple, everyday language.
 - `esbuild` - Production server bundling
 
 **Asset Management**: Generated images stored in `attached_assets/generated_images/` directory, imported via Vite aliases (`@assets`).
+
+### Progressive Web App (PWA) Features
+
+**Service Worker**: Custom service worker (`client/public/sw.js`) registered on app load provides offline functionality:
+- **Caching Strategies**:
+  - Static assets: Cache-first with STATIC_CACHE
+  - API lessons (`/api/lessons`): Network-first with LESSONS_CACHE fallback
+  - Dynamic assets: Cache-first with DYNAMIC_CACHE
+  - Navigation requests: Network-first with index.html fallback for offline SPA routing
+- **Offline Navigation**: Handles `request.mode === 'navigate'` to serve cached index.html when offline, enabling deep-linking and page reloads on any route (/learn, /practice, /dashboard)
+- **Update Detection**: Prompts users for reload when new service worker version available
+
+**Offline Lesson Storage**: IndexedDB-based persistent storage for lessons:
+- **Database**: SwahiliLearnDB with `lessons` object store
+- **Schema**: Stores lesson ID (string/UUID), title, level, category, content (JSONB), downloadedAt timestamp
+- **API**: `saveLessonOffline()`, `getOfflineLesson()`, `deleteLessonOffline()`, `getAllOfflineLessons()`, `isLessonDownloaded()`
+- **UI Integration**: Download buttons on each lesson card with three states (download, downloading, downloaded)
+
+**Online/Offline Detection**:
+- `useOnlineStatus()` hook monitors browser online/offline events
+- `<OfflineIndicator>` component displays prominent alert when disconnected
+- Download buttons and offline badges provide visual feedback of offline-available content
+
+**Web App Manifest**: `client/public/manifest.json` defines PWA metadata:
+- App name: "斯瓦希里语学习 - Swahili Learning"
+- Theme color: #6366f1 (indigo)
+- Display mode: standalone
+- Icons: 192x192 and 512x512 PNG (maskable, generated)
+- Start URL: /
+- Category: education, productivity
+
+**Installation**:
+- Mobile browsers (iOS Safari, Android Chrome) prompt to "Add to Home Screen"
+- Desktop browsers show install icon in address bar
+- Runs as standalone app when installed
+
+**Key Files**:
+- `client/public/sw.js` - Service worker with caching logic
+- `client/public/manifest.json` - PWA metadata
+- `client/src/lib/offlineStorage.ts` - IndexedDB utilities
+- `client/src/lib/registerSW.ts` - Service worker registration
+- `client/src/hooks/useOnlineStatus.ts` - Online/offline detection hook
+- `client/src/components/OfflineIndicator.tsx` - Offline status UI component

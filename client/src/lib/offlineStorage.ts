@@ -3,7 +3,7 @@ const DB_VERSION = 1;
 const LESSON_STORE = 'lessons';
 
 export interface OfflineLesson {
-  id: number;
+  id: string;
   title: string;
   level: string;
   category: string;
@@ -42,7 +42,7 @@ export async function saveLessonOffline(lesson: OfflineLesson): Promise<void> {
   });
 }
 
-export async function getOfflineLesson(id: number): Promise<OfflineLesson | undefined> {
+export async function getOfflineLesson(id: string): Promise<OfflineLesson | undefined> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([LESSON_STORE], 'readonly');
@@ -66,7 +66,7 @@ export async function getAllOfflineLessons(): Promise<OfflineLesson[]> {
   });
 }
 
-export async function deleteLessonOffline(id: number): Promise<void> {
+export async function deleteLessonOffline(id: string): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction([LESSON_STORE], 'readwrite');
@@ -78,7 +78,7 @@ export async function deleteLessonOffline(id: number): Promise<void> {
   });
 }
 
-export async function isLessonDownloaded(id: number): Promise<boolean> {
+export async function isLessonDownloaded(id: string): Promise<boolean> {
   try {
     const lesson = await getOfflineLesson(id);
     return !!lesson;

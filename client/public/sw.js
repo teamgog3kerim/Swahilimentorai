@@ -42,6 +42,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .catch(() => {
+          return caches.open(STATIC_CACHE).then((cache) => {
+            return cache.match('/index.html');
+          });
+        })
+    );
+    return;
+  }
+
   if (url.pathname.startsWith('/api/lessons')) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {

@@ -25,8 +25,8 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
   const isOnline = useOnlineStatus();
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
-  const [downloadedLessonIds, setDownloadedLessonIds] = useState<Set<number>>(new Set());
-  const [downloadingLessonIds, setDownloadingLessonIds] = useState<Set<number>>(new Set());
+  const [downloadedLessonIds, setDownloadedLessonIds] = useState<Set<string>>(new Set());
+  const [downloadingLessonIds, setDownloadingLessonIds] = useState<Set<string>>(new Set());
 
   const { data: lessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
     queryKey: selectedLevel ? [`/api/lessons/level/${selectedLevel}`] : ["/api/lessons"],
@@ -87,7 +87,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
 
   const handleDownloadLesson = async (lesson: Lesson, e: React.MouseEvent) => {
     e.stopPropagation();
-    const lessonId = parseInt(lesson.id);
+    const lessonId = lesson.id;
     
     if (downloadedLessonIds.has(lessonId)) {
       try {
@@ -116,7 +116,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
     try {
       const offlineLesson: OfflineLesson = {
         id: lessonId,
-        title: lesson.titleChinese || '',
+        title: lesson.titleChinese || lesson.titleSwahili || '',
         level: lesson.level,
         category: lesson.category,
         content: lesson.content,
@@ -215,7 +215,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
               {lessons.map((lesson) => {
                 const lessonProgress = getLessonProgress(lesson.id);
                 const isCompleted = lessonProgress?.completed;
-                const lessonId = parseInt(lesson.id);
+                const lessonId = lesson.id;
                 const isDownloaded = downloadedLessonIds.has(lessonId);
                 const isDownloading = downloadingLessonIds.has(lessonId);
 
@@ -291,57 +291,59 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
           </DialogHeader>
 
           {selectedLesson?.content && typeof selectedLesson.content === 'object' && (
-            <div className="space-y-6 mt-4">
-              {(selectedLesson.content as Record<string, any>).vocabulary && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">词汇 (Vocabulary)</h3>
-                  <div className="space-y-2">
-                    {((selectedLesson.content as Record<string, any>).vocabulary as any[]).map((item: any, idx: number) => (
-                      <div key={idx} className="p-3 bg-muted rounded-md">
-                        <p className="font-medium text-lg">{item.swahili}</p>
-                        <p className="text-muted-foreground">{item.chinese}</p>
-                        {item.pronunciation && (
-                          <p className="text-sm text-muted-foreground italic">{item.pronunciation}</p>
-                        )}
-                      </div>
-                    ))}
+            <>
+              <div className="space-y-6 mt-4">
+                {(selectedLesson.content as Record<string, any>).vocabulary && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">词汇 (Vocabulary)</h3>
+                    <div className="space-y-2">
+                      {((selectedLesson.content as Record<string, any>).vocabulary as any[]).map((item: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-muted rounded-md">
+                          <p className="font-medium text-lg">{item.swahili}</p>
+                          <p className="text-muted-foreground">{item.chinese}</p>
+                          {item.pronunciation && (
+                            <p className="text-sm text-muted-foreground italic">{item.pronunciation}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {(selectedLesson.content as Record<string, any>).phrases && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">常用短语 (Phrases)</h3>
-                  <div className="space-y-2">
-                    {((selectedLesson.content as Record<string, any>).phrases as any[]).map((item: any, idx: number) => (
-                      <div key={idx} className="p-3 bg-muted rounded-md">
-                        <p className="font-medium text-lg">{item.swahili}</p>
-                        <p className="text-muted-foreground">{item.chinese}</p>
-                      </div>
-                    ))}
+                {(selectedLesson.content as Record<string, any>).phrases && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">常用短语 (Phrases)</h3>
+                    <div className="space-y-2">
+                      {((selectedLesson.content as Record<string, any>).phrases as any[]).map((item: any, idx: number) => (
+                        <div key={idx} className="p-3 bg-muted rounded-md">
+                          <p className="font-medium text-lg">{item.swahili}</p>
+                          <p className="text-muted-foreground">{item.chinese}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {(selectedLesson.content as Record<string, any>).dialogues && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-3">对话 (Dialogues)</h3>
-                  <div className="space-y-4">
-                    {((selectedLesson.content as Record<string, any>).dialogues as any[]).map((dialogue: any, idx: number) => (
-                      <div key={idx} className="space-y-2">
-                        {dialogue.lines.map((line: any, lineIdx: number) => (
-                          <div key={lineIdx} className="p-3 bg-muted rounded-md">
-                            <p className="text-sm font-semibold text-primary mb-1">{line.speaker}:</p>
-                            <p className="font-medium">{line.swahili}</p>
-                            <p className="text-sm text-muted-foreground">{line.chinese}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+                {(selectedLesson.content as Record<string, any>).dialogues && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">对话 (Dialogues)</h3>
+                    <div className="space-y-4">
+                      {((selectedLesson.content as Record<string, any>).dialogues as any[]).map((dialogue: any, idx: number) => (
+                        <div key={idx} className="space-y-2">
+                          {dialogue.lines.map((line: any, lineIdx: number) => (
+                            <div key={lineIdx} className="p-3 bg-muted rounded-md">
+                              <p className="text-sm font-semibold text-primary mb-1">{line.speaker}:</p>
+                              <p className="font-medium">{line.swahili}</p>
+                              <p className="text-sm text-muted-foreground">{line.chinese}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </>
           )}
 
           <div className="mt-6 flex gap-3">
