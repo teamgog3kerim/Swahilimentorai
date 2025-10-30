@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { GraduationCap, BookOpen, Award, Clock, CheckCircle2, Lock } from "lucide-react";
+import { GraduationCap, BookOpen, Award, Clock, CheckCircle2, Lock, Download, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { saveLessonOffline, isLessonDownloaded, deleteLessonOffline, getAllOfflineLessons, type OfflineLesson } from "@/lib/offlineStorage";
 import type { Lesson, UserProgress } from "@shared/schema";
 
 interface LearnProps {
@@ -17,8 +21,12 @@ type Level = "beginner" | "intermediate" | "advanced";
 
 export default function Learn({ onNavigateToPractice }: LearnProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const isOnline = useOnlineStatus();
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [downloadedLessonIds, setDownloadedLessonIds] = useState<Set<number>>(new Set());
+  const [downloadingLessonIds, setDownloadingLessonIds] = useState<Set<number>>(new Set());
 
   const { data: lessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
     queryKey: selectedLevel ? [`/api/lessons/level/${selectedLevel}`] : ["/api/lessons"],
@@ -64,13 +72,85 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
     setSelectedLesson(lesson);
   };
 
+  useEffect(() => {
+    async function loadDownloadedLessons() {
+      const offlineLessons = await getAllOfflineLessons();
+      setDownloadedLessonIds(new Set(offlineLessons.map(l => l.id)));
+    }
+    loadDownloadedLessons();
+  }, []);
+
   const handleStartPractice = () => {
     setSelectedLesson(null);
     onNavigateToPractice(selectedLesson?.id);
   };
 
+  const handleDownloadLesson = async (lesson: Lesson, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const lessonId = parseInt(lesson.id);
+    
+    if (downloadedLessonIds.has(lessonId)) {
+      try {
+        await deleteLessonOffline(lessonId);
+        setDownloadedLessonIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(lessonId);
+          return newSet;
+        });
+        toast({
+          title: "已删除",
+          description: `${lesson.titleChinese} 已从离线存储中删除`
+        });
+      } catch (error) {
+        toast({
+          title: "删除失败",
+          description: "无法删除离线课程",
+          variant: "destructive"
+        });
+      }
+      return;
+    }
+
+    setDownloadingLessonIds(prev => new Set(prev).add(lessonId));
+    
+    try {
+      const offlineLesson: OfflineLesson = {
+        id: lessonId,
+        title: lesson.titleChinese || '',
+        level: lesson.level,
+        category: lesson.category,
+        content: lesson.content,
+        downloadedAt: Date.now()
+      };
+      
+      await saveLessonOffline(offlineLesson);
+      
+      setDownloadedLessonIds(prev => new Set(prev).add(lessonId));
+      
+      toast({
+        title: "下载完成",
+        description: `${lesson.titleChinese} 已保存，可离线访问`
+      });
+    } catch (error) {
+      console.error('Failed to download lesson:', error);
+      toast({
+        title: "下载失败",
+        description: "无法保存课程到离线存储",
+        variant: "destructive"
+      });
+    } finally {
+      setDownloadingLessonIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(lessonId);
+        return newSet;
+      });
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+      <OfflineIndicator />
+      
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-bold mb-2">学习</h1>
         <p className="text-muted-foreground text-lg">选择你的学习级别</p>
@@ -135,6 +215,9 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
               {lessons.map((lesson) => {
                 const lessonProgress = getLessonProgress(lesson.id);
                 const isCompleted = lessonProgress?.completed;
+                const lessonId = parseInt(lesson.id);
+                const isDownloaded = downloadedLessonIds.has(lessonId);
+                const isDownloading = downloadingLessonIds.has(lessonId);
 
                 return (
                   <Card
@@ -146,9 +229,27 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                     <CardHeader>
                       <div className="flex items-start justify-between mb-2">
                         <CardTitle className="text-xl flex-1">{lesson.titleSwahili}</CardTitle>
-                        {isCompleted && (
-                          <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" data-testid="icon-completed" />
-                        )}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {isCompleted && (
+                            <CheckCircle2 className="w-5 h-5 text-green-600" data-testid="icon-completed" />
+                          )}
+                          <Button
+                            size="icon"
+                            variant={isDownloaded ? "default" : "ghost"}
+                            onClick={(e) => handleDownloadLesson(lesson, e)}
+                            disabled={isDownloading}
+                            className="h-8 w-8"
+                            data-testid={`button-download-${lesson.id}`}
+                          >
+                            {isDownloading ? (
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : isDownloaded ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
                       </div>
                       <CardDescription className="text-base">{lesson.titleChinese}</CardDescription>
                     </CardHeader>
@@ -161,6 +262,11 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                           <Clock className="w-4 h-4" />
                           <span>{lesson.estimatedMinutes}分钟</span>
                         </div>
+                        {isDownloaded && (
+                          <Badge variant="outline" className="text-xs">
+                            已下载
+                          </Badge>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
