@@ -76,6 +76,11 @@ Preferred communication style: Simple, everyday language.
 - Multi-line dialogues with speaker attribution
 - Grammar explanations (intermediate/advanced)
 
+**9-Month Curriculum**: Complete structured learning path with 90 lessons:
+- **Beginner Level** (Lessons 1-30, Months 1-3): Foundation topics including greetings, numbers, family, colors, basic verbs, food, transportation, body parts, time, weather, shopping, and essential grammar
+- **Intermediate Level** (Lessons 31-60, Months 4-6): Past/future tenses, market conversations, directions, health, work, technology, sports, comparisons, cooking, celebrations, environment, housing, emergency situations, finance, cultural customs, and religion
+- **Advanced Level** (Lessons 61-90, Months 7-9): Business meetings, academic language, complex grammar, legal/medical terminology, literature, environmental issues, idioms, economic policy, international relations, scientific research, philosophy, technology innovation, history, social issues, leadership, digital economy, crisis management, and professional writing
+
 **Migration Strategy**: Drizzle Kit manages schema migrations in `./migrations` directory via `db:push` script.
 
 ### External Dependencies
