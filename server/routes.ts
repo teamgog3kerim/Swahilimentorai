@@ -237,10 +237,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { sessionId, content } = validation.data;
 
+      // Check if premium subscription is expired (server-side validation)
+      const now = new Date();
+      const isExpired = user.subscriptionEndsAt && new Date(user.subscriptionEndsAt) < now;
+      const isPremiumActive = user.isPremium && !isExpired;
+
       // Check free tier limit
-      if (!user.isPremium && user.practiceCount >= 10) {
+      if (!isPremiumActive && user.practiceCount >= 10) {
         return res.status(403).json({ 
-          message: "Free tier limit reached. Please upgrade to premium to continue practicing.",
+          message: isExpired 
+            ? "Your subscription has expired. Please renew to continue practicing."
+            : "Free tier limit reached. Please upgrade to premium to continue practicing.",
           requiresUpgrade: true 
         });
       }
@@ -328,15 +335,15 @@ Follow these rules:
         content: aiResponse,
       });
 
-      // Increment practice count for non-premium users
-      if (!user.isPremium) {
-        await storage.incrementPracticeCount(replitUserId);
+      // Increment practice count for non-premium users (including expired subscriptions)
+      if (!isPremiumActive) {
+        await storage.incrementPracticeCount(user.id);
       }
 
       res.json({
         message: aiResponse,
-        practiceCount: user.isPremium ? null : user.practiceCount + 1,
-        isPremium: user.isPremium
+        practiceCount: isPremiumActive ? null : user.practiceCount + 1,
+        isPremium: isPremiumActive
       });
     } catch (error) {
       console.error("Error processing chat message:", error);
@@ -375,10 +382,15 @@ Follow these rules:
       // Check if user already has an active subscription
       const existingSubscription = await storage.getUserActiveSubscription(user.id);
       if (existingSubscription && existingSubscription.status === "active") {
-        return res.status(400).json({ 
-          message: "You already have an active subscription",
-          subscription: existingSubscription 
-        });
+        // Allow renewal if subscription expires within 7 days
+        const daysUntilExpiration = Math.floor((new Date(existingSubscription.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (daysUntilExpiration > 7) {
+          return res.status(400).json({ 
+            message: "You already have an active subscription. You can renew starting 7 days before expiration.",
+            subscription: existingSubscription,
+            daysUntilExpiration
+          });
+        }
       }
 
       const validation = subscriptionCreateSchema.safeParse(req.body);
@@ -404,9 +416,23 @@ Follow these rules:
       }
 
       // Calculate dates (for when subscription is approved)
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 30); // 30 days from now
+      // For renewals, extend from current end date; for new subscriptions, start from now
+      const now = new Date();
+      let startDate: Date;
+      let endDate: Date;
+      
+      if (existingSubscription && existingSubscription.endDate) {
+        // Renewal: extend from current end date (or now if already expired)
+        const currentEndDate = new Date(existingSubscription.endDate);
+        startDate = currentEndDate > now ? currentEndDate : now;
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 30); // Add 30 days to existing end date
+      } else {
+        // New subscription: start from now
+        startDate = now;
+        endDate = new Date(now);
+        endDate.setDate(endDate.getDate() + 30); // 30 days from now
+      }
 
       // Create PENDING subscription - requires manual admin verification
       // Admin must verify the transaction on Binance before activating

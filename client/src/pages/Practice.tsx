@@ -8,10 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { ChatSession, ChatMessage, User } from "@shared/schema";
+import { differenceInDays } from "date-fns";
+import { Link } from "wouter";
 
 export default function Practice() {
   const { user } = useAuth() as { user: User | null };
@@ -94,7 +97,13 @@ export default function Practice() {
   };
 
   const practiceCount = user?.practiceCount || 0;
-  const isPremium = user?.isPremium || false;
+  const subscriptionEndsAt = user?.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
+  const now = new Date();
+  const isExpired = subscriptionEndsAt !== null && subscriptionEndsAt < now;
+  const daysRemaining = subscriptionEndsAt 
+    ? differenceInDays(subscriptionEndsAt, now)
+    : null;
+  const isPremium = user?.isPremium && !isExpired;
   const remainingPractices = isPremium ? "无限" : Math.max(0, 10 - practiceCount);
 
   return (
@@ -118,6 +127,23 @@ export default function Practice() {
           </div>
         </div>
       </div>
+
+      {isExpired && (
+        <div className="px-4 md:px-6 pt-4">
+          <Alert variant="destructive" data-testid="alert-subscription-expired">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>订阅已过期</AlertTitle>
+            <AlertDescription className="flex items-center justify-between">
+              <span>你的高级订阅已过期，现在使用免费版限制（10次练习）。</span>
+              <Link href="/subscription">
+                <Button variant="outline" size="sm" className="ml-4">
+                  续费订阅
+                </Button>
+              </Link>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
 
       <div className="flex-1 overflow-hidden flex flex-col max-w-4xl mx-auto w-full">
         <ScrollArea className="flex-1 p-4 md:p-6" ref={scrollRef}>

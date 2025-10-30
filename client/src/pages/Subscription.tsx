@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Check, CreditCard, Sparkles, Lock, Zap, Copy, CheckCircle2, QrCode } from "lucide-react";
+import { Check, CreditCard, Sparkles, Lock, Zap, Copy, CheckCircle2, QrCode, AlertCircle, Clock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +8,14 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Subscription, User } from "@shared/schema";
 import binanceQrImage from "@assets/binance-usdt-qr.jpg";
 import { BookOpen } from "lucide-react";
+import { differenceInDays } from "date-fns";
 
 export default function SubscriptionPage() {
   const { user } = useAuth() as { user: User | null };
@@ -48,6 +50,8 @@ export default function SubscriptionPage() {
     onError: (error: any) => {
       const message = error.message?.includes("already have an active subscription")
         ? "你已经有一个活跃的订阅"
+        : error.message?.includes("renew starting 7 days before")
+        ? "你的订阅还未到续费期。请在到期前7天内续费。"
         : error.message?.includes("already been submitted")
         ? "此交易ID已提交过"
         : "请检查交易ID是否正确，或稍后重试。";
@@ -94,9 +98,20 @@ export default function SubscriptionPage() {
   ];
 
   const isPremium = user?.isPremium || false;
-  const subscriptionEndDate = subscription?.endDate
-    ? new Date(subscription.endDate).toLocaleDateString("zh-CN")
+  const subscriptionEndsAt = user?.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
+  const subscriptionEndDate = subscriptionEndsAt
+    ? subscriptionEndsAt.toLocaleDateString("zh-CN")
     : null;
+  
+  // Calculate remaining days
+  const now = new Date();
+  const isExpired = subscriptionEndsAt !== null && subscriptionEndsAt < now;
+  const daysRemaining = subscriptionEndsAt 
+    ? differenceInDays(subscriptionEndsAt, now)
+    : null;
+  
+  const isExpiringSoon = !isExpired && daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 7;
+  const needsRenewal = isExpired || isExpiringSoon;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
@@ -106,8 +121,29 @@ export default function SubscriptionPage() {
       </div>
 
       <div className="space-y-6">
-        {isPremium && subscription && (
-          <Card className="border-primary" data-testid="card-current-subscription">
+        {/* Expiration Warning Alert */}
+        {isExpired && (
+          <Alert variant="destructive" data-testid="alert-expired">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>订阅已过期</AlertTitle>
+            <AlertDescription>
+              你的订阅已于 {subscriptionEndDate} 过期。请续费以继续使用高级功能。
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isExpiringSoon && !isExpired && (
+          <Alert data-testid="alert-expiring-soon">
+            <Clock className="h-4 w-4" />
+            <AlertTitle>订阅即将到期</AlertTitle>
+            <AlertDescription>
+              你的订阅将在 {daysRemaining} 天后到期（{subscriptionEndDate}）。请提前续费以避免服务中断。
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isPremium && subscriptionEndsAt && (
+          <Card className={isExpired ? "border-destructive" : isExpiringSoon ? "border-yellow-500" : "border-primary"} data-testid="card-current-subscription">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -115,26 +151,52 @@ export default function SubscriptionPage() {
                     <Sparkles className="w-5 h-5 text-primary" />
                     当前订阅
                   </CardTitle>
-                  <CardDescription className="mt-1">你是高级会员</CardDescription>
+                  <CardDescription className="mt-1">
+                    {isExpired ? "已过期" : isExpiringSoon ? `还有 ${daysRemaining} 天到期` : "你是高级会员"}
+                  </CardDescription>
                 </div>
-                <Badge variant="default">活跃</Badge>
+                <Badge variant={isExpired ? "destructive" : isExpiringSoon ? "outline" : "default"}>
+                  {isExpired ? "已过期" : isExpiringSoon ? "即将到期" : "活跃"}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">订阅状态</span>
-                  <span className="font-medium">{subscription.status === "active" ? "活跃" : "已过期"}</span>
+                  <span className="font-medium">{isExpired ? "已过期" : "活跃"}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">到期日期</span>
                   <span className="font-medium">{subscriptionEndDate}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">支付方式</span>
-                  <span className="font-medium">{subscription.paymentMethod}</span>
+                  <span className="text-sm text-muted-foreground">剩余天数</span>
+                  <span className={`font-medium ${isExpired ? "text-destructive" : isExpiringSoon ? "text-yellow-600 dark:text-yellow-500" : ""}`}>
+                    {daysRemaining !== null ? (daysRemaining < 0 ? "已过期" : `${daysRemaining} 天`) : "-"}
+                  </span>
                 </div>
+                {subscription && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">支付方式</span>
+                    <span className="font-medium">{subscription.paymentMethod}</span>
+                  </div>
+                )}
               </div>
+              {needsRenewal && (
+                <>
+                  <Separator className="my-4" />
+                  <Button
+                    onClick={handleOpenPayment}
+                    className="w-full"
+                    variant={isExpired ? "default" : "outline"}
+                    data-testid="button-renew"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    续费订阅 (90 USDT/月)
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
         )}
