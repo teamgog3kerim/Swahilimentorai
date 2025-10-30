@@ -86,7 +86,39 @@ Preferred communication style: Simple, everyday language.
 - **Neon Database**: Serverless PostgreSQL hosting
 - **Google Fonts**: Inter and Noto Sans SC font families
 
-**Payment Integration**: Binance Pay (USDT) mentioned but not yet implemented - displays "coming soon" toast.
+**Payment Integration**: Binance Pay (USDT TRC20) - Recurring monthly subscriptions at 90 USDT per 30 days. Manual verification workflow via admin (see ADMIN_PAYMENT_VERIFICATION.md). Supports subscription renewals starting 7 days before expiration.
+
+### Recurring Subscription System
+
+**Subscription Model**: 
+- Monthly recurring: 90 USDT per 30 days via Binance Pay (TRC20 network)
+- Wallet address: TCdeZjG39zU9SjtoLwfXmcedJhnXyNd8zB
+- Payment method: Manual transaction ID submission + admin verification
+
+**Expiration Handling**:
+- Frontend and backend check: `subscriptionEndsAt < now` for expiration
+- Expired users automatically downgrade to free tier (10 practice limit)
+- Real-time expiration detection (no day-based delays)
+- Expiration alerts shown 7 days before and when expired
+
+**Renewal Flow**:
+- Renewal window opens 7 days before expiration
+- Users submit new transaction ID via payment dialog
+- System extends subscription from current end date (preserves remaining days)
+- Renewal creates pending subscription requiring admin approval
+- Formula: `newEndDate = max(currentEndDate, now) + 30 days`
+
+**Security Features**:
+- Server-side expiration checks prevent API abuse
+- Practice count increments for expired premium users
+- Duplicate transaction ID detection
+- Renewal blocked if more than 7 days remaining
+
+**Admin Verification Process** (see ADMIN_PAYMENT_VERIFICATION.md):
+1. User submits transaction ID
+2. System creates pending subscription
+3. Admin verifies payment on blockchain
+4. Admin activates subscription and updates user premium status
 
 **NPM Packages** (key dependencies):
 - `@tanstack/react-query` - Server state management
