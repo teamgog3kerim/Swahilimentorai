@@ -32,6 +32,7 @@ const chatMessageSchema = z.object({
 
 const subscriptionCreateSchema = z.object({
   transactionId: z.string(),
+  planType: z.enum(['monthly', 'quarterly']).default('monthly'),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -382,11 +383,11 @@ Follow these rules:
       // Check if user already has an active subscription
       const existingSubscription = await storage.getUserActiveSubscription(user.id);
       if (existingSubscription && existingSubscription.status === "active") {
-        // Allow renewal if subscription expires within 7 days
+        // Allow renewal if subscription expires within 4 days
         const daysUntilExpiration = Math.floor((new Date(existingSubscription.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        if (daysUntilExpiration > 7) {
+        if (daysUntilExpiration > 4) {
           return res.status(400).json({ 
-            message: "You already have an active subscription. You can renew starting 7 days before expiration.",
+            message: "You already have an active subscription. You can renew starting 4 days before expiration.",
             subscription: existingSubscription,
             daysUntilExpiration
           });
@@ -398,7 +399,7 @@ Follow these rules:
         return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
       }
 
-      const { transactionId } = validation.data;
+      const { transactionId, planType } = validation.data;
 
       // Validate transaction ID format (basic validation for TRC20)
       // TRC20 transaction IDs are typically 64-character hexadecimal strings
@@ -415,6 +416,13 @@ Follow these rules:
         });
       }
 
+      // Determine pricing and duration based on plan type
+      const planConfig = {
+        monthly: { amount: 90, days: 30 },
+        quarterly: { amount: 250, days: 90 }
+      };
+      const { amount, days } = planConfig[planType];
+
       // Calculate dates (for when subscription is approved)
       // For renewals, extend from current end date; for new subscriptions, start from now
       const now = new Date();
@@ -426,12 +434,12 @@ Follow these rules:
         const currentEndDate = new Date(existingSubscription.endDate);
         startDate = currentEndDate > now ? currentEndDate : now;
         endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 30); // Add 30 days to existing end date
+        endDate.setDate(endDate.getDate() + days); // Add days based on plan type
       } else {
         // New subscription: start from now
         startDate = now;
         endDate = new Date(now);
-        endDate.setDate(endDate.getDate() + 30); // 30 days from now
+        endDate.setDate(endDate.getDate() + days); // days from now based on plan type
       }
 
       // Create PENDING subscription - requires manual admin verification
@@ -439,7 +447,8 @@ Follow these rules:
       const subscriptionData = {
         userId: user.id,
         status: "pending", // Pending verification - admin must approve
-        amount: 90,
+        planType,
+        amount,
         currency: "USDT",
         paymentMethod: "Binance Pay (TRC20)",
         startDate,

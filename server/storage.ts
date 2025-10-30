@@ -65,18 +65,32 @@ export class DbStorage implements IStorage {
   }
 
   async upsertUser(userData: InsertUser): Promise<User> {
-    const result = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.replitUserId,
-        set: {
+    const existing = await this.getUserByReplitId(userData.replitUserId);
+    
+    if (existing) {
+      const result = await db
+        .update(users)
+        .set({
           username: userData.username,
           email: userData.email,
-        },
-      })
-      .returning();
-    return result[0];
+        })
+        .where(eq(users.replitUserId, userData.replitUserId))
+        .returning();
+      return result[0];
+    } else {
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+      
+      const result = await db
+        .insert(users)
+        .values({
+          ...userData,
+          isPremium: true,
+          subscriptionEndsAt: trialEndsAt,
+        })
+        .returning();
+      return result[0];
+    }
   }
 
   async updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void> {

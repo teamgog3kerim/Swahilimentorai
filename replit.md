@@ -86,12 +86,15 @@ Preferred communication style: Simple, everyday language.
 - **Neon Database**: Serverless PostgreSQL hosting
 - **Google Fonts**: Inter and Noto Sans SC font families
 
-**Payment Integration**: Binance Pay (USDT TRC20) - Recurring monthly subscriptions at 90 USDT per 30 days. Manual verification workflow via admin (see ADMIN_PAYMENT_VERIFICATION.md). Supports subscription renewals starting 7 days before expiration.
+**Payment Integration**: Binance Pay (USDT TRC20) - Recurring monthly subscriptions at 90 USDT per 30 days. Manual verification workflow via admin (see ADMIN_PAYMENT_VERIFICATION.md). Supports subscription renewals starting 4 days before expiration.
 
 ### Recurring Subscription System
 
 **Subscription Model**: 
-- Monthly recurring: 90 USDT per 30 days via Binance Pay (TRC20 network)
+- Two pricing tiers:
+  - Monthly: 90 USDT per 30 days
+  - Quarterly: 250 USDT per 90 days (saves 20 USDT vs 3x monthly)
+- Payment via Binance Pay (TRC20 network)
 - Wallet address: TCdeZjG39zU9SjtoLwfXmcedJhnXyNd8zB
 - Payment method: Manual transaction ID submission + admin verification
 
@@ -99,10 +102,11 @@ Preferred communication style: Simple, everyday language.
 - Frontend and backend check: `subscriptionEndsAt < now` for expiration
 - Expired users automatically downgrade to free tier (10 practice limit)
 - Real-time expiration detection (no day-based delays)
-- Expiration alerts shown 7 days before and when expired
+- Expiration alerts shown 4 days before and when expired
+- New users get 7-day free trial automatically
 
 **Renewal Flow**:
-- Renewal window opens 7 days before expiration
+- Renewal window opens 4 days before expiration
 - Users submit new transaction ID via payment dialog
 - System extends subscription from current end date (preserves remaining days)
 - Renewal creates pending subscription requiring admin approval
@@ -112,7 +116,7 @@ Preferred communication style: Simple, everyday language.
 - Server-side expiration checks prevent API abuse
 - Practice count increments for expired premium users
 - Duplicate transaction ID detection
-- Renewal blocked if more than 7 days remaining
+- Renewal blocked if more than 4 days remaining
 
 **Admin Verification Process** (see ADMIN_PAYMENT_VERIFICATION.md):
 1. User submits transaction ID

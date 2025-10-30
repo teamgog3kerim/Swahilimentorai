@@ -23,17 +23,22 @@ export default function SubscriptionPage() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [transactionId, setTransactionId] = useState("");
   const [copied, setCopied] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'quarterly'>('monthly');
 
   const WALLET_ADDRESS = "TCdeZjG39zU9SjtoLwfXmcedJhnXyNd8zB";
   const NETWORK = "Tron (TRC20)";
-  const AMOUNT = "90 USDT";
+  const PLAN_CONFIGS = {
+    monthly: { amount: '90 USDT', days: 30, label: '月订阅' },
+    quarterly: { amount: '250 USDT', days: 90, label: '季度订阅' }
+  };
+  const AMOUNT = PLAN_CONFIGS[selectedPlan].amount;
 
   const { data: subscription } = useQuery<Subscription>({
     queryKey: ["/api/subscription"],
   });
 
   const paymentMutation = useMutation({
-    mutationFn: async (data: { transactionId: string }) => {
+    mutationFn: async (data: { transactionId: string; planType: 'monthly' | 'quarterly' }) => {
       const res = await apiRequest("POST", "/api/subscription/verify-payment", data);
       return await res.json();
     },
@@ -50,8 +55,8 @@ export default function SubscriptionPage() {
     onError: (error: any) => {
       const message = error.message?.includes("already have an active subscription")
         ? "你已经有一个活跃的订阅"
-        : error.message?.includes("renew starting 7 days before")
-        ? "你的订阅还未到续费期。请在到期前7天内续费。"
+        : error.message?.includes("renew starting 4 days before")
+        ? "你的订阅还未到续费期。请在到期前4天内续费。"
         : error.message?.includes("already been submitted")
         ? "此交易ID已提交过"
         : "请检查交易ID是否正确，或稍后重试。";
@@ -74,7 +79,8 @@ export default function SubscriptionPage() {
     });
   };
 
-  const handleOpenPayment = () => {
+  const handleOpenPayment = (plan: 'monthly' | 'quarterly') => {
+    setSelectedPlan(plan);
     setShowPaymentDialog(true);
   };
 
@@ -87,7 +93,7 @@ export default function SubscriptionPage() {
       });
       return;
     }
-    paymentMutation.mutate({ transactionId: transactionId.trim() });
+    paymentMutation.mutate({ transactionId: transactionId.trim(), planType: selectedPlan });
   };
 
   const premiumFeatures = [
@@ -110,7 +116,7 @@ export default function SubscriptionPage() {
     ? differenceInDays(subscriptionEndsAt, now)
     : null;
   
-  const isExpiringSoon = !isExpired && daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 7;
+  const isExpiringSoon = !isExpired && daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 4;
   const needsRenewal = isExpired || isExpiringSoon;
 
   return (
@@ -186,73 +192,145 @@ export default function SubscriptionPage() {
               {needsRenewal && (
                 <>
                   <Separator className="my-4" />
-                  <Button
-                    onClick={handleOpenPayment}
-                    className="w-full"
-                    variant={isExpired ? "default" : "outline"}
-                    data-testid="button-renew"
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    续费订阅 (90 USDT/月)
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => handleOpenPayment('monthly')}
+                      className="w-full"
+                      variant={isExpired ? "default" : "outline"}
+                      data-testid="button-renew-monthly"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      续费 - 月订阅 (90 USDT/月)
+                    </Button>
+                    <Button
+                      onClick={() => handleOpenPayment('quarterly')}
+                      className="w-full"
+                      variant="outline"
+                      data-testid="button-renew-quarterly"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      续费 - 季度订阅 (250 USDT/3月)
+                    </Button>
+                  </div>
                 </>
               )}
             </CardContent>
           </Card>
         )}
 
-        <Card className="relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-bl-full" />
-          <CardHeader>
-            <div className="flex items-center justify-between mb-2">
-              <Badge variant="secondary">推荐</Badge>
-              {!isPremium && <Badge variant="outline">7天免费试用</Badge>}
-            </div>
-            <CardTitle className="text-3xl">高级会员</CardTitle>
-            <div className="flex items-baseline gap-2 mt-4">
-              <span className="text-5xl font-bold">90</span>
-              <span className="text-2xl font-semibold text-muted-foreground">USDT</span>
-              <span className="text-muted-foreground">/月</span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Separator />
-            <div>
-              <h3 className="font-semibold mb-4">包含功能：</h3>
-              <div className="space-y-3">
-                {premiumFeatures.map((feature, idx) => (
-                  <div key={idx} className="flex items-start gap-3" data-testid={`feature-${idx}`}>
-                    <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
-                      <feature.icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{feature.title}</p>
-                      <p className="text-sm text-muted-foreground">{feature.description}</p>
-                    </div>
-                  </div>
-                ))}
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Monthly Plan */}
+          <Card className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-bl-full" />
+            <CardHeader>
+              <div className="flex items-center justify-between mb-2">
+                <Badge variant="secondary">推荐</Badge>
+                {!isPremium && <Badge variant="outline">7天免费试用</Badge>}
               </div>
-            </div>
+              <CardTitle className="text-2xl">月订阅</CardTitle>
+              <div className="flex items-baseline gap-2 mt-4">
+                <span className="text-5xl font-bold">90</span>
+                <span className="text-2xl font-semibold text-muted-foreground">USDT</span>
+                <span className="text-muted-foreground">/月</span>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">每30天续费一次</p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Separator />
+              <div>
+                <h3 className="font-semibold mb-4">包含功能：</h3>
+                <div className="space-y-3">
+                  {premiumFeatures.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+                        <feature.icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{feature.title}</p>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-            {!isPremium && (
-              <>
-                <Separator />
-                <Button
-                  onClick={handleOpenPayment}
-                  className="w-full"
-                  size="lg"
-                  data-testid="button-subscribe"
-                >
-                  <CreditCard className="w-5 h-5 mr-2" />
-                  使用 Binance Pay 订阅
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  安全的加密货币支付 · 随时取消订阅
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              {!isPremium && (
+                <>
+                  <Separator />
+                  <Button
+                    onClick={() => handleOpenPayment('monthly')}
+                    className="w-full"
+                    size="lg"
+                    data-testid="button-subscribe-monthly"
+                  >
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    选择月订阅
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    安全的加密货币支付
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quarterly Plan */}
+          <Card className="relative overflow-hidden border-primary/50">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/20 to-transparent rounded-bl-full" />
+            <CardHeader>
+              <div className="flex items-center justify-between mb-2">
+                <Badge className="bg-green-600 hover:bg-green-700">超值优惠</Badge>
+                {!isPremium && <Badge variant="outline">7天免费试用</Badge>}
+              </div>
+              <CardTitle className="text-2xl">季度订阅</CardTitle>
+              <div className="flex items-baseline gap-2 mt-4">
+                <span className="text-5xl font-bold">250</span>
+                <span className="text-2xl font-semibold text-muted-foreground">USDT</span>
+                <span className="text-muted-foreground">/3月</span>
+              </div>
+              <p className="text-sm text-green-600 dark:text-green-500 font-medium mt-2">
+                节省 20 USDT (相当于 83 USDT/月)
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <Separator />
+              <div>
+                <h3 className="font-semibold mb-4">包含功能：</h3>
+                <div className="space-y-3">
+                  {premiumFeatures.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center flex-shrink-0">
+                        <feature.icon className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{feature.title}</p>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {!isPremium && (
+                <>
+                  <Separator />
+                  <Button
+                    onClick={() => handleOpenPayment('quarterly')}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    size="lg"
+                    data-testid="button-subscribe-quarterly"
+                  >
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    选择季度订阅
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    每3个月续费，更实惠
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         <Card>
           <CardHeader>

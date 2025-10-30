@@ -66,6 +66,7 @@ export const subscriptions = pgTable("subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   status: text("status").notNull(),
+  planType: text("plan_type").notNull().default('monthly'),
   amount: integer("amount").notNull(),
   currency: text("currency").notNull(),
   paymentMethod: text("payment_method").notNull(),
