@@ -118,6 +118,11 @@ export default function SubscriptionPage() {
   
   const isExpiringSoon = !isExpired && daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 4;
   const needsRenewal = isExpired || isExpiringSoon;
+  
+  // Show subscribe buttons if: no paid subscription OR only on free trial
+  // Free trial users have isPremium=true but no subscription record
+  const hasActivePaidSubscription = subscription && subscription.status === 'active';
+  const showSubscribeButtons = !hasActivePaidSubscription;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
@@ -225,7 +230,7 @@ export default function SubscriptionPage() {
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
                 <Badge variant="secondary">推荐</Badge>
-                {!isPremium && <Badge variant="outline">7天免费试用</Badge>}
+                {showSubscribeButtons && <Badge variant="outline">7天免费试用</Badge>}
               </div>
               <CardTitle className="text-2xl">月订阅</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">
@@ -254,7 +259,7 @@ export default function SubscriptionPage() {
                 </div>
               </div>
 
-              {!isPremium && (
+              {showSubscribeButtons && (
                 <>
                   <Separator />
                   <Button
@@ -280,7 +285,7 @@ export default function SubscriptionPage() {
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
                 <Badge className="bg-green-600 hover:bg-green-700">超值优惠</Badge>
-                {!isPremium && <Badge variant="outline">7天免费试用</Badge>}
+                {showSubscribeButtons && <Badge variant="outline">7天免费试用</Badge>}
               </div>
               <CardTitle className="text-2xl">季度订阅</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">
@@ -311,7 +316,7 @@ export default function SubscriptionPage() {
                 </div>
               </div>
 
-              {!isPremium && (
+              {showSubscribeButtons && (
                 <>
                   <Separator />
                   <Button
