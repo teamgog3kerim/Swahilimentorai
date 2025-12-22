@@ -1,45 +1,23 @@
-import { createContext, useContext, useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { useTheme as useNextTheme } from "next-themes";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
-  defaultTheme?: Theme;
+  defaultTheme?: "light" | "dark" | "system";
 };
 
-type ThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
-
-export function ThemeProvider({
-  children,
-  defaultTheme = "light",
-}: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("theme") as Theme) || defaultTheme
-  );
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
+export function ThemeProvider({ children, defaultTheme = "light" }: ThemeProviderProps) {
   return (
-    <ThemeProviderContext.Provider value={{ theme, setTheme }}>
+    <NextThemesProvider attribute="class" defaultTheme={defaultTheme} enableSystem>
       {children}
-    </ThemeProviderContext.Provider>
+    </NextThemesProvider>
   );
 }
 
 export function useTheme() {
-  const context = useContext(ThemeProviderContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  const result = useNextTheme();
+  return {
+    theme: (result.resolvedTheme || result.theme || "light") as "light" | "dark",
+    setTheme: (t: "light" | "dark") => result.setTheme(t),
+  };
 }
