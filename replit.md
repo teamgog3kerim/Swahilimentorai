@@ -33,6 +33,8 @@ Preferred communication style: Simple, everyday language.
 - `Learn.tsx`: Browse and select lessons by proficiency level
 - `Practice.tsx`: AI chat interface for conversation practice
 - `Progress.tsx`: Learning analytics and completion tracking
+- `Leaderboard.tsx`: Rankings and competition with other learners
+- `StudyGroups.tsx`: Create and join collaborative study groups
 - `Subscription.tsx`: Premium membership management
 
 ### Backend Architecture
@@ -45,6 +47,8 @@ Preferred communication style: Simple, everyday language.
 - `/api/progress` - User learning progress tracking
 - `/api/chat/*` - Chat session and message management
 - `/api/subscription` - Subscription status and creation
+- `/api/leaderboard` - Leaderboard rankings (allTime/weekly)
+- `/api/study-groups/*` - Study group CRUD and membership
 
 **Authentication**: Replit's OpenID Connect (OIDC) integration using Passport.js strategy. Session management via `express-session` with PostgreSQL session store (`connect-pg-simple`).
 
@@ -62,12 +66,14 @@ Preferred communication style: Simple, everyday language.
 **Database**: PostgreSQL via Neon serverless with WebSocket connections.
 
 **Schema Design** (key tables):
-- `users` - User accounts with Replit ID mapping, premium status, practice counts
+- `users` - User accounts with Replit ID mapping, premium status, practice counts, gamification stats (totalPoints, lessonsCompleted, practiceMinutes, currentStreak, longestStreak, lastActiveAt)
 - `lessons` - Lesson content stored as JSONB with metadata (level, category, estimated time, order)
 - `user_progress` - Tracks completion status and last accessed timestamps
 - `chat_sessions` - Conversation practice sessions linked to users and optional lessons
 - `chat_messages` - Individual messages with role (user/assistant) and content
 - `subscriptions` - Premium subscription records with status and expiration
+- `study_groups` - Study groups with name, description, creator, visibility, max members
+- `study_group_members` - Group membership with role (admin/member)
 - `sessions` - Express session storage managed by connect-pg-simple
 
 **Content Structure**: Lessons contain JSONB with:
