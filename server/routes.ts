@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import OpenAI from "openai";
 import { z } from "zod";
-import { insertUserProgressSchema, insertChatSessionSchema, insertChatMessageSchema, insertSubscriptionSchema, insertStudyGroupSchema } from "@shared/schema";
+import { insertUserProgressSchema, insertChatSessionSchema, insertChatMessageSchema, insertSubscriptionSchema } from "@shared/schema";
 
 // This is using Replit's AI Integrations service, which provides OpenAI-compatible API access without requiring your own OpenAI API key.
 // The newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
@@ -33,13 +33,6 @@ const chatMessageSchema = z.object({
 const subscriptionCreateSchema = z.object({
   transactionId: z.string(),
   planType: z.enum(['monthly', 'quarterly']).default('monthly'),
-});
-
-const studyGroupCreateSchema = z.object({
-  name: z.string().min(3).max(100),
-  description: z.string().max(500).optional(),
-  isPublic: z.boolean().default(true),
-  maxMembers: z.number().min(2).max(100).default(20),
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -520,195 +513,6 @@ Follow these rules:
     } catch (error) {
       console.error("Error creating subscription:", error);
       res.status(500).json({ message: "Failed to create subscription" });
-    }
-  });
-
-  // ==================== LEADERBOARD ROUTES ====================
-
-  // GET /api/leaderboard - Get leaderboard data
-  app.get('/api/leaderboard', isAuthenticated, async (req: any, res) => {
-    try {
-      const type = (req.query.type as 'weekly' | 'allTime') || 'allTime';
-      const limit = parseInt(req.query.limit as string) || 20;
-      const leaderboard = await storage.getLeaderboard(type, limit);
-      res.json(leaderboard);
-    } catch (error) {
-      console.error("Error fetching leaderboard:", error);
-      res.status(500).json({ message: "Failed to fetch leaderboard" });
-    }
-  });
-
-  // GET /api/leaderboard/rank - Get current user's rank
-  app.get('/api/leaderboard/rank', isAuthenticated, async (req: any, res) => {
-    try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      const rank = await storage.getUserRank(user.id);
-      res.json({ rank, user });
-    } catch (error) {
-      console.error("Error fetching user rank:", error);
-      res.status(500).json({ message: "Failed to fetch user rank" });
-    }
-  });
-
-  // ==================== STUDY GROUPS ROUTES ====================
-
-  // GET /api/study-groups - List all public groups
-  app.get('/api/study-groups', isAuthenticated, async (req: any, res) => {
-    try {
-      const groups = await storage.getStudyGroups();
-      const groupsWithMemberCount = await Promise.all(
-        groups.map(async (group) => {
-          const memberCount = await storage.getGroupMemberCount(group.id);
-          return { ...group, memberCount };
-        })
-      );
-      res.json(groupsWithMemberCount);
-    } catch (error) {
-      console.error("Error fetching study groups:", error);
-      res.status(500).json({ message: "Failed to fetch study groups" });
-    }
-  });
-
-  // GET /api/study-groups/my - Get user's groups
-  app.get('/api/study-groups/my', isAuthenticated, async (req: any, res) => {
-    try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      const groups = await storage.getUserStudyGroups(user.id);
-      const groupsWithMemberCount = await Promise.all(
-        groups.map(async (group) => {
-          const memberCount = await storage.getGroupMemberCount(group.id);
-          return { ...group, memberCount };
-        })
-      );
-      res.json(groupsWithMemberCount);
-    } catch (error) {
-      console.error("Error fetching user's study groups:", error);
-      res.status(500).json({ message: "Failed to fetch user's study groups" });
-    }
-  });
-
-  // POST /api/study-groups - Create a group
-  app.post('/api/study-groups', isAuthenticated, async (req: any, res) => {
-    try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const validation = studyGroupCreateSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
-      }
-
-      const group = await storage.createStudyGroup({
-        ...validation.data,
-        createdBy: user.id,
-      });
-      res.status(201).json(group);
-    } catch (error) {
-      console.error("Error creating study group:", error);
-      res.status(500).json({ message: "Failed to create study group" });
-    }
-  });
-
-  // GET /api/study-groups/:id - Get group details
-  app.get('/api/study-groups/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const group = await storage.getStudyGroup(id);
-      if (!group) {
-        return res.status(404).json({ message: "Study group not found" });
-      }
-
-      const members = await storage.getStudyGroupMembers(id);
-      const isMember = await storage.isUserInGroup(id, user.id);
-      const memberCount = await storage.getGroupMemberCount(id);
-
-      res.json({ ...group, members, isMember, memberCount });
-    } catch (error) {
-      console.error("Error fetching study group:", error);
-      res.status(500).json({ message: "Failed to fetch study group" });
-    }
-  });
-
-  // POST /api/study-groups/:id/join - Join a group
-  app.post('/api/study-groups/:id/join', isAuthenticated, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const group = await storage.getStudyGroup(id);
-      if (!group) {
-        return res.status(404).json({ message: "Study group not found" });
-      }
-
-      const isAlreadyMember = await storage.isUserInGroup(id, user.id);
-      if (isAlreadyMember) {
-        return res.status(400).json({ message: "You are already a member of this group" });
-      }
-
-      const memberCount = await storage.getGroupMemberCount(id);
-      if (memberCount >= group.maxMembers) {
-        return res.status(400).json({ message: "This group is full" });
-      }
-
-      const membership = await storage.joinStudyGroup(id, user.id);
-      res.status(201).json(membership);
-    } catch (error) {
-      console.error("Error joining study group:", error);
-      res.status(500).json({ message: "Failed to join study group" });
-    }
-  });
-
-  // DELETE /api/study-groups/:id/leave - Leave a group
-  app.delete('/api/study-groups/:id/leave', isAuthenticated, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const group = await storage.getStudyGroup(id);
-      if (!group) {
-        return res.status(404).json({ message: "Study group not found" });
-      }
-
-      // Cannot leave if you're the creator
-      if (group.createdBy === user.id) {
-        return res.status(400).json({ message: "Group creators cannot leave their own group" });
-      }
-
-      const isMember = await storage.isUserInGroup(id, user.id);
-      if (!isMember) {
-        return res.status(400).json({ message: "You are not a member of this group" });
-      }
-
-      await storage.leaveStudyGroup(id, user.id);
-      res.json({ message: "Successfully left the group" });
-    } catch (error) {
-      console.error("Error leaving study group:", error);
-      res.status(500).json({ message: "Failed to leave study group" });
     }
   });
 

@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, gte } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
   type User,
@@ -13,18 +13,12 @@ import {
   type InsertChatMessage,
   type Subscription,
   type InsertSubscription,
-  type StudyGroup,
-  type InsertStudyGroup,
-  type StudyGroupMember,
-  type InsertStudyGroupMember,
   users,
   lessons,
   userProgress,
   chatSessions,
   chatMessages,
   subscriptions,
-  studyGroups,
-  studyGroupMembers,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -34,7 +28,6 @@ export interface IStorage {
   upsertUser(user: InsertUser): Promise<User>;
   updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void>;
   incrementPracticeCount(userId: string): Promise<void>;
-  updateUserStats(userId: string, stats: { totalPoints?: number; lessonsCompleted?: number; practiceMinutes?: number; currentStreak?: number; longestStreak?: number; lastActiveAt?: Date }): Promise<void>;
   
   getAllLessons(): Promise<Lesson[]>;
   getLessonsByLevel(level: string): Promise<Lesson[]>;
@@ -53,19 +46,6 @@ export interface IStorage {
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getUserActiveSubscription(userId: string): Promise<Subscription | undefined>;
   getSubscriptionByTransactionId(transactionId: string): Promise<Subscription | undefined>;
-  
-  getLeaderboard(type: 'weekly' | 'allTime', limit: number): Promise<User[]>;
-  getUserRank(userId: string): Promise<number>;
-  
-  createStudyGroup(group: InsertStudyGroup): Promise<StudyGroup>;
-  getStudyGroups(): Promise<StudyGroup[]>;
-  getStudyGroup(id: string): Promise<StudyGroup | undefined>;
-  joinStudyGroup(groupId: string, userId: string): Promise<StudyGroupMember>;
-  leaveStudyGroup(groupId: string, userId: string): Promise<void>;
-  getStudyGroupMembers(groupId: string): Promise<(StudyGroupMember & { user: User })[]>;
-  getUserStudyGroups(userId: string): Promise<StudyGroup[]>;
-  isUserInGroup(groupId: string, userId: string): Promise<boolean>;
-  getGroupMemberCount(groupId: string): Promise<number>;
 }
 
 export class DbStorage implements IStorage {
@@ -199,105 +179,6 @@ export class DbStorage implements IStorage {
       .where(eq(subscriptions.transactionId, transactionId))
       .limit(1);
     return result[0];
-  }
-
-  async updateUserStats(userId: string, stats: { totalPoints?: number; lessonsCompleted?: number; practiceMinutes?: number; currentStreak?: number; longestStreak?: number; lastActiveAt?: Date }): Promise<void> {
-    await db.update(users).set(stats).where(eq(users.id, userId));
-  }
-
-  async getLeaderboard(type: 'weekly' | 'allTime', limit: number): Promise<User[]> {
-    if (type === 'weekly') {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      return await db.select().from(users)
-        .where(gte(users.lastActiveAt, oneWeekAgo))
-        .orderBy(desc(users.totalPoints))
-        .limit(limit);
-    }
-    return await db.select().from(users)
-      .orderBy(desc(users.totalPoints))
-      .limit(limit);
-  }
-
-  async getUserRank(userId: string): Promise<number> {
-    const user = await this.getUser(userId);
-    if (!user) return 0;
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(sql`${users.totalPoints} > ${user.totalPoints}`);
-    return (result[0]?.count || 0) + 1;
-  }
-
-  async createStudyGroup(group: InsertStudyGroup): Promise<StudyGroup> {
-    const result = await db.insert(studyGroups).values(group).returning();
-    await db.insert(studyGroupMembers).values({
-      groupId: result[0].id,
-      userId: group.createdBy,
-      role: 'admin',
-    });
-    return result[0];
-  }
-
-  async getStudyGroups(): Promise<StudyGroup[]> {
-    return await db.select().from(studyGroups)
-      .where(eq(studyGroups.isPublic, true))
-      .orderBy(desc(studyGroups.createdAt));
-  }
-
-  async getStudyGroup(id: string): Promise<StudyGroup | undefined> {
-    const result = await db.select().from(studyGroups).where(eq(studyGroups.id, id)).limit(1);
-    return result[0];
-  }
-
-  async joinStudyGroup(groupId: string, userId: string): Promise<StudyGroupMember> {
-    const result = await db.insert(studyGroupMembers).values({
-      groupId,
-      userId,
-      role: 'member',
-    }).returning();
-    return result[0];
-  }
-
-  async leaveStudyGroup(groupId: string, userId: string): Promise<void> {
-    await db.delete(studyGroupMembers)
-      .where(and(eq(studyGroupMembers.groupId, groupId), eq(studyGroupMembers.userId, userId)));
-  }
-
-  async getStudyGroupMembers(groupId: string): Promise<(StudyGroupMember & { user: User })[]> {
-    const result = await db.select({
-      id: studyGroupMembers.id,
-      groupId: studyGroupMembers.groupId,
-      userId: studyGroupMembers.userId,
-      role: studyGroupMembers.role,
-      joinedAt: studyGroupMembers.joinedAt,
-      user: users,
-    })
-      .from(studyGroupMembers)
-      .innerJoin(users, eq(studyGroupMembers.userId, users.id))
-      .where(eq(studyGroupMembers.groupId, groupId));
-    return result;
-  }
-
-  async getUserStudyGroups(userId: string): Promise<StudyGroup[]> {
-    const result = await db.select({ group: studyGroups })
-      .from(studyGroupMembers)
-      .innerJoin(studyGroups, eq(studyGroupMembers.groupId, studyGroups.id))
-      .where(eq(studyGroupMembers.userId, userId));
-    return result.map(r => r.group);
-  }
-
-  async isUserInGroup(groupId: string, userId: string): Promise<boolean> {
-    const result = await db.select().from(studyGroupMembers)
-      .where(and(eq(studyGroupMembers.groupId, groupId), eq(studyGroupMembers.userId, userId)))
-      .limit(1);
-    return result.length > 0;
-  }
-
-  async getGroupMemberCount(groupId: string): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` })
-      .from(studyGroupMembers)
-      .where(eq(studyGroupMembers.groupId, groupId));
-    return result[0]?.count || 0;
   }
 }
 

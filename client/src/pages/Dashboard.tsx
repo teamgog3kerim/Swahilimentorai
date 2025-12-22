@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Trophy, Users } from "lucide-react";
+import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -21,11 +21,9 @@ import Learn from "@/pages/Learn";
 import Practice from "@/pages/Practice";
 import Progress from "@/pages/Progress";
 import Subscription from "@/pages/Subscription";
-import Leaderboard from "@/pages/Leaderboard";
-import StudyGroups from "@/pages/StudyGroups";
 import type { User } from "@shared/schema";
 
-type View = "learn" | "practice" | "progress" | "leaderboard" | "groups" | "subscription";
+type View = "learn" | "practice" | "progress" | "subscription";
 
 export default function Dashboard() {
   const { user } = useAuth() as { user: User | null };
@@ -35,8 +33,6 @@ export default function Dashboard() {
     { id: "learn" as View, title: "学习", icon: Home },
     { id: "practice" as View, title: "练习", icon: MessageSquare },
     { id: "progress" as View, title: "进度", icon: BarChart },
-    { id: "leaderboard" as View, title: "排行榜", icon: Trophy },
-    { id: "groups" as View, title: "学习小组", icon: Users },
     { id: "subscription" as View, title: "订阅", icon: CreditCard },
   ];
 
@@ -52,10 +48,6 @@ export default function Dashboard() {
         return <Practice />;
       case "progress":
         return <Progress />;
-      case "leaderboard":
-        return <Leaderboard />;
-      case "groups":
-        return <StudyGroups />;
       case "subscription":
         return <Subscription />;
       default:
