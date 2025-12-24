@@ -15,7 +15,7 @@ export function Pricing() {
   ];
 
   return (
-    <section className="py-12 md:py-16 lg:py-20 bg-muted/30">
+    <section id="pricing" className="py-12 md:py-16 lg:py-20 bg-muted/30">
       <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center mb-12 md:mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl font-bold">订阅计划</h2>
@@ -58,9 +58,10 @@ export function Pricing() {
                 size="lg" 
                 className="w-full text-base font-semibold gap-2"
                 data-testid="button-subscribe"
+                onClick={() => window.location.href = "/api/login"}
               >
                 <SiBinance className="h-5 w-5" />
-                使用Binance Pay订阅
+                开始免费试用
               </Button>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <SiBinance className="h-4 w-4" />

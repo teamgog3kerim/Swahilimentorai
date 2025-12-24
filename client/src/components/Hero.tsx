@@ -41,10 +41,21 @@ export function Hero() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="text-base font-semibold" data-testid="button-start-free">
+              <Button 
+                size="lg" 
+                className="text-base font-semibold" 
+                data-testid="button-start-free"
+                onClick={() => window.location.href = "/api/login"}
+              >
                 开始免费试用
               </Button>
-              <Button variant="outline" size="lg" className="text-base font-semibold" data-testid="button-view-pricing">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-base font-semibold" 
+                data-testid="button-view-pricing"
+                onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
+              >
                 查看定价
               </Button>
               <ShareButton variant="ghost" size="lg" className="text-base font-semibold" />
