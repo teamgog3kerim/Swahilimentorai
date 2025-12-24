@@ -13,6 +13,91 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { saveLessonOffline, isLessonDownloaded, deleteLessonOffline, getAllOfflineLessons, type OfflineLesson } from "@/lib/offlineStorage";
 import type { Lesson, UserProgress } from "@shared/schema";
 
+interface VocabItem {
+  swahili: string;
+  chinese: string;
+  pronunciation?: string;
+}
+
+interface PhraseItem {
+  swahili: string;
+  chinese: string;
+}
+
+interface DialogueLine {
+  speaker: string;
+  swahili: string;
+  chinese: string;
+}
+
+interface DialogueItem {
+  lines: DialogueLine[];
+}
+
+interface LessonContent {
+  vocabulary?: VocabItem[];
+  phrases?: PhraseItem[];
+  dialogues?: DialogueItem[];
+}
+
+function LessonContentView({ content }: { content: Record<string, unknown> }) {
+  const lessonContent = content as LessonContent;
+  
+  return (
+    <div className="space-y-6 mt-4">
+      {lessonContent.vocabulary && lessonContent.vocabulary.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-3">词汇 (Vocabulary)</h3>
+          <div className="space-y-2">
+            {lessonContent.vocabulary.map((item, idx) => (
+              <div key={idx} className="p-3 bg-muted rounded-md">
+                <p className="font-medium text-lg">{item.swahili}</p>
+                <p className="text-muted-foreground">{item.chinese}</p>
+                {item.pronunciation && (
+                  <p className="text-sm text-muted-foreground italic">{item.pronunciation}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {lessonContent.phrases && lessonContent.phrases.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-3">常用短语 (Phrases)</h3>
+          <div className="space-y-2">
+            {lessonContent.phrases.map((item, idx) => (
+              <div key={idx} className="p-3 bg-muted rounded-md">
+                <p className="font-medium text-lg">{item.swahili}</p>
+                <p className="text-muted-foreground">{item.chinese}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {lessonContent.dialogues && lessonContent.dialogues.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-3">对话 (Dialogues)</h3>
+          <div className="space-y-4">
+            {lessonContent.dialogues.map((dialogue, idx) => (
+              <div key={idx} className="space-y-2">
+                {dialogue.lines.map((line, lineIdx) => (
+                  <div key={lineIdx} className="p-3 bg-muted rounded-md">
+                    <p className="text-sm font-semibold text-primary mb-1">{line.speaker}:</p>
+                    <p className="font-medium">{line.swahili}</p>
+                    <p className="text-sm text-muted-foreground">{line.chinese}</p>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface LearnProps {
   onNavigateToPractice: (lessonId?: string) => void;
 }
@@ -290,61 +375,9 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
             <DialogDescription className="text-lg">{selectedLesson?.titleChinese}</DialogDescription>
           </DialogHeader>
 
-          {selectedLesson?.content && typeof selectedLesson.content === 'object' && (
-            <>
-              <div className="space-y-6 mt-4">
-                {(selectedLesson.content as Record<string, any>).vocabulary && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">词汇 (Vocabulary)</h3>
-                    <div className="space-y-2">
-                      {((selectedLesson.content as Record<string, any>).vocabulary as any[]).map((item: any, idx: number) => (
-                        <div key={idx} className="p-3 bg-muted rounded-md">
-                          <p className="font-medium text-lg">{item.swahili}</p>
-                          <p className="text-muted-foreground">{item.chinese}</p>
-                          {item.pronunciation && (
-                            <p className="text-sm text-muted-foreground italic">{item.pronunciation}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {(selectedLesson.content as Record<string, any>).phrases && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">常用短语 (Phrases)</h3>
-                    <div className="space-y-2">
-                      {((selectedLesson.content as Record<string, any>).phrases as any[]).map((item: any, idx: number) => (
-                        <div key={idx} className="p-3 bg-muted rounded-md">
-                          <p className="font-medium text-lg">{item.swahili}</p>
-                          <p className="text-muted-foreground">{item.chinese}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {(selectedLesson.content as Record<string, any>).dialogues && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3">对话 (Dialogues)</h3>
-                    <div className="space-y-4">
-                      {((selectedLesson.content as Record<string, any>).dialogues as any[]).map((dialogue: any, idx: number) => (
-                        <div key={idx} className="space-y-2">
-                          {dialogue.lines.map((line: any, lineIdx: number) => (
-                            <div key={lineIdx} className="p-3 bg-muted rounded-md">
-                              <p className="text-sm font-semibold text-primary mb-1">{line.speaker}:</p>
-                              <p className="font-medium">{line.swahili}</p>
-                              <p className="text-sm text-muted-foreground">{line.chinese}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+          {selectedLesson?.content && typeof selectedLesson.content === 'object' ? (
+            <LessonContentView content={selectedLesson.content as Record<string, unknown>} />
+          ) : null}
 
           <div className="mt-6 flex gap-3">
             <Button onClick={handleStartPractice} className="flex-1" data-testid="button-start-practice">
