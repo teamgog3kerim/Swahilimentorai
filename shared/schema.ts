@@ -19,6 +19,7 @@ export const users = pgTable("users", {
   username: text("username").notNull(),
   email: text("email"),
   isPremium: boolean("is_premium").notNull().default(false),
+  isAdmin: boolean("is_admin").notNull().default(false),
   subscriptionEndsAt: timestamp("subscription_ends_at"),
   practiceCount: integer("practice_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
