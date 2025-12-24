@@ -129,6 +129,36 @@ Preferred communication style: Simple, everyday language.
 3. Admin verifies payment on blockchain
 4. Admin activates subscription and updates user premium status
 
+### Admin Panel
+
+**Access Control**:
+- Users with `isAdmin=true` in the database can access the admin panel
+- Admin menu item appears in Dashboard sidebar only for admin users
+- All admin API routes are protected by `isAdmin` middleware (layered on `isAuthenticated`)
+
+**Admin Page** (`client/src/pages/Admin.tsx`):
+- Statistics dashboard showing pending payments, active subscriptions, and total users
+- Three tabs: 待验证 (Pending), 所有订阅 (All Subscriptions), 用户管理 (User Management)
+
+**Admin API Routes** (`/api/admin/*`):
+- `GET /api/admin/check` - Check if current user is admin
+- `GET /api/admin/users` - List all users with search support
+- `GET /api/admin/subscriptions` - List all subscriptions with user info
+- `GET /api/admin/pending` - List pending payment verifications
+- `POST /api/admin/subscription/action` - Approve or reject subscription
+
+**Approve/Reject Workflow**:
+- Admin reviews pending subscription with transaction ID
+- Approve: Updates subscription status to 'active', sets user `isPremium=true` and `subscriptionEndsAt`
+- Reject: Updates subscription status to 'rejected', no user changes
+
+**Key Test IDs**:
+- `button-nav-admin`: Admin menu item in sidebar
+- `text-admin-title`: Admin page title
+- `card-pending-count`, `card-active-count`, `card-users-count`: Statistics cards
+- `tab-pending`, `tab-subscriptions`, `tab-users`: Tab navigation
+- `button-approve-{id}`, `button-reject-{id}`: Action buttons
+
 **NPM Packages** (key dependencies):
 - `@tanstack/react-query` - Server state management
 - `drizzle-orm` & `drizzle-zod` - Database ORM and validation
