@@ -39,9 +39,13 @@ export default function Practice() {
       queryClient.invalidateQueries({ queryKey: ["/api/chat/sessions"] });
     },
     onError: (error: Error) => {
+      const errorMsg = error.message;
+      if (errorMsg.includes("401") || errorMsg.includes("Unauthorized")) {
+        return;
+      }
       toast({
-        title: "错误",
-        description: error.message || "创建会话失败",
+        title: "创建会话失败",
+        description: "请稍后重试",
         variant: "destructive",
       });
     },
@@ -76,10 +80,10 @@ export default function Practice() {
   });
 
   useEffect(() => {
-    if (!currentSessionId && !createSessionMutation.isPending) {
+    if (user && !currentSessionId && !createSessionMutation.isPending) {
       createSessionMutation.mutate("beginner");
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (scrollRef.current) {
