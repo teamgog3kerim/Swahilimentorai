@@ -262,11 +262,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { sessionId, content } = validation.data;
 
       // Check if premium subscription is expired (server-side validation)
+      // Admins have full access without subscription
       const now = new Date();
       const isExpired = user.subscriptionEndsAt && new Date(user.subscriptionEndsAt) < now;
-      const isPremiumActive = user.isPremium && !isExpired;
+      const isPremiumActive = user.isAdmin || (user.isPremium && !isExpired);
 
-      // Check free tier limit
+      // Check free tier limit (admins bypass this check)
       if (!isPremiumActive && user.practiceCount >= 10) {
         return res.status(403).json({ 
           message: isExpired 

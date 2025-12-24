@@ -161,7 +161,9 @@ export default function Practice() {
   const daysRemaining = subscriptionEndsAt 
     ? differenceInDays(subscriptionEndsAt, now)
     : null;
-  const isPremium = user?.isPremium && !isExpired;
+  // Admins have full access without subscription
+  const isAdmin = user?.isAdmin === true;
+  const isPremium = isAdmin || (user?.isPremium && !isExpired);
   const remainingPractices = isPremium ? "无限" : Math.max(0, 10 - practiceCount);
 
   return (

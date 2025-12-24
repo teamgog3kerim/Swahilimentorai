@@ -60,6 +60,11 @@ function getReminderType(user: User): ReminderType {
 export function SubscriptionReminder({ user, onUpgrade }: SubscriptionReminderProps) {
   const [dismissed, setDismissed] = useState(false);
   
+  // Admins don't need subscription reminders - they have full access
+  if (user.isAdmin) {
+    return null;
+  }
+  
   const reminderType = getReminderType(user);
   
   if (!reminderType || dismissed) {
