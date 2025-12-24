@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import type { UserProgress, Lesson } from "@shared/schema";
 import {
   Sidebar,
@@ -37,14 +35,6 @@ function DashboardContent() {
   const { user } = useAuth() as { user: User | null };
   const [currentView, setCurrentView] = useState<View>("learn");
   const { setOpenMobile } = useSidebar();
-  const [stayLoggedIn, setStayLoggedIn] = useState(() => {
-    const saved = localStorage.getItem("stayLoggedIn");
-    return saved !== "false";
-  });
-
-  useEffect(() => {
-    localStorage.setItem("stayLoggedIn", stayLoggedIn.toString());
-  }, [stayLoggedIn]);
 
   const { data: progressData } = useQuery<UserProgress[]>({
     queryKey: ["/api/progress"],
@@ -156,18 +146,7 @@ function DashboardContent() {
           </div>
         </SidebarContent>
 
-        <SidebarFooter className="space-y-2">
-          <div className="flex items-center justify-between px-2 py-1">
-            <Label htmlFor="stay-logged-in" className="text-sm text-muted-foreground cursor-pointer">
-              保持登录状态
-            </Label>
-            <Switch
-              id="stay-logged-in"
-              checked={stayLoggedIn}
-              onCheckedChange={setStayLoggedIn}
-              data-testid="switch-stay-logged-in"
-            />
-          </div>
+        <SidebarFooter>
           <Button
             variant="ghost"
             className="w-full justify-start"
