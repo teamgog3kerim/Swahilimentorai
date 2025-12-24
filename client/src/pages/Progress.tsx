@@ -75,7 +75,7 @@ export default function ProgressPage() {
   ];
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto" data-testid="page-progress">
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-bold mb-2">学习进度</h1>
         <p className="text-muted-foreground text-lg">追踪你的学习成果</p>

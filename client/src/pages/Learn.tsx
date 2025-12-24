@@ -148,7 +148,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto" data-testid="page-learn">
       <OfflineIndicator />
       
       <div className="mb-8">

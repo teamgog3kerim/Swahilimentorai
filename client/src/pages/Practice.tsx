@@ -107,7 +107,7 @@ export default function Practice() {
   const remainingPractices = isPremium ? "无限" : Math.max(0, 10 - practiceCount);
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col" data-testid="page-practice">
       <div className="border-b bg-card">
         <div className="px-4 md:px-6 py-4 flex items-center justify-between gap-4">
           <div>

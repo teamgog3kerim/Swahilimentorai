@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon } from "lucide-react";
+import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
 import type { UserProgress, Lesson } from "@shared/schema";
 import {
@@ -15,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -155,9 +156,17 @@ export default function Dashboard() {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 overflow-auto bg-background">
-          {renderView()}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <header className="md:hidden flex items-center gap-3 p-3 border-b bg-background">
+            <SidebarTrigger data-testid="button-sidebar-toggle">
+              <Menu className="w-5 h-5" />
+            </SidebarTrigger>
+            <span className="font-semibold">斯瓦希里语学习</span>
+          </header>
+          <main className="flex-1 overflow-auto bg-background">
+            {renderView()}
+          </main>
+        </div>
       </div>
     </SidebarProvider>
   );
