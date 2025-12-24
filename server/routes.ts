@@ -35,6 +35,29 @@ const subscriptionCreateSchema = z.object({
   planType: z.enum(['monthly', 'quarterly']).default('monthly'),
 });
 
+const adminActionSchema = z.object({
+  subscriptionId: z.string(),
+  action: z.enum(['approve', 'reject']),
+});
+
+const isAdmin = async (req: any, res: any, next: any) => {
+  try {
+    const replitUserId = req.user?.claims?.sub;
+    if (!replitUserId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const user = await storage.getUserByReplitId(replitUserId);
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    req.adminUser = user;
+    next();
+  } catch (error) {
+    console.error("Admin auth error:", error);
+    res.status(500).json({ message: "Authentication error" });
+  }
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
@@ -513,6 +536,98 @@ Follow these rules:
     } catch (error) {
       console.error("Error creating subscription:", error);
       res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  // ==================== ADMIN ROUTES ====================
+
+  // GET /api/admin/users - Get all users (admin only)
+  app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // GET /api/admin/subscriptions - Get all subscriptions (admin only)
+  app.get('/api/admin/subscriptions', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const subscriptions = await storage.getAllSubscriptions();
+      res.json(subscriptions);
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch subscriptions" });
+    }
+  });
+
+  // GET /api/admin/pending - Get pending subscriptions (admin only)
+  app.get('/api/admin/pending', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const pending = await storage.getPendingSubscriptions();
+      res.json(pending);
+    } catch (error) {
+      console.error("Error fetching pending subscriptions:", error);
+      res.status(500).json({ message: "Failed to fetch pending subscriptions" });
+    }
+  });
+
+  // POST /api/admin/subscription/action - Approve or reject subscription (admin only)
+  app.post('/api/admin/subscription/action', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const validation = adminActionSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
+      }
+
+      const { subscriptionId, action } = validation.data;
+
+      const subscription = await storage.getSubscription(subscriptionId);
+      if (!subscription) {
+        return res.status(404).json({ message: "Subscription not found" });
+      }
+
+      if (subscription.status !== 'pending') {
+        return res.status(400).json({ message: `Subscription is already ${subscription.status}` });
+      }
+
+      if (action === 'approve') {
+        await storage.updateSubscriptionStatus(subscriptionId, 'active');
+        await storage.updateUserPremiumStatus(subscription.userId, true, subscription.endDate);
+        res.json({ 
+          success: true, 
+          message: "Subscription approved and user premium status activated",
+          subscriptionId,
+          endDate: subscription.endDate
+        });
+      } else {
+        await storage.updateSubscriptionStatus(subscriptionId, 'rejected');
+        res.json({ 
+          success: true, 
+          message: "Subscription rejected",
+          subscriptionId
+        });
+      }
+    } catch (error) {
+      console.error("Error processing subscription action:", error);
+      res.status(500).json({ message: "Failed to process subscription action" });
+    }
+  });
+
+  // GET /api/admin/check - Check if current user is admin
+  app.get('/api/admin/check', isAuthenticated, async (req: any, res) => {
+    try {
+      const replitUserId = req.user.claims.sub;
+      const user = await storage.getUserByReplitId(replitUserId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ isAdmin: user.isAdmin });
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      res.status(500).json({ message: "Failed to check admin status" });
     }
   });
 
