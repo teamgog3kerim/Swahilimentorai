@@ -1,7 +1,7 @@
-const CACHE_NAME = 'swahili-learn-v2';
-const STATIC_CACHE = 'static-v2';
-const DYNAMIC_CACHE = 'dynamic-v2';
-const LESSONS_CACHE = 'lessons-v2';
+const CACHE_NAME = 'swahili-learn-v3';
+const STATIC_CACHE = 'static-v3';
+const DYNAMIC_CACHE = 'dynamic-v3';
+const LESSONS_CACHE = 'lessons-v3';
 
 const STATIC_ASSETS = [
   '/',
@@ -39,6 +39,12 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Never cache authentication endpoints - always fetch fresh from network
+  if (url.pathname.startsWith('/api/auth') || url.pathname.startsWith('/api/logout')) {
+    event.respondWith(fetch(request));
     return;
   }
 
