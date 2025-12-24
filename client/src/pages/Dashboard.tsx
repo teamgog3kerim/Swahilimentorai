@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
+import { SubscriptionReminder } from "@/components/SubscriptionReminder";
 import type { UserProgress, Lesson } from "@shared/schema";
 import {
   Sidebar,
@@ -167,6 +168,14 @@ function DashboardContent() {
           <span className="font-semibold">斯瓦希里语学习</span>
         </header>
         <main className="flex-1 overflow-auto bg-background">
+          <div className="px-4 pt-4">
+            {user && currentView !== "subscription" && (
+              <SubscriptionReminder 
+                user={user} 
+                onUpgrade={() => setCurrentView("subscription")} 
+              />
+            )}
+          </div>
           {renderView()}
         </main>
       </div>
