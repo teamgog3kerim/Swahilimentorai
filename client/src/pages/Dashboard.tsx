@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu } from "lucide-react";
+import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu, Shield } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
 import { SubscriptionReminder } from "@/components/SubscriptionReminder";
 import type { UserProgress, Lesson } from "@shared/schema";
@@ -28,9 +28,10 @@ import Learn from "@/pages/Learn";
 import Practice from "@/pages/Practice";
 import Progress from "@/pages/Progress";
 import Subscription from "@/pages/Subscription";
+import Admin from "@/pages/Admin";
 import type { User } from "@shared/schema";
 
-type View = "learn" | "practice" | "progress" | "subscription";
+type View = "learn" | "practice" | "progress" | "subscription" | "admin";
 
 function DashboardContent() {
   const { user } = useAuth() as { user: User | null };
@@ -56,11 +57,19 @@ function DashboardContent() {
     learningDays: 7,
   };
 
+  const { data: adminCheck } = useQuery<{ isAdmin: boolean }>({
+    queryKey: ["/api/admin/check"],
+    retry: false,
+  });
+
+  const isAdmin = adminCheck?.isAdmin === true;
+
   const menuItems = [
     { id: "learn" as View, title: "学习", icon: Home },
     { id: "practice" as View, title: "练习", icon: MessageSquare },
     { id: "progress" as View, title: "进度", icon: BarChart },
     { id: "subscription" as View, title: "订阅", icon: CreditCard },
+    ...(isAdmin ? [{ id: "admin" as View, title: "管理后台", icon: Shield }] : []),
   ];
 
   const handleNavigation = (view: View) => {
@@ -83,6 +92,8 @@ function DashboardContent() {
         return <Progress />;
       case "subscription":
         return <Subscription />;
+      case "admin":
+        return <Admin />;
       default:
         return <Learn onNavigateToPractice={(_lessonId?: string) => setCurrentView("practice")} />;
     }
