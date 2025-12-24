@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu, Shield } from "lucide-react";
+import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu, Shield, Bell } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
 import { SubscriptionReminder } from "@/components/SubscriptionReminder";
 import type { UserProgress, Lesson } from "@shared/schema";
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import Learn from "@/pages/Learn";
 import Practice from "@/pages/Practice";
 import Progress from "@/pages/Progress";
@@ -63,6 +64,15 @@ function DashboardContent() {
   });
 
   const isAdmin = adminCheck?.isAdmin === true;
+
+  // Fetch pending payments count for admins
+  const { data: pendingPayments } = useQuery<any[]>({
+    queryKey: ["/api/admin/pending"],
+    enabled: isAdmin,
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  const pendingCount = pendingPayments?.length || 0;
 
   const menuItems = [
     { id: "learn" as View, title: "学习", icon: Home },
@@ -179,7 +189,33 @@ function DashboardContent() {
           <span className="font-semibold">斯瓦希里语学习</span>
         </header>
         <main className="flex-1 overflow-auto bg-background">
-          <div className="px-4 pt-4">
+          <div className="px-4 pt-4 space-y-3">
+            {isAdmin && pendingCount > 0 && currentView !== "admin" && (
+              <Alert 
+                className="bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800 cursor-pointer hover-elevate"
+                onClick={() => setCurrentView("admin")}
+                data-testid="alert-pending-payments"
+              >
+                <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertDescription className="text-amber-800 dark:text-amber-200 flex items-center justify-between">
+                  <span>
+                    您有 <strong>{pendingCount}</strong> 笔待验证的支付，请及时处理
+                  </span>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    className="ml-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentView("admin");
+                    }}
+                    data-testid="button-go-to-admin"
+                  >
+                    前往处理
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
             {user && currentView !== "subscription" && (
               <SubscriptionReminder 
                 user={user} 
