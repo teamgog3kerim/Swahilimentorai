@@ -209,12 +209,20 @@ The share message is an attractive Chinese invitation encouraging friends to lea
 - Includes 7-day free trial call-to-action
 - Uses Swahili greeting "Karibu!" (Welcome!)
 
+**Progress Sharing** (Dashboard users):
+When `showProgress=true`, the ShareButton displays and shares the user's learning progress:
+- Progress stats section showing completed lessons, practice count, and completion percentage
+- Learning streak display (days of continuous learning)
+- Share message includes user's actual progress data (lessons completed, completion rate, practice count)
+- Progress bar visualization in the share dialog
+
 **Placement**:
-- Hero section on landing page (for visitors)
-- Dashboard sidebar (for logged-in users)
+- Hero section on landing page (for visitors) - basic share without progress
+- Dashboard sidebar (for logged-in users) - with learning progress sharing
 
 **Key Test IDs**:
 - `button-share`: Main share button trigger
 - `dialog-share`: Share dialog container
+- `section-progress-stats`: Progress statistics section (dashboard only)
 - `button-copy-share`: Copy to clipboard button
 - `button-share-{platform}`: Individual platform buttons (微信, whatsapp, telegram, x, facebook)

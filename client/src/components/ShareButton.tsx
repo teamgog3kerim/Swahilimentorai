@@ -8,24 +8,38 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Share2, Copy, Check, MessageCircle, Users } from "lucide-react";
+import { Share2, Copy, Check, MessageCircle, Users, BookOpen, Trophy, Flame } from "lucide-react";
 import { SiWechat, SiWhatsapp, SiX, SiTelegram, SiFacebook } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+
+interface LearningProgress {
+  completedLessons: number;
+  totalLessons: number;
+  practiceCount: number;
+  learningDays?: number;
+}
 
 interface ShareButtonProps {
   variant?: "default" | "outline" | "ghost";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
+  showProgress?: boolean;
+  progress?: LearningProgress;
 }
 
-export function ShareButton({ variant = "default", size = "default", className = "" }: ShareButtonProps) {
+export function ShareButton({ variant = "default", size = "default", className = "", showProgress = false, progress }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "https://swahili-ai.replit.app";
   
-  const shareMessage = `【推荐】发现一个超棒的斯瓦希里语学习平台！
+  const completionRate = progress && progress.totalLessons > 0 
+    ? Math.round((progress.completedLessons / progress.totalLessons) * 100) 
+    : 0;
+
+  const baseMessage = `【推荐】发现一个超棒的斯瓦希里语学习平台！
 
 我正在用AI老师学习斯瓦希里语，效果真的很好！
 
@@ -40,6 +54,29 @@ Karibu! (欢迎!)
 ${appUrl}
 
 #斯瓦希里语 #语言学习 #AI学习`;
+
+  const progressMessage = progress ? `【分享学习成果】我正在学斯瓦希里语！
+
+我的学习进度：
+- 已完成 ${progress.completedLessons} / ${progress.totalLessons} 节课程
+- 完成率 ${completionRate}%
+- 练习次数 ${progress.practiceCount} 次
+${progress.learningDays ? `- 连续学习 ${progress.learningDays} 天` : ""}
+
+这个AI学习平台真的很棒：
+- AI导师24小时在线，随时练习对话
+- 专为中文母语者设计
+- 从零基础到流利，9个月系统课程
+
+一起来学习非洲最美的语言吧！
+Karibu! (欢迎!)
+
+点击链接免费试用：
+${appUrl}
+
+#斯瓦希里语 #语言学习 #我的学习成果` : baseMessage;
+
+  const shareMessage = showProgress && progress ? progressMessage : baseMessage;
 
   const shareMessageEncoded = encodeURIComponent(shareMessage);
   const urlEncoded = encodeURIComponent(appUrl);
@@ -129,13 +166,49 @@ ${appUrl}
         </DialogHeader>
 
         <div className="space-y-4">
+          {showProgress && progress && (
+            <div className="p-4 bg-primary/10 rounded-lg space-y-3" data-testid="section-progress-stats">
+              <div className="flex items-center gap-2 mb-2">
+                <Trophy className="w-5 h-5 text-primary" />
+                <p className="text-sm font-medium">我的学习成果</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    课程 <span className="font-semibold">{progress.completedLessons}/{progress.totalLessons}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    练习 <span className="font-semibold">{progress.practiceCount}次</span>
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>完成进度</span>
+                  <span>{completionRate}%</span>
+                </div>
+                <Progress value={completionRate} className="h-2" />
+              </div>
+              {progress.learningDays && (
+                <div className="flex items-center gap-2 pt-1">
+                  <Flame className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm">连续学习 <span className="font-semibold">{progress.learningDays}天</span></span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="p-4 bg-muted rounded-lg">
             <div className="flex items-start gap-3 mb-3">
               <MessageCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <p className="text-sm font-medium">分享内容预览：</p>
             </div>
             <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-              {shareMessage.slice(0, 150)}...
+              {shareMessage.slice(0, 180)}...
             </p>
           </div>
 

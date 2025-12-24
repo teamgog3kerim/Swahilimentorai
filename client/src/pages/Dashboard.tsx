@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Share2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
+import type { UserProgress, Lesson } from "@shared/schema";
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +31,25 @@ type View = "learn" | "practice" | "progress" | "subscription";
 export default function Dashboard() {
   const { user } = useAuth() as { user: User | null };
   const [currentView, setCurrentView] = useState<View>("learn");
+
+  const { data: progressData } = useQuery<UserProgress[]>({
+    queryKey: ["/api/progress"],
+  });
+
+  const { data: lessonsData } = useQuery<Lesson[]>({
+    queryKey: ["/api/lessons"],
+  });
+
+  const completedLessons = progressData?.filter((p) => p.completed)?.length || 0;
+  const totalLessons = lessonsData?.length || 90;
+  const practiceCount = user?.practiceCount || 0;
+
+  const learningProgress = {
+    completedLessons,
+    totalLessons,
+    practiceCount,
+    learningDays: 7,
+  };
 
   const menuItems = [
     { id: "learn" as View, title: "学习", icon: Home },
@@ -92,7 +113,12 @@ export default function Dashboard() {
             <div className="mt-auto px-4 py-4">
               <Separator className="mb-4" />
               <div className="mb-4">
-                <ShareButton variant="outline" className="w-full justify-start" />
+                <ShareButton 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  showProgress={true}
+                  progress={learningProgress}
+                />
               </div>
               <div className="flex items-center gap-3 mb-4">
                 <Avatar className="w-10 h-10">
