@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon } from "lucide-react";
+import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Share2 } from "lucide-react";
+import { ShareButton } from "@/components/ShareButton";
 import {
   Sidebar,
   SidebarContent,
@@ -90,6 +91,9 @@ export default function Dashboard() {
 
             <div className="mt-auto px-4 py-4">
               <Separator className="mb-4" />
+              <div className="mb-4">
+                <ShareButton variant="outline" className="w-full justify-start" />
+              </div>
               <div className="flex items-center gap-3 mb-4">
                 <Avatar className="w-10 h-10">
                   <AvatarFallback>

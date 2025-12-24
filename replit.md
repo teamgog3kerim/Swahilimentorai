@@ -189,3 +189,32 @@ Preferred communication style: Simple, everyday language.
 - `client/src/lib/registerSW.ts` - Service worker registration
 - `client/src/hooks/useOnlineStatus.ts` - Online/offline detection hook
 - `client/src/components/OfflineIndicator.tsx` - Offline status UI component
+
+### Social Sharing Feature
+
+**ShareButton Component**: `client/src/components/ShareButton.tsx` enables viral marketing through social media sharing.
+
+**Supported Platforms**:
+- WeChat (微信) - Copies message to clipboard for pasting in WeChat
+- WhatsApp - Direct share via Web API
+- Telegram - Direct share via Telegram API
+- X (Twitter) - Direct share via Twitter intent
+- Facebook - Direct share via Facebook sharer
+
+**Share Message** (Chinese):
+The share message is an attractive Chinese invitation encouraging friends to learn Swahili together:
+- Highlights AI tutor benefits (24/7 availability)
+- Emphasizes design for Chinese speakers
+- Mentions 90 lessons and 9-month curriculum
+- Includes 7-day free trial call-to-action
+- Uses Swahili greeting "Karibu!" (Welcome!)
+
+**Placement**:
+- Hero section on landing page (for visitors)
+- Dashboard sidebar (for logged-in users)
+
+**Key Test IDs**:
+- `button-share`: Main share button trigger
+- `dialog-share`: Share dialog container
+- `button-copy-share`: Copy to clipboard button
+- `button-share-{platform}`: Individual platform buttons (微信, whatsapp, telegram, x, facebook)

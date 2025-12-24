@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import heroImage from "@assets/generated_images/Chinese_learners_using_Swahili_app_148614f4.png";
+import { ShareButton } from "@/components/ShareButton";
 
 export function Hero() {
   const features = [
@@ -46,6 +47,7 @@ export function Hero() {
               <Button variant="outline" size="lg" className="text-base font-semibold" data-testid="button-view-pricing">
                 查看定价
               </Button>
+              <ShareButton variant="ghost" size="lg" className="text-base font-semibold" />
             </div>
 
             <p className="text-sm text-muted-foreground">
