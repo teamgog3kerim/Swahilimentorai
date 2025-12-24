@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -77,13 +77,9 @@ function DashboardContent() {
     setOpenMobile(false);
   };
 
-  const logoutLinkRef = useRef<HTMLAnchorElement>(null);
-
   const handleLogout = () => {
     queryClient.clear();
-    if (logoutLinkRef.current) {
-      logoutLinkRef.current.click();
-    }
+    window.location.replace("/api/logout");
   };
 
   const renderView = () => {
@@ -195,7 +191,6 @@ function DashboardContent() {
           {renderView()}
         </main>
       </div>
-      <form ref={logoutFormRef} action="/api/logout" method="GET" style={{ display: 'none' }} />
     </div>
   );
 }
