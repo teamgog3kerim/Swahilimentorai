@@ -46,6 +46,12 @@ export interface IStorage {
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getUserActiveSubscription(userId: string): Promise<Subscription | undefined>;
   getSubscriptionByTransactionId(transactionId: string): Promise<Subscription | undefined>;
+  
+  getAllUsers(): Promise<User[]>;
+  getPendingSubscriptions(): Promise<(Subscription & { user: User })[]>;
+  getAllSubscriptions(): Promise<(Subscription & { user: User })[]>;
+  updateSubscriptionStatus(subscriptionId: string, status: string): Promise<Subscription>;
+  getSubscription(id: string): Promise<Subscription | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -177,6 +183,50 @@ export class DbStorage implements IStorage {
   async getSubscriptionByTransactionId(transactionId: string): Promise<Subscription | undefined> {
     const result = await db.select().from(subscriptions)
       .where(eq(subscriptions.transactionId, transactionId))
+      .limit(1);
+    return result[0];
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getPendingSubscriptions(): Promise<(Subscription & { user: User })[]> {
+    const results = await db.select()
+      .from(subscriptions)
+      .innerJoin(users, eq(subscriptions.userId, users.id))
+      .where(eq(subscriptions.status, 'pending'))
+      .orderBy(desc(subscriptions.createdAt));
+    
+    return results.map(row => ({
+      ...row.subscriptions,
+      user: row.users,
+    }));
+  }
+
+  async getAllSubscriptions(): Promise<(Subscription & { user: User })[]> {
+    const results = await db.select()
+      .from(subscriptions)
+      .innerJoin(users, eq(subscriptions.userId, users.id))
+      .orderBy(desc(subscriptions.createdAt));
+    
+    return results.map(row => ({
+      ...row.subscriptions,
+      user: row.users,
+    }));
+  }
+
+  async updateSubscriptionStatus(subscriptionId: string, status: string): Promise<Subscription> {
+    const result = await db.update(subscriptions)
+      .set({ status })
+      .where(eq(subscriptions.id, subscriptionId))
+      .returning();
+    return result[0];
+  }
+
+  async getSubscription(id: string): Promise<Subscription | undefined> {
+    const result = await db.select().from(subscriptions)
+      .where(eq(subscriptions.id, id))
       .limit(1);
     return result[0];
   }
