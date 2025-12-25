@@ -15,9 +15,12 @@ export const sessions = pgTable(
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  replitUserId: text("replit_user_id").notNull().unique(),
+  email: text("email").notNull().unique(),
   username: text("username").notNull(),
-  email: text("email"),
+  passwordHash: text("password_hash"),
+  authProvider: text("auth_provider").notNull().default("email"),
+  googleId: text("google_id").unique(),
+  profileImageUrl: text("profile_image_url"),
   isPremium: boolean("is_premium").notNull().default(false),
   isAdmin: boolean("is_admin").notNull().default(false),
   subscriptionEndsAt: timestamp("subscription_ends_at"),
@@ -81,6 +84,20 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
 });
+
+export const signupSchema = z.object({
+  email: z.string().email("请输入有效的电子邮件地址"),
+  password: z.string().min(8, "密码至少需要8个字符"),
+  username: z.string().min(2, "用户名至少需要2个字符"),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email("请输入有效的电子邮件地址"),
+  password: z.string().min(1, "请输入密码"),
+});
+
+export type SignupInput = z.infer<typeof signupSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
 
 export const insertLessonSchema = createInsertSchema(lessons).omit({
   id: true,
