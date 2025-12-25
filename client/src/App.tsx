@@ -4,12 +4,23 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { Switch, Route, useLocation } from "wouter";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 function Router() {
   const { user, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!isLoading && user && (location === "/login" || location === "/signup")) {
+      setLocation("/");
+    }
+  }, [user, isLoading, location, setLocation]);
 
   if (isLoading) {
     return (
@@ -19,11 +30,15 @@ function Router() {
     );
   }
 
-  if (!user) {
-    return <Home />;
-  }
-
-  return <Dashboard />;
+  return (
+    <Switch>
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
+      <Route>
+        {user ? <Dashboard /> : <Home />}
+      </Route>
+    </Switch>
+  );
 }
 
 function App() {

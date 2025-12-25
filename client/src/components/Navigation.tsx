@@ -23,10 +23,10 @@ export function Navigation() {
             </Badge>
             <ThemeToggle />
             <Button variant="outline" size="sm" asChild data-testid="button-login">
-              <a href="/api/login">登录</a>
+              <Link href="/login">登录</Link>
             </Button>
             <Button variant="default" size="sm" asChild data-testid="button-signup">
-              <a href="/api/login">免费注册</a>
+              <Link href="/signup">免费注册</Link>
             </Button>
           </div>
         </div>

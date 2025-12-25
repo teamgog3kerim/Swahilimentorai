@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import heroImage from "@assets/generated_images/Chinese_learners_using_Swahili_app_148614f4.png";
 import { ShareButton } from "@/components/ShareButton";
+import { Link } from "wouter";
 
 export function Hero() {
   const features = [
@@ -45,9 +46,9 @@ export function Hero() {
                 size="lg" 
                 className="text-base font-semibold" 
                 data-testid="button-start-free"
-                onClick={() => window.location.href = "/api/login"}
+                asChild
               >
-                免费注册开始学习
+                <Link href="/signup">免费注册开始学习</Link>
               </Button>
               <Button 
                 variant="outline" 
@@ -62,7 +63,7 @@ export function Hero() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              使用Google账号快速注册 • 7天免费试用 • 无需信用卡
+              支持邮箱或Google账号注册 • 7天免费试用 • 无需信用卡
             </p>
           </div>
 
