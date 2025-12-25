@@ -23,9 +23,11 @@ import {
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
-  getUserByReplitId(replitUserId: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  upsertUser(user: InsertUser): Promise<User>;
+  createUserWithPassword(email: string, username: string, passwordHash: string): Promise<User>;
+  createUserWithGoogle(email: string, username: string, googleId: string, profileImageUrl?: string): Promise<User>;
   updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void>;
   incrementPracticeCount(userId: string): Promise<void>;
   
@@ -60,8 +62,13 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getUserByReplitId(replitUserId: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.replitUserId, replitUserId)).limit(1);
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  }
+
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
     return result[0];
   }
 
@@ -70,33 +77,35 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async upsertUser(userData: InsertUser): Promise<User> {
-    const existing = await this.getUserByReplitId(userData.replitUserId);
+  async createUserWithPassword(email: string, username: string, passwordHash: string): Promise<User> {
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 7);
     
-    if (existing) {
-      const result = await db
-        .update(users)
-        .set({
-          username: userData.username,
-          email: userData.email,
-        })
-        .where(eq(users.replitUserId, userData.replitUserId))
-        .returning();
-      return result[0];
-    } else {
-      const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + 7);
-      
-      const result = await db
-        .insert(users)
-        .values({
-          ...userData,
-          isPremium: true,
-          subscriptionEndsAt: trialEndsAt,
-        })
-        .returning();
-      return result[0];
-    }
+    const result = await db.insert(users).values({
+      email,
+      username,
+      passwordHash,
+      authProvider: "email",
+      isPremium: true,
+      subscriptionEndsAt: trialEndsAt,
+    }).returning();
+    return result[0];
+  }
+
+  async createUserWithGoogle(email: string, username: string, googleId: string, profileImageUrl?: string): Promise<User> {
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+    
+    const result = await db.insert(users).values({
+      email,
+      username,
+      googleId,
+      profileImageUrl,
+      authProvider: "google",
+      isPremium: true,
+      subscriptionEndsAt: trialEndsAt,
+    }).returning();
+    return result[0];
   }
 
   async updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void> {
@@ -104,7 +113,7 @@ export class DbStorage implements IStorage {
   }
 
   async incrementPracticeCount(userId: string): Promise<void> {
-    const user = await this.getUserByReplitId(userId);
+    const user = await this.getUser(userId);
     if (user) {
       await db.update(users).set({ practiceCount: (user.practiceCount || 0) + 1 }).where(eq(users.id, user.id));
     }

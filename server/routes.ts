@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, isAuthenticated } from "./auth";
 import OpenAI from "openai";
 import { z } from "zod";
 import { insertUserProgressSchema, insertChatSessionSchema, insertChatMessageSchema, insertSubscriptionSchema } from "@shared/schema";
@@ -42,12 +42,11 @@ const adminActionSchema = z.object({
 
 const isAdmin = async (req: any, res: any, next: any) => {
   try {
-    const replitUserId = req.user?.claims?.sub;
-    if (!replitUserId) {
+    const user = req.user;
+    if (!user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    const user = await storage.getUserByReplitId(replitUserId);
-    if (!user || !user.isAdmin) {
+    if (!user.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
     }
     req.adminUser = user;
@@ -61,20 +60,6 @@ const isAdmin = async (req: any, res: any, next: any) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
-  // Auth route
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
 
   // ==================== LESSON ROUTES ====================
   
@@ -124,8 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/progress - Get user's progress for all lessons
   app.get('/api/progress', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -140,8 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/progress - Upsert progress
   app.post('/api/progress', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -173,8 +156,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/chat/session - Create new chat session
   app.post('/api/chat/session', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -203,8 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/chat/sessions - Get user's chat sessions
   app.get('/api/chat/sessions', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -220,8 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET /api/chat/session/:id - Get specific session with messages
   app.get('/api/chat/session/:id', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -248,8 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/chat/message - Send message and get AI response
   app.post('/api/chat/message', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -381,8 +360,7 @@ Follow these rules:
   // GET /api/subscription - Get user's active subscription
   app.get('/api/subscription', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -398,8 +376,7 @@ Follow these rules:
   // POST /api/subscription/verify-payment - Submit payment for verification
   app.post('/api/subscription/verify-payment', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -498,8 +475,7 @@ Follow these rules:
   // POST /api/subscription/create - Create subscription (deprecated - use verify-payment)
   app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -620,8 +596,7 @@ Follow these rules:
   // GET /api/admin/check - Check if current user is admin
   app.get('/api/admin/check', isAuthenticated, async (req: any, res) => {
     try {
-      const replitUserId = req.user.claims.sub;
-      const user = await storage.getUserByReplitId(replitUserId);
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
