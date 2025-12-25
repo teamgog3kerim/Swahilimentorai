@@ -63,7 +63,7 @@ export function Hero() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              支持邮箱或Google账号注册 • 7天免费试用 • 无需信用卡
+              支持邮箱注册 • 7天免费试用 • 无需信用卡
             </p>
           </div>
 

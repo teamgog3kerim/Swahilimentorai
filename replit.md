@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 The frontend is built with React 18+ (TypeScript, Vite), utilizing Radix UI primitives and shadcn/ui components with Tailwind CSS for styling. Wouter handles client-side routing, distinguishing between a marketing landing page and the authenticated user dashboard. State management is powered by TanStack Query for server state and a custom `useAuth` hook for authentication. The design system emphasizes mobile-first responsiveness, featuring Inter and Noto Sans SC fonts, a custom theme with light/dark modes, and consistent spacing and color systems. Key pages include Learn, Practice, Progress, and Subscription.
 
 ### Backend
-The backend uses Express.js (Node.js, TypeScript) with a RESTful API. Authentication is managed via a custom system supporting email/password (Passport.js with bcrypt) and Google OAuth, with session management via `express-session` and a PostgreSQL store. AI integration leverages Replit's AI Integrations service for OpenAI's GPT-5 model for conversational tutoring. Data interactions are handled through Drizzle ORM with a type-safe schema, abstracted by a `DbStorage` class.
+The backend uses Express.js (Node.js, TypeScript) with a RESTful API. Authentication is managed via email/password using Passport.js Local strategy with bcrypt password hashing, with session management via `express-session` and a PostgreSQL store. AI integration leverages Replit's AI Integrations service for OpenAI's GPT-5 model for conversational tutoring. Data interactions are handled through Drizzle ORM with a type-safe schema, abstracted by a `DbStorage` class.
 
 ### Data Storage
 PostgreSQL, hosted on Neon serverless, serves as the primary database. Key tables include `users`, `lessons`, `user_progress`, `chat_sessions`, `chat_messages`, and `subscriptions`. Lesson content is stored as JSONB, encompassing vocabulary, phrases, dialogues, and grammar across a 9-month, 90-lesson curriculum divided into Beginner, Intermediate, and Advanced levels. Drizzle Kit manages schema migrations.
@@ -31,7 +31,6 @@ A `ShareButton` component enables users to share the platform on WeChat, WhatsAp
 
 ## External Dependencies
 
--   **Google OAuth**: For user authentication.
 -   **Replit AI Integrations**: Proxied access to OpenAI API (GPT-5 model).
 -   **Neon Database**: Serverless PostgreSQL hosting.
 -   **Google Fonts**: Inter and Noto Sans SC font families.

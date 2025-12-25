@@ -8,7 +8,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
-import { SiGoogle } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -37,12 +36,12 @@ export default function Login() {
     setIsLoading(true);
     try {
       await apiRequest("POST", "/api/auth/login", data);
-      await queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "登录成功",
         description: "欢迎回来！",
       });
-      setLocation("/");
+      setLocation("/dashboard");
     } catch (error: any) {
       toast({
         title: "登录失败",
@@ -52,10 +51,6 @@ export default function Login() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/google";
   };
 
   return (
@@ -78,28 +73,6 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            data-testid="button-google-login"
-          >
-            <SiGoogle className="mr-2 h-4 w-4" />
-            使用 Google 账号登录
-          </Button>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                或使用邮箱登录
-              </span>
-            </div>
-          </div>
-
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

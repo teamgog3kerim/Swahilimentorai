@@ -1,6 +1,5 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
@@ -46,7 +45,7 @@ export async function setupAuth(app: Express) {
             return done(null, false, { message: "用户不存在" });
           }
           if (!user.passwordHash) {
-            return done(null, false, { message: "请使用Google登录" });
+            return done(null, false, { message: "账户密码未设置" });
           }
           const isValid = await bcrypt.compare(password, user.passwordHash);
           if (!isValid) {
@@ -59,50 +58,6 @@ export async function setupAuth(app: Express) {
       }
     )
   );
-
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-      new GoogleStrategy(
-        {
-          clientID: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          callbackURL: "/api/auth/google/callback",
-          proxy: true,
-        },
-        async (accessToken, refreshToken, profile, done) => {
-          try {
-            const email = profile.emails?.[0]?.value;
-            if (!email) {
-              return done(null, false, { message: "无法获取Google邮箱" });
-            }
-
-            let user = await storage.getUserByGoogleId(profile.id);
-            if (user) {
-              return done(null, user);
-            }
-
-            user = await storage.getUserByEmail(email);
-            if (user) {
-              if (!user.googleId) {
-                await storage.updateUserGoogleId(user.id, profile.id, profile.photos?.[0]?.value);
-              }
-              return done(null, user);
-            }
-
-            user = await storage.createUserWithGoogle(
-              email,
-              profile.displayName || email.split("@")[0],
-              profile.id,
-              profile.photos?.[0]?.value
-            );
-            return done(null, user);
-          } catch (error) {
-            return done(error);
-          }
-        }
-      )
-    );
-  }
 
   passport.serializeUser((user: any, done) => {
     done(null, user.id);
@@ -177,20 +132,6 @@ export async function setupAuth(app: Express) {
           user: { id: user.id, email: user.email, username: user.username } 
         });
       });
-    })(req, res, next);
-  });
-
-  app.get("/api/auth/google", (req, res, next) => {
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      return res.status(503).json({ message: "Google登录暂不可用" });
-    }
-    passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
-  });
-
-  app.get("/api/auth/google/callback", (req, res, next) => {
-    passport.authenticate("google", {
-      successRedirect: "/dashboard",
-      failureRedirect: "/login?error=google_failed",
     })(req, res, next);
   });
 

@@ -34,7 +34,10 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
-      <Route>
+      <Route path="/dashboard">
+        {user ? <Dashboard /> : <Home />}
+      </Route>
+      <Route path="/">
         {user ? <Dashboard /> : <Home />}
       </Route>
     </Switch>
