@@ -22,8 +22,11 @@ export function Navigation() {
               7天免费试用
             </Badge>
             <ThemeToggle />
-            <Button variant="default" size="sm" asChild data-testid="button-sign-in">
+            <Button variant="outline" size="sm" asChild data-testid="button-login">
               <a href="/api/login">登录</a>
+            </Button>
+            <Button variant="default" size="sm" asChild data-testid="button-signup">
+              <a href="/api/login">免费注册</a>
             </Button>
           </div>
         </div>

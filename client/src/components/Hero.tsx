@@ -47,7 +47,7 @@ export function Hero() {
                 data-testid="button-start-free"
                 onClick={() => window.location.href = "/api/login"}
               >
-                开始免费试用
+                免费注册开始学习
               </Button>
               <Button 
                 variant="outline" 
@@ -62,7 +62,7 @@ export function Hero() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              7天免费试用 • 无需信用卡 • 随时取消
+              使用Google账号快速注册 • 7天免费试用 • 无需信用卡
             </p>
           </div>
 
