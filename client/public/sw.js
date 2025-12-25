@@ -1,7 +1,7 @@
-const CACHE_NAME = 'swahili-learn-v3';
-const STATIC_CACHE = 'static-v3';
-const DYNAMIC_CACHE = 'dynamic-v3';
-const LESSONS_CACHE = 'lessons-v3';
+const CACHE_NAME = 'swahili-learn-v4';
+const STATIC_CACHE = 'static-v4';
+const DYNAMIC_CACHE = 'dynamic-v4';
+const LESSONS_CACHE = 'lessons-v4';
 
 const STATIC_ASSETS = [
   '/',

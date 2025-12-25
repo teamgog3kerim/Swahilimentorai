@@ -24,12 +24,9 @@ import {
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  getUserByGoogleId(googleId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   createUserWithPassword(email: string, username: string, passwordHash: string): Promise<User>;
-  createUserWithGoogle(email: string, username: string, googleId: string, profileImageUrl?: string): Promise<User>;
   updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void>;
-  updateUserGoogleId(userId: string, googleId: string, profileImageUrl?: string): Promise<void>;
   incrementPracticeCount(userId: string): Promise<void>;
   
   getAllLessons(): Promise<Lesson[]>;
@@ -68,11 +65,6 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.googleId, googleId)).limit(1);
-    return result[0];
-  }
-
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser).returning();
     return result[0];
@@ -93,32 +85,8 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async createUserWithGoogle(email: string, username: string, googleId: string, profileImageUrl?: string): Promise<User> {
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 7);
-    
-    const result = await db.insert(users).values({
-      email,
-      username,
-      googleId,
-      profileImageUrl,
-      authProvider: "google",
-      isPremium: true,
-      subscriptionEndsAt: trialEndsAt,
-    }).returning();
-    return result[0];
-  }
-
   async updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void> {
     await db.update(users).set({ isPremium, subscriptionEndsAt: endsAt }).where(eq(users.id, userId));
-  }
-
-  async updateUserGoogleId(userId: string, googleId: string, profileImageUrl?: string): Promise<void> {
-    await db.update(users).set({ 
-      googleId, 
-      profileImageUrl: profileImageUrl || undefined,
-      authProvider: "google" 
-    }).where(eq(users.id, userId));
   }
 
   async incrementPracticeCount(userId: string): Promise<void> {
