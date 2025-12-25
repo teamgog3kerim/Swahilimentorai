@@ -29,6 +29,7 @@ export interface IStorage {
   createUserWithPassword(email: string, username: string, passwordHash: string): Promise<User>;
   createUserWithGoogle(email: string, username: string, googleId: string, profileImageUrl?: string): Promise<User>;
   updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void>;
+  updateUserGoogleId(userId: string, googleId: string, profileImageUrl?: string): Promise<void>;
   incrementPracticeCount(userId: string): Promise<void>;
   
   getAllLessons(): Promise<Lesson[]>;
@@ -110,6 +111,14 @@ export class DbStorage implements IStorage {
 
   async updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void> {
     await db.update(users).set({ isPremium, subscriptionEndsAt: endsAt }).where(eq(users.id, userId));
+  }
+
+  async updateUserGoogleId(userId: string, googleId: string, profileImageUrl?: string): Promise<void> {
+    await db.update(users).set({ 
+      googleId, 
+      profileImageUrl: profileImageUrl || undefined,
+      authProvider: "google" 
+    }).where(eq(users.id, userId));
   }
 
   async incrementPracticeCount(userId: string): Promise<void> {

@@ -86,6 +86,9 @@ export async function setupAuth(app: Express) {
 
             user = await storage.getUserByEmail(email);
             if (user) {
+              if (!user.googleId) {
+                await storage.updateUserGoogleId(user.id, profile.id, profile.photos?.[0]?.value);
+              }
               return done(null, user);
             }
 
@@ -127,7 +130,7 @@ export async function setupAuth(app: Express) {
         });
       }
 
-      const { email, password, username } = validation.data;
+      const { email, password, name } = validation.data;
 
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -135,7 +138,7 @@ export async function setupAuth(app: Express) {
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = await storage.createUserWithPassword(email, username, passwordHash);
+      const user = await storage.createUserWithPassword(email, name, passwordHash);
 
       req.login(user, (err) => {
         if (err) {
