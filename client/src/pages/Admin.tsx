@@ -286,17 +286,17 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="pending" data-testid="tab-pending">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto gap-1">
+          <TabsTrigger value="pending" data-testid="tab-pending" className="text-xs md:text-sm py-2">
             待验证 ({pendingSubscriptions.length})
           </TabsTrigger>
-          <TabsTrigger value="subscriptions" data-testid="tab-subscriptions">
+          <TabsTrigger value="subscriptions" data-testid="tab-subscriptions" className="text-xs md:text-sm py-2">
             所有订阅
           </TabsTrigger>
-          <TabsTrigger value="users" data-testid="tab-users">
+          <TabsTrigger value="users" data-testid="tab-users" className="text-xs md:text-sm py-2">
             用户管理
           </TabsTrigger>
-          <TabsTrigger value="analytics" data-testid="tab-analytics">
+          <TabsTrigger value="analytics" data-testid="tab-analytics" className="text-xs md:text-sm py-2">
             访问统计
           </TabsTrigger>
         </TabsList>
