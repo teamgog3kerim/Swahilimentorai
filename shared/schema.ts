@@ -80,6 +80,21 @@ export const subscriptions = pgTable("subscriptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const visits = pgTable("visits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: text("session_id"),
+  userId: varchar("user_id"),
+  countryCode: text("country_code"),
+  countryName: text("country_name"),
+  browserName: text("browser_name"),
+  browserVersion: text("browser_version"),
+  osName: text("os_name"),
+  deviceType: text("device_type"),
+  deviceVendor: text("device_vendor"),
+  ipHash: text("ip_hash"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -123,6 +138,11 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   createdAt: true,
 });
 
+export const insertVisitSchema = createInsertSchema(visits).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertLesson = z.infer<typeof insertLessonSchema>;
@@ -135,3 +155,5 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertVisit = z.infer<typeof insertVisitSchema>;
+export type Visit = typeof visits.$inferSelect;
