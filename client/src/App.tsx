@@ -44,11 +44,35 @@ function Router() {
   );
 }
 
+function VisitTracker() {
+  useEffect(() => {
+    const trackVisit = async () => {
+      try {
+        const sessionKey = 'visit_tracked';
+        if (sessionStorage.getItem(sessionKey)) return;
+        
+        await fetch('/api/analytics/visit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+        });
+        sessionStorage.setItem(sessionKey, 'true');
+      } catch (error) {
+        console.error('Failed to track visit:', error);
+      }
+    };
+    trackVisit();
+  }, []);
+  
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
+          <VisitTracker />
           <Router />
           <Toaster />
         </TooltipProvider>

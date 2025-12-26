@@ -9,7 +9,12 @@ import {
   Shield,
   RefreshCw,
   Search,
-  Copy
+  Copy,
+  BarChart3,
+  Globe,
+  Monitor,
+  Smartphone,
+  Eye
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,8 +35,51 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, Subscription } from "@shared/schema";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts";
 
 type SubscriptionWithUser = Subscription & { user: User };
+
+type AnalyticsOverview = {
+  totalVisits: number;
+  uniqueSessions: number;
+  todayVisits: number;
+};
+
+type CountryData = {
+  countryCode: string;
+  countryName: string;
+  count: number;
+};
+
+type BrowserData = {
+  browserName: string;
+  count: number;
+};
+
+type DeviceData = {
+  deviceType: string;
+  count: number;
+};
+
+type VisitsByDate = {
+  date: string;
+  count: number;
+};
+
+const CHART_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
 export default function AdminPage() {
   const { user } = useAuth() as { user: User | null };
@@ -57,6 +105,39 @@ export default function AdminPage() {
     queryKey: ["/api/admin/users"],
     enabled: isAdminCheck?.isAdmin === true,
   });
+
+  const { data: analyticsOverview, isLoading: overviewLoading, refetch: refetchOverview } = useQuery<AnalyticsOverview>({
+    queryKey: ["/api/admin/analytics/overview"],
+    enabled: isAdminCheck?.isAdmin === true,
+  });
+
+  const { data: topCountries = [], isLoading: countriesLoading } = useQuery<CountryData[]>({
+    queryKey: ["/api/admin/analytics/countries"],
+    enabled: isAdminCheck?.isAdmin === true,
+  });
+
+  const { data: topBrowsers = [], isLoading: browsersLoading } = useQuery<BrowserData[]>({
+    queryKey: ["/api/admin/analytics/browsers"],
+    enabled: isAdminCheck?.isAdmin === true,
+  });
+
+  const { data: topDevices = [], isLoading: devicesLoading } = useQuery<DeviceData[]>({
+    queryKey: ["/api/admin/analytics/devices"],
+    enabled: isAdminCheck?.isAdmin === true,
+  });
+
+  const { data: visitsByDate = [], isLoading: visitsLoading } = useQuery<VisitsByDate[]>({
+    queryKey: ["/api/admin/analytics/visits-by-date"],
+    enabled: isAdminCheck?.isAdmin === true,
+  });
+
+  const refetchAnalytics = () => {
+    refetchOverview();
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/countries"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/browsers"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/devices"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/visits-by-date"] });
+  };
 
   const actionMutation = useMutation({
     mutationFn: async (data: { subscriptionId: string; action: 'approve' | 'reject' }) => {
@@ -205,7 +286,7 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pending" data-testid="tab-pending">
             待验证 ({pendingSubscriptions.length})
           </TabsTrigger>
@@ -214,6 +295,9 @@ export default function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users">
             用户管理
+          </TabsTrigger>
+          <TabsTrigger value="analytics" data-testid="tab-analytics">
+            访问统计
           </TabsTrigger>
         </TabsList>
 
@@ -470,6 +554,229 @@ export default function AdminPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              访问统计
+            </h2>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refetchAnalytics}
+              data-testid="button-refresh-analytics"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              刷新
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card data-testid="card-total-visits">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">总访问次数</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-primary" />
+                  <span className="text-3xl font-bold" data-testid="text-total-visits">
+                    {overviewLoading ? "..." : analyticsOverview?.totalVisits || 0}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-unique-sessions">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">独立会话数</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-500" />
+                  <span className="text-3xl font-bold" data-testid="text-unique-sessions">
+                    {overviewLoading ? "..." : analyticsOverview?.uniqueSessions || 0}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-today-visits">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">今日访问</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-green-500" />
+                  <span className="text-3xl font-bold" data-testid="text-today-visits">
+                    {overviewLoading ? "..." : analyticsOverview?.todayVisits || 0}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card data-testid="card-visits-chart">
+              <CardHeader>
+                <CardTitle className="text-base">过去30天访问趋势</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {visitsLoading ? (
+                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                ) : visitsByDate.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={visitsByDate}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={(value) => {
+                          const d = new Date(value);
+                          return `${d.getMonth() + 1}/${d.getDate()}`;
+                        }}
+                        fontSize={12}
+                      />
+                      <YAxis fontSize={12} />
+                      <Tooltip 
+                        labelFormatter={(value) => `日期: ${value}`}
+                        formatter={(value: number) => [value, '访问次数']}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="count" 
+                        stroke="#2563eb" 
+                        strokeWidth={2}
+                        dot={{ fill: '#2563eb', r: 3 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-countries-chart">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Globe className="h-4 w-4" />
+                  访问来源国家/地区
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {countriesLoading ? (
+                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                ) : topCountries.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={topCountries} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" fontSize={12} />
+                      <YAxis 
+                        type="category" 
+                        dataKey="countryName" 
+                        width={100}
+                        fontSize={12}
+                      />
+                      <Tooltip formatter={(value: number) => [value, '访问次数']} />
+                      <Bar dataKey="count" fill="#2563eb" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-browsers-chart">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Monitor className="h-4 w-4" />
+                  浏览器分布
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {browsersLoading ? (
+                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                ) : topBrowsers.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <ResponsiveContainer width="60%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={topBrowsers}
+                          dataKey="count"
+                          nameKey="browserName"
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={70}
+                          label={false}
+                        >
+                          {topBrowsers.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => [value, '访问次数']} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-2">
+                      {topBrowsers.slice(0, 5).map((browser, index) => (
+                        <div key={browser.browserName} className="flex items-center gap-2 text-sm">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                          />
+                          <span className="truncate flex-1">{browser.browserName}</span>
+                          <span className="text-muted-foreground">{browser.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card data-testid="card-devices-chart">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" />
+                  设备类型分布
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {devicesLoading ? (
+                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                ) : topDevices.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                ) : (
+                  <div className="space-y-4">
+                    {topDevices.map((device, index) => {
+                      const total = topDevices.reduce((acc, d) => acc + d.count, 0);
+                      const percentage = total > 0 ? Math.round((device.count / total) * 100) : 0;
+                      return (
+                        <div key={device.deviceType} className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="capitalize">{device.deviceType}</span>
+                            <span className="text-muted-foreground">{device.count} ({percentage}%)</span>
+                          </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all"
+                              style={{ 
+                                width: `${percentage}%`,
+                                backgroundColor: CHART_COLORS[index % CHART_COLORS.length]
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -627,20 +627,56 @@ Follow these rules:
 
   // ==================== ANALYTICS ROUTES ====================
 
+  const visitRateLimitBySession = new Map<string, number>();
+  const visitRateLimitByIp = new Map<string, { count: number; firstRequest: number }>();
+  
   // POST /api/analytics/visit - Track page visit
   app.post('/api/analytics/visit', async (req: any, res) => {
     try {
+      if (!req.sessionID) {
+        return res.status(403).json({ message: "Session required" });
+      }
+      
+      const sessionId = req.sessionID;
+      const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+      const ipHash = crypto.createHash('sha256').update(ip).digest('hex').substring(0, 16);
+      
+      const now = Date.now();
+      
+      const ipData = visitRateLimitByIp.get(ipHash);
+      if (ipData) {
+        const windowMs = 60000;
+        if (now - ipData.firstRequest < windowMs) {
+          if (ipData.count >= 10) {
+            return res.status(429).json({ message: "Too many requests" });
+          }
+          ipData.count++;
+        } else {
+          visitRateLimitByIp.set(ipHash, { count: 1, firstRequest: now });
+        }
+      } else {
+        visitRateLimitByIp.set(ipHash, { count: 1, firstRequest: now });
+      }
+      
+      const lastVisit = visitRateLimitBySession.get(sessionId) || 0;
+      if (now - lastVisit < 60000) {
+        return res.json({ success: true, cached: true });
+      }
+      visitRateLimitBySession.set(sessionId, now);
+      
+      if (visitRateLimitBySession.size > 10000) {
+        const entries = Array.from(visitRateLimitBySession.entries());
+        entries.slice(0, 5000).forEach(([key]) => visitRateLimitBySession.delete(key));
+      }
+      if (visitRateLimitByIp.size > 10000) {
+        const entries = Array.from(visitRateLimitByIp.entries());
+        entries.slice(0, 5000).forEach(([key]) => visitRateLimitByIp.delete(key));
+      }
+      
       const userAgent = req.headers['user-agent'] || '';
       const parser = new UAParser(userAgent);
       const result = parser.getResult();
       
-      const ip = req.headers['x-forwarded-for']?.toString().split(',')[0] || 
-                 req.headers['x-real-ip'] || 
-                 req.connection?.remoteAddress || 
-                 'unknown';
-      const ipHash = crypto.createHash('sha256').update(ip).digest('hex').substring(0, 16);
-      
-      const sessionId = req.sessionID || req.headers['x-session-id'] || ipHash;
       const userId = req.user?.id || null;
       
       let countryCode = 'Unknown';

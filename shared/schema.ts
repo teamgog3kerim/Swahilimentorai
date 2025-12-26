@@ -82,14 +82,14 @@ export const subscriptions = pgTable("subscriptions", {
 
 export const visits = pgTable("visits", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  sessionId: text("session_id"),
+  sessionId: text("session_id").notNull(),
   userId: varchar("user_id"),
-  countryCode: text("country_code"),
-  countryName: text("country_name"),
-  browserName: text("browser_name"),
+  countryCode: text("country_code").default('Unknown'),
+  countryName: text("country_name").default('Unknown'),
+  browserName: text("browser_name").default('Unknown'),
   browserVersion: text("browser_version"),
-  osName: text("os_name"),
-  deviceType: text("device_type"),
+  osName: text("os_name").default('Unknown'),
+  deviceType: text("device_type").default('desktop'),
   deviceVendor: text("device_vendor"),
   ipHash: text("ip_hash"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -141,6 +141,8 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
 export const insertVisitSchema = createInsertSchema(visits).omit({
   id: true,
   createdAt: true,
+}).extend({
+  sessionId: z.string().min(1, "Session ID is required"),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
