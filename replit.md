@@ -21,7 +21,21 @@ PostgreSQL, hosted on Neon serverless, serves as the primary database. Key table
 The platform offers monthly (90 USDT) and quarterly (250 USDT) premium subscriptions via Binance Pay (TRC20 network). Payments are manually verified by an admin against a specified wallet address. The system includes expiration checks, a 7-day free trial for new users, and a renewal process that extends subscriptions from their current end date. Security features include server-side expiration checks, practice count limits for expired users, and duplicate transaction ID detection.
 
 ### Admin Panel
-An admin panel provides management capabilities for users with `isAdmin=true`. It includes a statistics dashboard, tabs for pending payments, active subscriptions, and user management. Admin API routes (`/api/admin/*`) are protected and facilitate actions like approving or rejecting subscriptions, and managing user data.
+An admin panel provides management capabilities for users with `isAdmin=true`. It includes a statistics dashboard, tabs for pending payments, active subscriptions, user management, and visit analytics. Admin API routes (`/api/admin/*`) are protected and facilitate actions like approving or rejecting subscriptions, and managing user data.
+
+### Analytics System
+The platform includes a comprehensive analytics system to track visitor data:
+- **Visits Table**: Stores sessionId (required), userId, country (code/name), browser, OS, device type, and IP hash
+- **Visit Tracking**: Client-side tracking in App.tsx using sessionStorage to prevent duplicate tracking per session
+- **Security**: Dual-layer rate limiting using trusted server values (req.ip and req.sessionID):
+  - IP-based: Max 10 requests per minute per IP (returns 429 if exceeded)
+  - Session-based: One visit per session per minute (returns cached response)
+- **Admin Dashboard**: Analytics tab with Recharts visualizations including:
+  - Overview metrics (total visits, unique sessions, today's visits)
+  - Visits trend line chart (last 30 days)
+  - Top countries bar chart
+  - Browser distribution pie chart
+  - Device type breakdown
 
 ### Progressive Web App (PWA) Features
 The application includes PWA features for enhanced user experience. A custom service worker (`sw.js`) provides offline capabilities through various caching strategies (cache-first for static assets, network-first for API lessons, etc.) and enables offline navigation by serving a cached `index.html`. Offline lesson storage is implemented using IndexedDB. The PWA also features online/offline detection with an indicator, and a web app manifest (`manifest.json`) for installation on home screens.
