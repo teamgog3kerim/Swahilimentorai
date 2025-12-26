@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Lock, User, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -28,6 +28,8 @@ export default function Signup() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -141,12 +143,26 @@ export default function Signup() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           data-testid="input-password"
                           {...field}
                         />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1 h-8 w-8"
+                          onClick={() => setShowPassword(!showPassword)}
+                          data-testid="button-toggle-password"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -164,12 +180,26 @@ export default function Signup() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          type="password"
+                          type={showConfirmPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           data-testid="input-confirm-password"
                           {...field}
                         />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1 h-8 w-8"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          data-testid="button-toggle-confirm-password"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
                       </div>
                     </FormControl>
                     <FormMessage />

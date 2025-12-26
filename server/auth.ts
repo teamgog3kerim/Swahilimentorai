@@ -116,6 +116,8 @@ export async function setupAuth(app: Express) {
       });
     }
 
+    const rememberMe = req.body.rememberMe === true;
+
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         return res.status(500).json({ message: "登录失败" });
@@ -127,6 +129,11 @@ export async function setupAuth(app: Express) {
         if (err) {
           return res.status(500).json({ message: "登录失败" });
         }
+        
+        if (rememberMe && req.session) {
+          req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+        }
+        
         res.json({ 
           message: "登录成功", 
           user: { id: user.id, email: user.email, username: user.username } 

@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
@@ -15,6 +16,7 @@ import { queryClient } from "@/lib/queryClient";
 const loginSchema = z.object({
   email: z.string().email("请输入有效的邮箱地址"),
   password: z.string().min(1, "请输入密码"),
+  rememberMe: z.boolean().default(false),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -23,19 +25,25 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: false,
     },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      await apiRequest("POST", "/api/auth/login", data);
+      await apiRequest("POST", "/api/auth/login", {
+        email: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe,
+      });
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "登录成功",
@@ -108,15 +116,48 @@ export default function Login() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          type="password"
+                          type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           data-testid="input-password"
                           {...field}
                         />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1 h-8 w-8"
+                          onClick={() => setShowPassword(!showPassword)}
+                          data-testid="button-toggle-password"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
                       </div>
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        data-testid="checkbox-remember-me"
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      保持登录状态
+                    </FormLabel>
                   </FormItem>
                 )}
               />
