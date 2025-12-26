@@ -28,7 +28,7 @@ export function Hero() {
                 Jifunze Kiswahili na AI
               </p>
               <p className="text-base md:text-lg text-foreground/80">
-                一门非洲语言。专为中文母语者设计的AI语言学习平台，让你轻松掌握斯瓦希里语的听说读写
+                专为中文母语者设计的AI语言学习平台，让你轻松掌握斯瓦希里语的听说读写
               </p>
             </div>
 
