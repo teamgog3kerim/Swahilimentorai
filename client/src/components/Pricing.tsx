@@ -16,7 +16,7 @@ export function Pricing() {
   ];
 
   const handleSubscribe = () => {
-    window.location.href = "/api/login";
+    window.location.href = "/signup";
   };
 
   return (
