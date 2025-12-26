@@ -5,6 +5,24 @@ import { setupAuth, isAuthenticated } from "./auth";
 import OpenAI from "openai";
 import { z } from "zod";
 import { insertUserProgressSchema, insertChatSessionSchema, insertChatMessageSchema, insertSubscriptionSchema } from "@shared/schema";
+import { UAParser } from "ua-parser-js";
+import crypto from "crypto";
+
+const countryNames: Record<string, string> = {
+  'CN': 'China', 'US': 'United States', 'GB': 'United Kingdom', 'DE': 'Germany',
+  'FR': 'France', 'JP': 'Japan', 'KR': 'South Korea', 'IN': 'India', 'BR': 'Brazil',
+  'RU': 'Russia', 'CA': 'Canada', 'AU': 'Australia', 'MX': 'Mexico', 'ES': 'Spain',
+  'IT': 'Italy', 'NL': 'Netherlands', 'SE': 'Sweden', 'CH': 'Switzerland', 'TW': 'Taiwan',
+  'HK': 'Hong Kong', 'SG': 'Singapore', 'KE': 'Kenya', 'TZ': 'Tanzania', 'UG': 'Uganda',
+  'RW': 'Rwanda', 'ZA': 'South Africa', 'NG': 'Nigeria', 'EG': 'Egypt', 'MA': 'Morocco',
+  'TH': 'Thailand', 'VN': 'Vietnam', 'ID': 'Indonesia', 'MY': 'Malaysia', 'PH': 'Philippines',
+  'PL': 'Poland', 'TR': 'Turkey', 'SA': 'Saudi Arabia', 'AE': 'UAE', 'IL': 'Israel',
+  'AR': 'Argentina', 'CL': 'Chile', 'CO': 'Colombia', 'PE': 'Peru', 'VE': 'Venezuela',
+};
+
+function getCountryName(code: string): string {
+  return countryNames[code.toUpperCase()] || code;
+}
 
 // This is using Replit's AI Integrations service, which provides OpenAI-compatible API access without requiring your own OpenAI API key.
 // The newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
@@ -604,6 +622,114 @@ Follow these rules:
     } catch (error) {
       console.error("Error checking admin status:", error);
       res.status(500).json({ message: "Failed to check admin status" });
+    }
+  });
+
+  // ==================== ANALYTICS ROUTES ====================
+
+  // POST /api/analytics/visit - Track page visit
+  app.post('/api/analytics/visit', async (req: any, res) => {
+    try {
+      const userAgent = req.headers['user-agent'] || '';
+      const parser = new UAParser(userAgent);
+      const result = parser.getResult();
+      
+      const ip = req.headers['x-forwarded-for']?.toString().split(',')[0] || 
+                 req.headers['x-real-ip'] || 
+                 req.connection?.remoteAddress || 
+                 'unknown';
+      const ipHash = crypto.createHash('sha256').update(ip).digest('hex').substring(0, 16);
+      
+      const sessionId = req.sessionID || req.headers['x-session-id'] || ipHash;
+      const userId = req.user?.id || null;
+      
+      let countryCode = 'Unknown';
+      let countryName = 'Unknown';
+      
+      const cfCountry = req.headers['cf-ipcountry'];
+      if (cfCountry) {
+        countryCode = cfCountry as string;
+        countryName = getCountryName(countryCode);
+      }
+      
+      const deviceType = result.device.type || 'desktop';
+      
+      await storage.createVisit({
+        sessionId,
+        userId,
+        countryCode,
+        countryName,
+        browserName: result.browser.name || 'Unknown',
+        browserVersion: result.browser.version || '',
+        osName: result.os.name || 'Unknown',
+        deviceType,
+        deviceVendor: result.device.vendor || '',
+        ipHash,
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error tracking visit:", error);
+      res.status(500).json({ message: "Failed to track visit" });
+    }
+  });
+
+  // GET /api/admin/analytics/overview - Get analytics overview (admin only)
+  app.get('/api/admin/analytics/overview', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const overview = await storage.getAnalyticsOverview();
+      res.json(overview);
+    } catch (error) {
+      console.error("Error fetching analytics overview:", error);
+      res.status(500).json({ message: "Failed to fetch analytics overview" });
+    }
+  });
+
+  // GET /api/admin/analytics/countries - Get top countries (admin only)
+  app.get('/api/admin/analytics/countries', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const countries = await storage.getTopCountries(limit);
+      res.json(countries);
+    } catch (error) {
+      console.error("Error fetching country analytics:", error);
+      res.status(500).json({ message: "Failed to fetch country analytics" });
+    }
+  });
+
+  // GET /api/admin/analytics/browsers - Get top browsers (admin only)
+  app.get('/api/admin/analytics/browsers', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const browsers = await storage.getTopBrowsers(limit);
+      res.json(browsers);
+    } catch (error) {
+      console.error("Error fetching browser analytics:", error);
+      res.status(500).json({ message: "Failed to fetch browser analytics" });
+    }
+  });
+
+  // GET /api/admin/analytics/devices - Get top devices (admin only)
+  app.get('/api/admin/analytics/devices', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const devices = await storage.getTopDevices(limit);
+      res.json(devices);
+    } catch (error) {
+      console.error("Error fetching device analytics:", error);
+      res.status(500).json({ message: "Failed to fetch device analytics" });
+    }
+  });
+
+  // GET /api/admin/analytics/visits-by-date - Get visits over time (admin only)
+  app.get('/api/admin/analytics/visits-by-date', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const days = parseInt(req.query.days as string) || 30;
+      const visitsByDate = await storage.getVisitsByDate(days);
+      res.json(visitsByDate);
+    } catch (error) {
+      console.error("Error fetching visits by date:", error);
+      res.status(500).json({ message: "Failed to fetch visits by date" });
     }
   });
 
