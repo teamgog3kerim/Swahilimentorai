@@ -114,20 +114,6 @@ export default function Login() {
                     <FormLabel>密码</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute left-1 top-1 h-8 w-8"
-                          onClick={() => setShowPassword(!showPassword)}
-                          data-testid="button-toggle-password"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
@@ -135,6 +121,18 @@ export default function Login() {
                           data-testid="input-password"
                           {...field}
                         />
+                        <button
+                          type="button"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                          data-testid="button-toggle-password"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </FormControl>
                     <FormMessage />

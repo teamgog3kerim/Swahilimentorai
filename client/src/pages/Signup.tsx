@@ -141,20 +141,6 @@ export default function Signup() {
                     <FormLabel>密码</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute left-1 top-1 h-8 w-8"
-                          onClick={() => setShowPassword(!showPassword)}
-                          data-testid="button-toggle-password"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
                         <Input
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
@@ -162,6 +148,18 @@ export default function Signup() {
                           data-testid="input-password"
                           {...field}
                         />
+                        <button
+                          type="button"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                          data-testid="button-toggle-password"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -177,20 +175,6 @@ export default function Signup() {
                     <FormLabel>确认密码</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute left-1 top-1 h-8 w-8"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          data-testid="button-toggle-confirm-password"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
                         <Input
                           type={showConfirmPassword ? "text" : "password"}
                           placeholder="••••••••"
@@ -198,6 +182,18 @@ export default function Signup() {
                           data-testid="input-confirm-password"
                           {...field}
                         />
+                        <button
+                          type="button"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          data-testid="button-toggle-confirm-password"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </FormControl>
                     <FormMessage />
