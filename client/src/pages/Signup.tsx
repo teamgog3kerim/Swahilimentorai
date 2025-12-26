@@ -141,19 +141,11 @@ export default function Signup() {
                     <FormLabel>密码</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10"
-                          data-testid="input-password"
-                          {...field}
-                        />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1 h-8 w-8"
+                          className="absolute left-1 top-1 h-8 w-8"
                           onClick={() => setShowPassword(!showPassword)}
                           data-testid="button-toggle-password"
                         >
@@ -163,6 +155,13 @@ export default function Signup() {
                             <Eye className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pl-10"
+                          data-testid="input-password"
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -178,19 +177,11 @@ export default function Signup() {
                     <FormLabel>确认密码</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10"
-                          data-testid="input-confirm-password"
-                          {...field}
-                        />
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="absolute right-1 top-1 h-8 w-8"
+                          className="absolute left-1 top-1 h-8 w-8"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           data-testid="button-toggle-confirm-password"
                         >
@@ -200,6 +191,13 @@ export default function Signup() {
                             <Eye className="h-4 w-4 text-muted-foreground" />
                           )}
                         </Button>
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pl-10"
+                          data-testid="input-confirm-password"
+                          {...field}
+                        />
                       </div>
                     </FormControl>
                     <FormMessage />
