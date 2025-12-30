@@ -14,7 +14,11 @@ import {
   Globe,
   Monitor,
   Smartphone,
-  Eye
+  Eye,
+  Bell,
+  UserPlus,
+  Trash2,
+  CheckCheck
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +35,8 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -79,12 +85,23 @@ type VisitsByDate = {
   count: number;
 };
 
+type AdminNotification = {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  metadata: Record<string, any> | null;
+  isRead: boolean;
+  createdAt: string;
+};
+
 const CHART_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
 
 export default function AdminPage() {
   const { user } = useAuth() as { user: User | null };
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [notificationOpen, setNotificationOpen] = useState(false);
 
   const { data: isAdminCheck } = useQuery<{ isAdmin: boolean }>({
     queryKey: ["/api/admin/check"],
@@ -129,6 +146,55 @@ export default function AdminPage() {
   const { data: visitsByDate = [], isLoading: visitsLoading } = useQuery<VisitsByDate[]>({
     queryKey: ["/api/admin/analytics/visits-by-date"],
     enabled: isAdminCheck?.isAdmin === true,
+  });
+
+  const { data: notifications = [], refetch: refetchNotifications } = useQuery<AdminNotification[]>({
+    queryKey: ["/api/admin/notifications"],
+    enabled: isAdminCheck?.isAdmin === true,
+    refetchInterval: 30000,
+  });
+
+  const { data: unreadCount } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/notifications/unread-count"],
+    enabled: isAdminCheck?.isAdmin === true,
+    refetchInterval: 30000,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/admin/notifications/${id}/read`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/notifications/read-all");
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
+      toast({
+        title: "已全部标记为已读",
+        description: "所有通知已标记为已读",
+      });
+    },
+  });
+
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/admin/notifications/${id}`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
+    },
   });
 
   const refetchAnalytics = () => {
@@ -189,6 +255,32 @@ export default function AdminPage() {
     });
   };
 
+  const formatNotificationTime = (date: string) => {
+    const now = new Date();
+    const notificationDate = new Date(date);
+    const diffMs = now.getTime() - notificationDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return "刚刚";
+    if (diffMins < 60) return `${diffMins}分钟前`;
+    if (diffHours < 24) return `${diffHours}小时前`;
+    if (diffDays < 7) return `${diffDays}天前`;
+    return formatDate(date);
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'new_user':
+        return <UserPlus className="h-4 w-4 text-blue-500" />;
+      case 'new_subscription':
+        return <CreditCard className="h-4 w-4 text-green-500" />;
+      default:
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -236,12 +328,104 @@ export default function AdminPage() {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
       <div className="mb-8">
-        <div className="flex items-center gap-3">
-          <Shield className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold" data-testid="text-admin-title">管理后台</h1>
-            <p className="text-muted-foreground">管理用户支付和订阅</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Shield className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold" data-testid="text-admin-title">管理后台</h1>
+              <p className="text-muted-foreground">管理用户支付和订阅</p>
+            </div>
           </div>
+          
+          <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative"
+                data-testid="button-notifications"
+              >
+                <Bell className="h-6 w-6" />
+                {(unreadCount?.count ?? 0) > 0 && (
+                  <span 
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center"
+                    data-testid="badge-unread-count"
+                  >
+                    {(unreadCount?.count ?? 0) > 99 ? '99+' : unreadCount?.count}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="font-semibold">通知</h3>
+                <div className="flex items-center gap-2">
+                  {notifications.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => markAllReadMutation.mutate()}
+                      disabled={markAllReadMutation.isPending || (unreadCount?.count || 0) === 0}
+                      data-testid="button-mark-all-read"
+                    >
+                      <CheckCheck className="h-4 w-4 mr-1" />
+                      全部已读
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <ScrollArea className="h-[300px]">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    暂无通知
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {notifications.map((notification) => (
+                      <div 
+                        key={notification.id} 
+                        className={`p-3 hover-elevate cursor-pointer ${!notification.isRead ? 'bg-primary/5' : ''}`}
+                        onClick={() => {
+                          if (!notification.isRead) {
+                            markReadMutation.mutate(notification.id);
+                          }
+                        }}
+                        data-testid={`notification-item-${notification.id}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-medium truncate">{notification.title}</p>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteNotificationMutation.mutate(notification.id);
+                                }}
+                                data-testid={`button-delete-notification-${notification.id}`}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{formatNotificationTime(notification.createdAt)}</p>
+                          </div>
+                          {!notification.isRead && (
+                            <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-2" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
