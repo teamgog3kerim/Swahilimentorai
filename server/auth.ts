@@ -92,6 +92,13 @@ export async function setupAuth(app: Express) {
       const passwordHash = await bcrypt.hash(password, 10);
       const user = await storage.createUserWithPassword(email, name, passwordHash);
 
+      await storage.createNotification({
+        type: 'new_user',
+        title: '新用户注册',
+        message: `${name} (${email}) 刚刚注册了账户`,
+        metadata: { userId: user.id, email: user.email, username: name },
+      });
+
       req.login(user, (err) => {
         if (err) {
           return res.status(500).json({ message: "登录失败" });

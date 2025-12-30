@@ -477,6 +477,20 @@ Follow these rules:
 
       const subscription = await storage.createSubscription(subscriptionData);
 
+      await storage.createNotification({
+        type: 'new_subscription',
+        title: '新订阅申请',
+        message: `${user.username} (${user.email}) 提交了${planType === 'monthly' ? '月度' : '季度'}订阅申请，交易ID: ${transactionId}`,
+        metadata: { 
+          userId: user.id, 
+          email: user.email, 
+          subscriptionId: subscription.id,
+          planType,
+          amount,
+          transactionId 
+        },
+      });
+
       // DO NOT update user premium status - this happens after admin verification
       // await storage.updateUserPremiumStatus(user.id, true, endDate);
 
@@ -523,6 +537,18 @@ Follow these rules:
       };
 
       const subscription = await storage.createSubscription(subscriptionData);
+
+      await storage.createNotification({
+        type: 'new_subscription',
+        title: '新订阅激活',
+        message: `${user.username} (${user.email}) 订阅已激活，交易ID: ${transactionId}`,
+        metadata: { 
+          userId: user.id, 
+          email: user.email, 
+          subscriptionId: subscription.id,
+          transactionId 
+        },
+      });
 
       // Update user premium status
       await storage.updateUserPremiumStatus(user.id, true, endDate);
@@ -766,6 +792,64 @@ Follow these rules:
     } catch (error) {
       console.error("Error fetching visits by date:", error);
       res.status(500).json({ message: "Failed to fetch visits by date" });
+    }
+  });
+
+  // ==================== ADMIN NOTIFICATIONS ROUTES ====================
+
+  // GET /api/admin/notifications - Get all notifications (admin only)
+  app.get('/api/admin/notifications', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const notifications = await storage.getAllNotifications(limit);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  // GET /api/admin/notifications/unread-count - Get unread count (admin only)
+  app.get('/api/admin/notifications/unread-count', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const count = await storage.getUnreadNotificationCount();
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  // POST /api/admin/notifications/:id/read - Mark notification as read (admin only)
+  app.post('/api/admin/notifications/:id/read', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      await storage.markNotificationAsRead(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  // POST /api/admin/notifications/read-all - Mark all notifications as read (admin only)
+  app.post('/api/admin/notifications/read-all', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      await storage.markAllNotificationsAsRead();
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
+  // DELETE /api/admin/notifications/:id - Delete notification (admin only)
+  app.delete('/api/admin/notifications/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      await storage.deleteNotification(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
     }
   });
 
