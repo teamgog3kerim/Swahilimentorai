@@ -15,6 +15,8 @@ import {
   type InsertSubscription,
   type Visit,
   type InsertVisit,
+  type AdminNotification,
+  type InsertAdminNotification,
   users,
   lessons,
   userProgress,
@@ -22,6 +24,7 @@ import {
   chatMessages,
   subscriptions,
   visits,
+  adminNotifications,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -62,6 +65,14 @@ export interface IStorage {
   getTopBrowsers(limit?: number): Promise<{ browserName: string; count: number }[]>;
   getTopDevices(limit?: number): Promise<{ deviceType: string; count: number }[]>;
   getVisitsByDate(days?: number): Promise<{ date: string; count: number }[]>;
+  
+  createNotification(notification: InsertAdminNotification): Promise<AdminNotification>;
+  getUnreadNotifications(): Promise<AdminNotification[]>;
+  getAllNotifications(limit?: number): Promise<AdminNotification[]>;
+  markNotificationAsRead(id: string): Promise<void>;
+  markAllNotificationsAsRead(): Promise<void>;
+  getUnreadNotificationCount(): Promise<number>;
+  deleteNotification(id: string): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -319,6 +330,45 @@ export class DbStorage implements IStorage {
       date: r.date,
       count: r.count,
     }));
+  }
+
+  async createNotification(notification: InsertAdminNotification): Promise<AdminNotification> {
+    const result = await db.insert(adminNotifications).values(notification).returning();
+    return result[0];
+  }
+
+  async getUnreadNotifications(): Promise<AdminNotification[]> {
+    return await db.select().from(adminNotifications)
+      .where(eq(adminNotifications.isRead, false))
+      .orderBy(desc(adminNotifications.createdAt));
+  }
+
+  async getAllNotifications(limit: number = 50): Promise<AdminNotification[]> {
+    return await db.select().from(adminNotifications)
+      .orderBy(desc(adminNotifications.createdAt))
+      .limit(limit);
+  }
+
+  async markNotificationAsRead(id: string): Promise<void> {
+    await db.update(adminNotifications)
+      .set({ isRead: true })
+      .where(eq(adminNotifications.id, id));
+  }
+
+  async markAllNotificationsAsRead(): Promise<void> {
+    await db.update(adminNotifications)
+      .set({ isRead: true })
+      .where(eq(adminNotifications.isRead, false));
+  }
+
+  async getUnreadNotificationCount(): Promise<number> {
+    const result = await db.select({ count: count() }).from(adminNotifications)
+      .where(eq(adminNotifications.isRead, false));
+    return result[0]?.count || 0;
+  }
+
+  async deleteNotification(id: string): Promise<void> {
+    await db.delete(adminNotifications).where(eq(adminNotifications.id, id));
   }
 }
 
