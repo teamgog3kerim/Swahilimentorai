@@ -169,6 +169,13 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
     },
+    onError: () => {
+      toast({
+        title: "标记失败",
+        description: "无法标记通知为已读，请稍后再试",
+        variant: "destructive",
+      });
+    },
   });
 
   const markAllReadMutation = useMutation({
@@ -184,6 +191,13 @@ export default function AdminPage() {
         description: "所有通知已标记为已读",
       });
     },
+    onError: () => {
+      toast({
+        title: "操作失败",
+        description: "无法标记所有通知为已读，请稍后再试",
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteNotificationMutation = useMutation({
@@ -194,6 +208,13 @@ export default function AdminPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
+    },
+    onError: () => {
+      toast({
+        title: "删除失败",
+        description: "无法删除通知，请稍后再试",
+        variant: "destructive",
+      });
     },
   });
 
@@ -337,7 +358,13 @@ export default function AdminPage() {
             </div>
           </div>
           
-          <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
+          <Popover open={notificationOpen} onOpenChange={(open) => {
+            setNotificationOpen(open);
+            if (open) {
+              refetchNotifications();
+              queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
+            }
+          }}>
             <PopoverTrigger asChild>
               <Button 
                 variant="ghost" 
