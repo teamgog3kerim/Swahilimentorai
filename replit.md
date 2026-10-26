@@ -43,6 +43,15 @@ The application includes PWA features for enhanced user experience. A custom ser
 ### Social Sharing
 A `ShareButton` component enables users to share the platform on WeChat, WhatsApp, Telegram, X (Twitter), and Facebook. The share message is a compelling Chinese invitation highlighting the AI tutor, curriculum, and free trial. For logged-in users, the share functionality extends to include their personal learning progress, such as completed lessons, practice count, and learning streaks.
 
+## Running on Replit
+
+- Install the dependencies declared in `package.json` with npm.
+- Run `npm run db:push` to initialize the development database schema. The imported database starts empty; this does not restore data from the original project.
+- Use the **Start application** workflow (`npm run dev`). Express and Vite serve together on port 5000.
+- `DATABASE_URL` and `SESSION_SECRET` must be available through the environment.
+- AI tutoring also needs `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY`. Without AI credentials, the app still starts, but chat requests return an explicit 503 configuration error.
+- `npm run build` builds the production app; `npm start` serves the build.
+
 ## External Dependencies
 
 -   **Replit AI Integrations**: Proxied access to OpenAI API (GPT-5 model).

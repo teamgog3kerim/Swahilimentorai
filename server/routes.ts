@@ -26,10 +26,10 @@ function getCountryName(code: string): string {
 
 // This is using Replit's AI Integrations service, which provides OpenAI-compatible API access without requiring your own OpenAI API key.
 // The newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = new OpenAI({
+const openai = process.env.AI_INTEGRATIONS_OPENAI_API_KEY ? new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY
-});
+}) : null;
 
 // Validation schemas
 const progressSchema = z.object({
@@ -246,6 +246,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // POST /api/chat/message - Send message and get AI response
   app.post('/api/chat/message', isAuthenticated, async (req: any, res) => {
     try {
+      if (!openai) {
+        return res.status(503).json({
+          message: "AI tutoring is not configured. Please connect the OpenAI AI integration.",
+        });
+      }
+
       const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });

@@ -1,0 +1,1 @@
+- [Optional AI configuration](optional-ai.md) — missing AI credentials must not stop non-AI features from starting.
