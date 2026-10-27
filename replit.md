@@ -25,6 +25,13 @@ The backend uses Express.js (Node.js, TypeScript) with a RESTful API. Authentica
 
 Authentication checks: `node --import tsx --test server/tests/accountPolicy.test.ts`. Development database integration checks: `RUN_DB_TESTS=1 node --import tsx --test server/tests/googleAccounts.test.ts` (temporary test accounts are removed afterwards).
 
+### Curriculum and browser verification
+- Startup initializes the supplied 90-lesson curriculum only when the lesson table is empty. Initialization is serialized and never replaces existing lessons or learner progress.
+- Lesson detail screens let learners mark lessons complete or incomplete, with progress saved to their account.
+- Private API responses must bypass the service worker cache. Only shared lessons and app assets are eligible for offline caching.
+- Run the signed-in browser journey with `RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/appBrowser.test.ts`. It uses temporary accounts, removes them afterwards, and checks Chinese-first defaults, English persistence, progress saves, admin management, logout/login, and mobile layout. `TEST_CHROMIUM_PATH` can override the browser executable.
+- AI tutoring requires its integration configuration. Newsletter subscription and the guide/blog/legal content pages are not implemented; do not present them as functional.
+
 ### Data Storage
 PostgreSQL, hosted on Neon serverless, serves as the primary database. Key tables include `users`, `lessons`, `user_progress`, `chat_sessions`, `chat_messages`, and `subscriptions`. Lesson content is stored as JSONB, encompassing vocabulary, phrases, dialogues, and grammar across a 9-month, 90-lesson curriculum divided into Beginner, Intermediate, and Advanced levels. Drizzle Kit manages schema migrations.
 

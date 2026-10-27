@@ -1,7 +1,10 @@
 import { db } from "./db";
 import { lessons } from "@shared/schema";
+import { sql } from "drizzle-orm";
+import { curriculumLessons } from "../scripts/add-curriculum";
+import { moreLessons } from "../scripts/add-more-curriculum";
 
-const lessonData = [
+export const sampleLessons = [
   // Beginner Level Lessons
   {
     level: "beginner",
@@ -206,24 +209,40 @@ const lessonData = [
   },
 ];
 
-export async function seedLessons() {
-  try {
-    console.log("Starting to seed lessons...");
-    
-    for (const lesson of lessonData) {
-      await db.insert(lessons).values(lesson);
-      console.log(`Inserted lesson: ${lesson.title}`);
+export async function seedLessons({ onlyIfEmpty = false } = {}) {
+  return db.transaction(async (tx) => {
+    // Serialize initialization across instances without overwriting existing lessons.
+    await tx.execute(sql`select pg_advisory_xact_lock(53849120)`);
+    const existing = await tx.select({ level: lessons.level, title: lessons.title }).from(lessons);
+    if (onlyIfEmpty && existing.length) return 0;
+    const known = new Set(existing.map((lesson) => `${lesson.level}:${lesson.title}`));
+    let inserted = 0;
+    for (const lesson of [...curriculumLessons, ...moreLessons]) {
+      const key = `${lesson.level}:${lesson.title}`;
+      if (known.has(key)) continue;
+      const content = lesson.content as Record<string, any>;
+      const normalized = { ...content };
+      if (!content.dialogues && Array.isArray(content.dialogue)) {
+        normalized.dialogues = [{
+          lines: content.dialogue.map((line: Record<string, string>) => ({
+            speaker: line.speaker,
+            swahili: line.swahili || line.text,
+            chinese: line.chinese || line.translation,
+            english: line.english || line.translation,
+          })),
+        }];
+      }
+      await tx.insert(lessons).values({ ...lesson, content: normalized });
+      known.add(key);
+      inserted++;
     }
-    
-    console.log("Successfully seeded all lessons!");
-  } catch (error) {
-    console.error("Error seeding lessons:", error);
-    throw error;
-  }
+    console.log(`Curriculum initialized: ${inserted} lessons added.`);
+    return inserted;
+  });
 }
 
 // Run if executed directly
-const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+const isMainModule = process.argv[1]?.endsWith("/seedLessons.ts") && import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
   seedLessons()
     .then(() => process.exit(0))

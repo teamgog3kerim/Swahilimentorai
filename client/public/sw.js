@@ -1,7 +1,7 @@
-const CACHE_NAME = 'swahili-learn-v4';
-const STATIC_CACHE = 'static-v4';
-const DYNAMIC_CACHE = 'dynamic-v4';
-const LESSONS_CACHE = 'lessons-v4';
+const CACHE_NAME = 'swahili-learn-v5';
+const STATIC_CACHE = 'static-v5';
+const DYNAMIC_CACHE = 'dynamic-v5';
+const LESSONS_CACHE = 'lessons-v5';
 
 const STATIC_ASSETS = [
   '/',
@@ -42,8 +42,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Never cache authentication endpoints - always fetch fresh from network
-  if (url.pathname.startsWith('/api/auth') || url.pathname.startsWith('/api/logout')) {
+  // Progress, chat, subscriptions and admin responses belong to the signed-in
+  // user. Never persist them in an origin-wide cache shared by other accounts.
+  if (url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/lessons')) {
+    event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
+
+  // Vite modules must stay fresh during development.
+  if (/^\/(src\/|@vite\/|@fs\/|@react-refresh|node_modules\/)/.test(url.pathname)) {
     event.respondWith(fetch(request));
     return;
   }
@@ -80,7 +87,7 @@ self.addEventListener('fetch', (event) => {
             );
           });
 
-        return cachedResponse || fetchPromise;
+        return fetchPromise;
       })
     );
     return;

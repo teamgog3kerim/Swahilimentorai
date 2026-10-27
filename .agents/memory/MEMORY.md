@@ -1,1 +1,2 @@
 - [Optional AI configuration](optional-ai.md) — missing AI credentials must not stop non-AI features from starting.
+- [Offline cache privacy](offline-cache-privacy.md) — never cache personalized API responses; cache policy changes must purge previous service-worker caches.

@@ -8,6 +8,7 @@ import { insertUserProgressSchema, insertChatSessionSchema, insertChatMessageSch
 import { UAParser } from "ua-parser-js";
 import crypto from "crypto";
 import { isOwnerEmail } from "./accountPolicy";
+import { seedLessons } from "./seedLessons";
 import type { User } from "@shared/schema";
 
 function managedUser(user: User) {
@@ -83,6 +84,7 @@ const isAdmin = async (req: any, res: any, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  await seedLessons({ onlyIfEmpty: true });
   await setupAuth(app);
 
 
@@ -160,6 +162,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { lessonId, completed, completedAt } = validation.data;
+      if (!(await storage.getLesson(lessonId))) {
+        return res.status(404).json({ message: "Lesson not found" });
+      }
 
       const progressData = {
         userId: user.id,

@@ -1,7 +1,7 @@
 import { db } from "../server/db";
 import { lessons } from "../shared/schema";
 
-const moreLessons = [
+export const moreLessons = [
   // INTERMEDIATE LEVEL CONTINUED - MONTH 4-5 (Weeks 13-20)
   {
     level: "intermediate",
@@ -1194,7 +1194,7 @@ async function insertMoreLessons() {
   }
 }
 
-insertMoreLessons()
+if (process.argv[1]?.endsWith("/add-more-curriculum.ts") && import.meta.url === `file://${process.argv[1]}`) insertMoreLessons()
   .then(() => {
     console.log("Done!");
     process.exit(0);

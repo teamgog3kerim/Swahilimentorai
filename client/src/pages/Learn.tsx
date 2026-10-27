@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { GraduationCap, BookOpen, Award, Clock, CheckCircle2, Lock, Download, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -125,6 +126,18 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
 
   const { data: progress } = useQuery<UserProgress[]>({
     queryKey: ["/api/progress"],
+  });
+  const completion = useMutation({
+    mutationFn: async ({ lessonId, completed }: { lessonId: string; completed: boolean }) =>
+      apiRequest("POST", "/api/progress", { lessonId, completed }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/progress"] });
+      toast({ title: language === "en" ? "Progress saved" : "学习进度已保存" });
+    },
+    onError: () => toast({
+      title: language === "en" ? "Couldn't save progress. Please try again online." : "无法保存进度，请联网后重试。",
+      variant: "destructive",
+    }),
   });
 
   const getLessonProgress = (lessonId: string) => {
@@ -384,7 +397,19 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
             <LessonContentView content={selectedLesson.content as Record<string, unknown>} language={language} t={t} />
           ) : null}
 
-          <div className="mt-6 flex gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              disabled={!selectedLesson || completion.isPending}
+              data-testid="button-toggle-lesson-completion"
+              onClick={() => selectedLesson && completion.mutate({
+                lessonId: selectedLesson.id, completed: !getLessonProgress(selectedLesson.id)?.completed,
+              })}
+            >
+              {getLessonProgress(selectedLesson?.id || "")?.completed
+                ? (language === "en" ? "Mark incomplete" : "标记为未完成")
+                : (language === "en" ? "Mark complete" : "标记为已完成")}
+            </Button>
             <Button onClick={handleStartPractice} className="flex-1" data-testid="button-start-practice">
               {t("开始练习")}
             </Button>

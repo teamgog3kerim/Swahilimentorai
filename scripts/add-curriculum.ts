@@ -1,7 +1,7 @@
 import { db } from "../server/db";
 import { lessons } from "../shared/schema";
 
-const curriculumLessons = [
+export const curriculumLessons = [
   // BEGINNER LEVEL - MONTH 1 (Weeks 1-4)
   {
     level: "beginner",
@@ -942,7 +942,7 @@ async function insertCurriculum() {
   }
 }
 
-insertCurriculum()
+if (process.argv[1]?.endsWith("/add-curriculum.ts") && import.meta.url === `file://${process.argv[1]}`) insertCurriculum()
   .then(() => {
     console.log("Done!");
     process.exit(0);

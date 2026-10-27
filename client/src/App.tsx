@@ -9,6 +9,7 @@ import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
+import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { LocaleProvider } from "@/lib/i18n";
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/">
         {user ? <Dashboard /> : <Home />}
       </Route>
+      <Route component={NotFound} />
     </Switch>
   );
 }

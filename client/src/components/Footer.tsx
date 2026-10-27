@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n";
 
 export function Footer() {
-  const { t } = useLocale();
+  const { language, t } = useLocale();
   const productLinks = [
-    { label: "课程", href: "/lessons" },
-    { label: "定价", href: "/pricing" },
-    { label: "AI导师", href: "/tutor" },
-    { label: "进度追踪", href: "/progress" }
+    { label: "课程", href: "/signup" },
+    { label: "定价", href: "/#pricing" },
+    { label: "AI导师", href: "/signup" },
+    { label: "进度追踪", href: "/signup" }
   ];
 
   const resourceLinks = [
@@ -49,9 +49,9 @@ export function Footer() {
             <ul className="space-y-2">
               {productLinks.map((link, index) => (
                 <li key={index}>
-                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
+                  <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
                     {t(link.label)}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>
@@ -78,14 +78,16 @@ export function Footer() {
             <div className="flex gap-2">
               <Input 
                 type="email" 
+                disabled
                 placeholder={t("你的邮箱")} 
                 className="text-sm"
                 data-testid="input-newsletter-email"
               />
-              <Button size="icon" variant="default" data-testid="button-newsletter-submit">
+              <Button disabled size="icon" variant="default" data-testid="button-newsletter-submit">
                 <Mail className="h-4 w-4" />
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">{language === "en" ? "Newsletter subscriptions are not available yet." : "周刊订阅暂未开放。"}</p>
           </div>
         </div>
 
