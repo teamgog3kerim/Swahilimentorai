@@ -20,6 +20,7 @@ import { Link } from "wouter";
 import { useLocale } from "@/lib/i18n";
 import { useTrack } from "@/contexts/TrackContext";
 import { AmharicPractice } from "@/components/learning/AmharicPractice";
+import { ReadingAid, ChineseReadingNotice } from "@/components/learning/ReadingAid";
 
 const getLevels = (t: (key: string) => string) => [
   { id: "beginner", name: t("初学者"), nameSwahili: "Mwanzo", icon: GraduationCap, color: "bg-green-500" },
@@ -365,6 +366,7 @@ function PracticeChat() {
         </ScrollArea>
 
         <div className="border-t bg-card p-4 md:p-6 space-y-3">
+          {language === "zh" && <ChineseReadingNotice target={track || "swahili"} />}
       {track === "swahili" && currentSessionId && session?.messages && session.messages.length < 4 && (
             <div className="flex flex-wrap gap-2">
               {QUICK_REPLIES.map((reply, idx) => (
@@ -377,7 +379,9 @@ function PracticeChat() {
                   className="text-xs"
                   data-testid={`button-quick-${idx}`}
                 >
-                  {reply.text} <span className="text-muted-foreground ml-1">({reply.translation})</span>
+                  <span>{reply.text} <span className="text-muted-foreground ml-1">({reply.translation})</span>
+                    <ReadingAid compact native={reply.text} target="swahili" />
+                  </span>
                 </Button>
               ))}
             </div>

@@ -127,6 +127,22 @@ test("Bilingual Amharic letters, flashcards, numbers, role-play and saved indepe
     await expect(page.getByTestId("page-progress")).toContainText(`1 / ${lessons.length}`);
     await page.getByTestId("button-switch-language").click();
     await expect(page.getByTestId("page-progress")).toContainText("0 / 90");
+    await page.getByTestId("button-language").click();
+    await page.getByTestId("button-nav-practice").click();
+    await page.getByTestId("practice-category-words").click();
+    await expect(page.getByTestId("pronunciation-guide").first()).toBeVisible();
+    for (const guide of await page.getByTestId("pronunciation-guide").allTextContents()) {
+      assert.ok(/[\u3400-\u9fff]/.test(guide), guide);
+      assert.equal(new RegExp("\\p{Script=Latin}", "u").test(guide), false, guide);
+    }
+    await page.getByTestId("practice-category-conversations").click();
+    if (await page.getByTestId("button-reveal-turn").isVisible()) await page.getByTestId("button-reveal-turn").click();
+    await expect(page.getByTestId("pronunciation-guide").first()).toHaveAttribute("data-reading-language", "zh");
+    await page.setViewportSize({ width: 402, height: 874 });
+    await page.getByTestId("pronunciation-guide").first().scrollIntoViewIfNeeded();
+    await page.screenshot({ path: "/tmp/swahili-chinese-practice.png", animations: "disabled" });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.getByTestId("button-language").click();
     await page.getByTestId("button-nav-learn").click();
     await page.getByTestId("card-level-beginner").click();
     await page.locator('[data-testid^="card-lesson-"]').first().click();

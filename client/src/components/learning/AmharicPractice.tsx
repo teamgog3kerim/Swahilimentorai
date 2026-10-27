@@ -12,7 +12,7 @@ import { LessonContentView } from "./LessonContentView";
 import { ReadingAid, ChineseReadingNotice } from "./ReadingAid";
 import { normalizeCourseContent } from "@shared/courseContent";
 
-type Quiz = { question?: { english?: string; chinese?: string }; options?: string[]; answer?: number; explanation?: { english?: string; chinese?: string } };
+type Quiz = { native?: string; question?: { english?: string; chinese?: string }; options?: string[]; answer?: number; explanation?: { english?: string; chinese?: string } };
 type DialogueLine = { speaker: string; term?: string; swahili?: string; transliteration?: string; pronunciationChinese?: string; english?: string; chinese?: string };
 const text = (en: string | undefined, zh: string | undefined, locale: string) => locale === "en" ? en || zh || "" : zh || en || "";
 const amharicCategories = ["all", "letters", "words", "numbers", "conversations"];
@@ -78,6 +78,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
       const answer = questionIndex % (choices.length + 1);
       choices.splice(answer, 0, correctMeaning);
       return {
+        native: sourceTerm,
         question: {
           english: `What does “${sourceTerm}” mean?`,
           chinese: `“${sourceTerm}”是什么意思？`,
@@ -139,6 +140,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
     if (value === "all") return english ? "All" : "全部";
     const names: Record<string, [string, string]> = {
       letters: ["Letters", "字母"], words: ["Words", "词汇"], numbers: ["Numbers", "数字"], conversations: ["Conversations", "对话"],
+      conversation: ["Conversation", "对话"], vocabulary: ["Vocabulary", "词汇"], grammar: ["Grammar", "语法"], phrases: ["Phrases", "常用短语"],
     };
     return names[value]?.[english ? 0 : 1] || value;
   };
@@ -235,6 +237,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
               <span>{english ? "Quick check" : "随堂自测"}</span><span>{questionIndex + 1} / {quizItems.length}</span>
             </div>
             <h2 className="mt-4 text-xl font-medium">{text(quiz.question?.english, quiz.question?.chinese, language)}</h2>
+            {quiz.native && <ReadingAid native={quiz.native} target={target} />}
             <div className="mt-5 grid gap-3">{(quiz.options || []).map((option, index) => <button key={`${questionIndex}-${index}`} data-testid={`quiz-option-${index}`}
               onClick={() => { setSelectedAnswer(index); setChecked(false); setAnswerRevealed(false); }} disabled={checked || answerRevealed}
               aria-pressed={selectedAnswer === index}

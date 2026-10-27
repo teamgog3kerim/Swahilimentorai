@@ -6,7 +6,7 @@
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Chinese is the primary/default interface. English is optional and should only be enabled when a user selects it; keep their selection saved for later visits.
-For Chinese users, pronunciation aids such as Amharic romanization must use Chinese characters rather than Latin spellings throughout lessons and practice. Keep native learning-language text visible and retain Latin transliteration in English mode. Chinese sound approximations are memory aids, not exact phonetic transcriptions.
+For Chinese users, pronunciation aids must use Chinese characters rather than Latin spellings throughout the app, explicitly including the practice page, role-play, quick replies and both language courses. Keep native learning-language text visible (Swahili itself uses Latin spelling) and retain Latin transliteration in English mode. Chinese sound approximations are memory aids, not exact phonetic transcriptions. Chinese AI tutor instructions must request Chinese-character reading aids, not Latin transliteration.
 Learner stories must represent Amharic learners as well as Swahili learners. Do not present illustrative stories as verified customer testimonials.
 
 ## System Architecture
