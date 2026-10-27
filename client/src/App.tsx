@@ -11,6 +11,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
+import { LocaleProvider } from "@/lib/i18n";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -71,11 +72,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <VisitTracker />
-          <Router />
-          <Toaster />
-        </TooltipProvider>
+        <LocaleProvider>
+          <TooltipProvider>
+            <VisitTracker />
+            <Router />
+            <Toaster />
+          </TooltipProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

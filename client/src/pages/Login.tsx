@@ -12,20 +12,22 @@ import { Loader2, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
+import { useLocale } from "@/lib/i18n";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
-const loginSchema = z.object({
-  email: z.string().email("请输入有效的邮箱地址"),
-  password: z.string().min(1, "请输入密码"),
-  rememberMe: z.boolean().default(false),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = { email: string; password: string; rememberMe: boolean };
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const loginSchema = z.object({
+    email: z.string().email(t("请输入有效的邮箱地址")),
+    password: z.string().min(1, t("请输入密码")),
+    rememberMe: z.boolean().default(false),
+  });
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -46,14 +48,14 @@ export default function Login() {
       });
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
-        title: "登录成功",
-        description: "欢迎回来！",
+        title: t("登录成功"),
+        description: t("欢迎回来！"),
       });
       setLocation("/dashboard");
     } catch (error: any) {
       toast({
-        title: "登录失败",
-        description: error.message || "请检查您的邮箱和密码",
+        title: t("登录失败"),
+        description: error.message || t("请检查您的邮箱和密码"),
         variant: "destructive",
       });
     } finally {
@@ -63,6 +65,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4"><LanguageToggle /></div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2">
@@ -74,10 +77,10 @@ export default function Login() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-2xl" data-testid="text-login-title">登录</CardTitle>
+            <CardTitle className="text-2xl" data-testid="text-login-title">{t("登录")}</CardTitle>
           </div>
           <CardDescription>
-            登录您的斯瓦希里语学习账户
+            {t("登录您的斯瓦希里语学习账户")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -88,7 +91,7 @@ export default function Login() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>邮箱</FormLabel>
+                    <FormLabel>{t("邮箱")}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -111,7 +114,7 @@ export default function Login() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>密码</FormLabel>
+                    <FormLabel>{t("密码")}</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
@@ -153,7 +156,7 @@ export default function Login() {
                       />
                     </FormControl>
                     <FormLabel className="text-sm font-normal cursor-pointer">
-                      保持登录状态
+                      {t("保持登录状态")}
                     </FormLabel>
                   </FormItem>
                 )}
@@ -168,24 +171,24 @@ export default function Login() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    登录中...
+                    {t("登录中...")}
                   </>
                 ) : (
-                  "登录"
+                  t("登录")
                 )}
               </Button>
             </form>
           </Form>
 
           <div className="text-center text-sm">
-            还没有账户？{" "}
+            {t("还没有账户？")}{" "}
             <Button
               variant="ghost"
               className="px-0 h-auto text-primary underline-offset-4 hover:underline"
               onClick={() => setLocation("/signup")}
               data-testid="link-signup"
             >
-              立即注册
+              {t("立即注册")}
             </Button>
           </div>
         </CardContent>

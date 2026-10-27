@@ -1,7 +1,7 @@
 # Swahili Learning Platform for Chinese Speakers
 
 ## Overview
-This project is a **Swahili AI Tutor**, a language learning platform tailored for Chinese speakers. It offers AI-powered conversational practice, structured lessons across three proficiency levels, and progress tracking. The platform operates on a freemium model with USDT-based payments, aiming to provide an accessible and comprehensive Swahili learning experience.
+This project is a **Swahili AI Tutor**, a language learning platform for Chinese- and English-speaking learners. The app interface can be switched between Simplified Chinese and English, with the selection saved in the browser. It offers AI-powered conversational practice, structured lessons across three proficiency levels, and progress tracking. The platform operates on a freemium model with USDT-based payments.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

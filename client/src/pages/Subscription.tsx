@@ -16,9 +16,11 @@ import type { Subscription, User } from "@shared/schema";
 import binanceQrImage from "@assets/binance-usdt-qr.jpg";
 import { BookOpen } from "lucide-react";
 import { differenceInDays } from "date-fns";
+import { useLocale } from "@/lib/i18n";
 
 export default function SubscriptionPage() {
   const { user } = useAuth() as { user: User | null };
+  const { language, t } = useLocale();
   const { toast } = useToast();
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [transactionId, setTransactionId] = useState("");
@@ -28,8 +30,8 @@ export default function SubscriptionPage() {
   const WALLET_ADDRESS = "TCdeZjG39zU9SjtoLwfXmcedJhnXyNd8zB";
   const NETWORK = "Tron (TRC20)";
   const PLAN_CONFIGS = {
-    monthly: { amount: '90 USDT', days: 30, label: '月订阅' },
-    quarterly: { amount: '250 USDT', days: 90, label: '季度订阅' }
+    monthly: { amount: '90 USDT', days: 30, label: t('月订阅') },
+    quarterly: { amount: '250 USDT', days: 90, label: t('季度订阅') }
   };
   const AMOUNT = PLAN_CONFIGS[selectedPlan].amount;
 
@@ -44,8 +46,8 @@ export default function SubscriptionPage() {
     },
     onSuccess: (data: any) => {
       toast({
-        title: "支付已提交",
-        description: data.message || "我们正在验证你的支付。通常在1-2小时内完成验证。",
+        title: t("支付已提交"),
+        description: data.message || t("我们正在验证你的支付。通常在1-2小时内完成验证。"),
       });
       setShowPaymentDialog(false);
       setTransactionId("");
@@ -54,15 +56,15 @@ export default function SubscriptionPage() {
     },
     onError: (error: any) => {
       const message = error.message?.includes("already have an active subscription")
-        ? "你已经有一个活跃的订阅"
+        ? t("你已经有一个活跃的订阅")
         : error.message?.includes("renew starting 4 days before")
-        ? "你的订阅还未到续费期。请在到期前4天内续费。"
+        ? t("你的订阅还未到续费期。请在到期前4天内续费。")
         : error.message?.includes("already been submitted")
-        ? "此交易ID已提交过"
-        : "请检查交易ID是否正确，或稍后重试。";
+        ? t("此交易ID已提交过")
+        : t("请检查交易ID是否正确，或稍后重试。");
       
       toast({
-        title: "提交失败",
+        title: t("提交失败"),
         description: message,
         variant: "destructive",
       });
@@ -74,8 +76,8 @@ export default function SubscriptionPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({
-      title: "已复制",
-      description: "钱包地址已复制到剪贴板",
+      title: t("已复制"),
+      description: t("钱包地址已复制到剪贴板"),
     });
   };
 
@@ -87,8 +89,8 @@ export default function SubscriptionPage() {
   const handleSubmitPayment = () => {
     if (!transactionId.trim()) {
       toast({
-        title: "请输入交易ID",
-        description: "交易ID不能为空",
+        title: t("请输入交易ID"),
+        description: t("交易ID不能为空"),
         variant: "destructive",
       });
       return;
@@ -97,16 +99,16 @@ export default function SubscriptionPage() {
   };
 
   const premiumFeatures = [
-    { icon: Zap, title: "无限AI练习", description: "随时随地与AI老师对话练习" },
-    { icon: BookOpen, title: "全部课程访问", description: "解锁所有级别的课程内容" },
-    { icon: Lock, title: "离线模式", description: "下载课程离线学习" },
-    { icon: Sparkles, title: "优先支持", description: "获得优先客户支持服务" },
+    { icon: Zap, title: t("无限AI练习"), description: t("随时随地与AI老师对话练习") },
+    { icon: BookOpen, title: t("全部课程访问"), description: t("解锁所有级别的课程内容") },
+    { icon: Lock, title: t("离线模式"), description: t("下载课程离线学习") },
+    { icon: Sparkles, title: t("优先支持"), description: t("获得优先客户支持服务") },
   ];
 
   const isPremium = user?.isPremium || false;
   const subscriptionEndsAt = user?.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
   const subscriptionEndDate = subscriptionEndsAt
-    ? subscriptionEndsAt.toLocaleDateString("zh-CN")
+    ? subscriptionEndsAt.toLocaleDateString(language === "en" ? "en-US" : "zh-CN")
     : null;
   
   // Calculate remaining days
@@ -127,8 +129,8 @@ export default function SubscriptionPage() {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">订阅</h1>
-        <p className="text-muted-foreground text-lg">升级到高级会员解锁全部功能</p>
+        <h1 className="text-4xl md:text-5xl font-bold mb-2">{t("订阅")}</h1>
+        <p className="text-muted-foreground text-lg">{t("升级到高级会员解锁全部功能")}</p>
       </div>
 
       <div className="space-y-6">
@@ -136,9 +138,11 @@ export default function SubscriptionPage() {
         {isExpired && (
           <Alert variant="destructive" data-testid="alert-expired">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>订阅已过期</AlertTitle>
+            <AlertTitle>{t("订阅已过期")}</AlertTitle>
             <AlertDescription>
-              你的订阅已于 {subscriptionEndDate} 过期。请续费以继续使用高级功能。
+              {language === "en"
+                ? <>Your subscription expired on {subscriptionEndDate}. Renew to keep using Premium features.</>
+                : <>你的订阅已于 {subscriptionEndDate} 过期。请续费以继续使用高级功能。</>}
             </AlertDescription>
           </Alert>
         )}
@@ -146,9 +150,11 @@ export default function SubscriptionPage() {
         {isExpiringSoon && !isExpired && (
           <Alert data-testid="alert-expiring-soon">
             <Clock className="h-4 w-4" />
-            <AlertTitle>订阅即将到期</AlertTitle>
+            <AlertTitle>{t("订阅即将到期")}</AlertTitle>
             <AlertDescription>
-              你的订阅将在 {daysRemaining} 天后到期（{subscriptionEndDate}）。请提前续费以避免服务中断。
+              {language === "en"
+                ? <>Your subscription expires in {daysRemaining} days ({subscriptionEndDate}). Renew early to avoid an interruption.</>
+                : <>你的订阅将在 {daysRemaining} 天后到期（{subscriptionEndDate}）。请提前续费以避免服务中断。</>}
             </AlertDescription>
           </Alert>
         )}
@@ -160,36 +166,36 @@ export default function SubscriptionPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-primary" />
-                    当前订阅
+                    {t("当前订阅")}
                   </CardTitle>
                   <CardDescription className="mt-1">
-                    {isExpired ? "已过期" : isExpiringSoon ? `还有 ${daysRemaining} 天到期` : "你是高级会员"}
+                  {isExpired ? t("已过期") : isExpiringSoon ? `${t("还有")} ${daysRemaining} ${t("天到期")}` : t("你是高级会员")}
                   </CardDescription>
                 </div>
                 <Badge variant={isExpired ? "destructive" : isExpiringSoon ? "outline" : "default"}>
-                  {isExpired ? "已过期" : isExpiringSoon ? "即将到期" : "活跃"}
+                  {isExpired ? t("已过期") : isExpiringSoon ? t("即将到期") : t("活跃")}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">订阅状态</span>
-                  <span className="font-medium">{isExpired ? "已过期" : "活跃"}</span>
+                  <span className="text-sm text-muted-foreground">{t("订阅状态")}</span>
+                  <span className="font-medium">{isExpired ? t("已过期") : t("活跃")}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">到期日期</span>
+                  <span className="text-sm text-muted-foreground">{t("到期日期")}</span>
                   <span className="font-medium">{subscriptionEndDate}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">剩余天数</span>
+                  <span className="text-sm text-muted-foreground">{t("剩余天数")}</span>
                   <span className={`font-medium ${isExpired ? "text-destructive" : isExpiringSoon ? "text-yellow-600 dark:text-yellow-500" : ""}`}>
-                    {daysRemaining !== null ? (daysRemaining < 0 ? "已过期" : `${daysRemaining} 天`) : "-"}
+                    {daysRemaining !== null ? (daysRemaining < 0 ? t("已过期") : `${daysRemaining} ${t("天")}`) : "-"}
                   </span>
                 </div>
                 {subscription && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">支付方式</span>
+                    <span className="text-sm text-muted-foreground">{t("支付方式")}</span>
                     <span className="font-medium">{subscription.paymentMethod}</span>
                   </div>
                 )}
@@ -205,7 +211,7 @@ export default function SubscriptionPage() {
                       data-testid="button-renew-monthly"
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
-                      续费 - 月订阅 (90 USDT/月)
+                      {t("续费 - 月订阅 (90 USDT/月)")}
                     </Button>
                     <Button
                       onClick={() => handleOpenPayment('quarterly')}
@@ -214,7 +220,7 @@ export default function SubscriptionPage() {
                       data-testid="button-renew-quarterly"
                     >
                       <CreditCard className="w-4 h-4 mr-2" />
-                      续费 - 季度订阅 (250 USDT/3月)
+                      {t("续费 - 季度订阅 (250 USDT/3月)")}
                     </Button>
                   </div>
                 </>
@@ -229,21 +235,21 @@ export default function SubscriptionPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/20 to-transparent rounded-bl-full" />
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
-                <Badge variant="secondary">推荐</Badge>
-                {showSubscribeButtons && <Badge variant="outline">7天免费试用</Badge>}
+                <Badge variant="secondary">{t("推荐")}</Badge>
+                {showSubscribeButtons && <Badge variant="outline">{t("7天免费试用")}</Badge>}
               </div>
-              <CardTitle className="text-2xl">月订阅</CardTitle>
+              <CardTitle className="text-2xl">{t("月订阅")}</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">
                 <span className="text-5xl font-bold">90</span>
                 <span className="text-2xl font-semibold text-muted-foreground">USDT</span>
-                <span className="text-muted-foreground">/月</span>
+                <span className="text-muted-foreground">{t("/月")}</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">每30天续费一次</p>
+              <p className="text-sm text-muted-foreground mt-2">{t("每30天续费一次")}</p>
             </CardHeader>
             <CardContent className="space-y-6">
               <Separator />
               <div>
-                <h3 className="font-semibold mb-4">包含功能：</h3>
+                <h3 className="font-semibold mb-4">{t("包含功能：")}</h3>
                 <div className="space-y-3">
                   {premiumFeatures.map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-3">
@@ -269,10 +275,10 @@ export default function SubscriptionPage() {
                     data-testid="button-subscribe-monthly"
                   >
                     <CreditCard className="w-5 h-5 mr-2" />
-                    选择月订阅
+                    {t("选择月订阅")}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    安全的加密货币支付
+                    {t("安全的加密货币支付")}
                   </p>
                 </>
               )}
@@ -284,23 +290,23 @@ export default function SubscriptionPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-500/20 to-transparent rounded-bl-full" />
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
-                <Badge className="bg-green-600 hover:bg-green-700">超值优惠</Badge>
-                {showSubscribeButtons && <Badge variant="outline">7天免费试用</Badge>}
+                <Badge className="bg-green-600 hover:bg-green-700">{t("超值优惠")}</Badge>
+                {showSubscribeButtons && <Badge variant="outline">{t("7天免费试用")}</Badge>}
               </div>
-              <CardTitle className="text-2xl">季度订阅</CardTitle>
+              <CardTitle className="text-2xl">{t("季度订阅")}</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">
                 <span className="text-5xl font-bold">250</span>
                 <span className="text-2xl font-semibold text-muted-foreground">USDT</span>
-                <span className="text-muted-foreground">/3月</span>
+                <span className="text-muted-foreground">{t("/3月")}</span>
               </div>
               <p className="text-sm text-green-600 dark:text-green-500 font-medium mt-2">
-                节省 20 USDT (相当于 83 USDT/月)
+                {t("节省 20 USDT (相当于 83 USDT/月)")}
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
               <Separator />
               <div>
-                <h3 className="font-semibold mb-4">包含功能：</h3>
+                <h3 className="font-semibold mb-4">{t("包含功能：")}</h3>
                 <div className="space-y-3">
                   {premiumFeatures.map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-3">
@@ -326,10 +332,10 @@ export default function SubscriptionPage() {
                     data-testid="button-subscribe-quarterly"
                   >
                     <CreditCard className="w-5 h-5 mr-2" />
-                    选择季度订阅
+                    {t("选择季度订阅")}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    每3个月续费，更实惠
+                    {t("每3个月续费，更实惠")}
                   </p>
                 </>
               )}
@@ -339,47 +345,47 @@ export default function SubscriptionPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>免费版 vs 高级版</CardTitle>
+            <CardTitle>{t("免费版 vs 高级版")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-muted-foreground">免费版</h4>
+                  <h4 className="font-semibold text-muted-foreground">{t("免费版")}</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-muted-foreground" />
-                      <span>10次AI练习</span>
+                      <span>{t("10次AI练习")}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-muted-foreground" />
-                      <span>初级课程访问</span>
+                      <span>{t("初级课程访问")}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-muted-foreground" />
-                      <span>基础进度跟踪</span>
+                      <span>{t("基础进度跟踪")}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-primary">高级版</h4>
+                  <h4 className="font-semibold text-primary">{t("高级版")}</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-primary" />
-                      <span className="font-medium">无限AI练习</span>
+                      <span className="font-medium">{t("无限AI练习")}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-primary" />
-                      <span className="font-medium">全部课程访问</span>
+                      <span className="font-medium">{t("全部课程访问")}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-primary" />
-                      <span className="font-medium">离线模式</span>
+                      <span className="font-medium">{t("离线模式")}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Check className="w-4 h-4 text-primary" />
-                      <span className="font-medium">优先支持</span>
+                      <span className="font-medium">{t("优先支持")}</span>
                     </div>
                   </div>
                 </div>
@@ -394,10 +400,10 @@ export default function SubscriptionPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <QrCode className="w-5 h-5" />
-              支付订阅费用
+              {t("支付订阅费用")}
             </DialogTitle>
             <DialogDescription>
-              使用Binance扫描二维码或复制钱包地址发送USDT
+              {t("使用Binance扫描二维码或复制钱包地址发送USDT")}
             </DialogDescription>
           </DialogHeader>
 
@@ -416,17 +422,17 @@ export default function SubscriptionPage() {
             <div className="space-y-4">
               <div className="bg-muted p-4 rounded-md space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">网络</span>
+                  <span className="text-sm text-muted-foreground">{t("网络")}</span>
                   <span className="font-medium">{NETWORK}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">金额</span>
+                  <span className="text-sm text-muted-foreground">{t("金额")}</span>
                   <span className="font-medium text-primary">{AMOUNT}</span>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="wallet-address" className="text-sm text-muted-foreground">钱包地址</Label>
+                <Label htmlFor="wallet-address" className="text-sm text-muted-foreground">{t("钱包地址")}</Label>
                 <div className="flex gap-2 mt-1">
                   <Input
                     id="wallet-address"
@@ -449,16 +455,16 @@ export default function SubscriptionPage() {
               <Separator />
 
               <div className="space-y-2">
-                <Label htmlFor="transaction-id">支付后请输入交易ID</Label>
+                <Label htmlFor="transaction-id">{t("支付后请输入交易ID")}</Label>
                 <Input
                   id="transaction-id"
-                  placeholder="例如: 0x1234abcd..."
+                  placeholder={t("例如: 0x1234abcd...")}
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
                   data-testid="input-transaction-id"
                 />
                 <p className="text-xs text-muted-foreground">
-                  完成支付后，在Binance钱包中查找交易ID并粘贴到这里
+                  {t("完成支付后，在Binance钱包中查找交易ID并粘贴到这里")}
                 </p>
               </div>
 
@@ -469,20 +475,20 @@ export default function SubscriptionPage() {
                   className="flex-1"
                   data-testid="button-submit-payment"
                 >
-                  {paymentMutation.isPending ? "提交中..." : "提交支付"}
+                  {paymentMutation.isPending ? t("提交中...") : t("提交支付")}
                 </Button>
                 <Button
                   onClick={() => setShowPaymentDialog(false)}
                   variant="outline"
                   data-testid="button-cancel-payment"
                 >
-                  取消
+                  {t("取消")}
                 </Button>
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-900">
                 <p className="text-xs text-blue-900 dark:text-blue-100">
-                  ⓘ 提交后我们会在1-2小时内验证你的支付并激活高级会员
+              ⓘ {t("提交后我们会在1-2小时内验证你的支付并激活高级会员")}
                 </p>
               </div>
             </div>

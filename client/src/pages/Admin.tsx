@@ -39,6 +39,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocale } from "@/lib/i18n";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, Subscription } from "@shared/schema";
 import { 
@@ -99,6 +100,7 @@ const CHART_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#e
 
 export default function AdminPage() {
   const { user } = useAuth() as { user: User | null };
+  const { language, t } = useLocale();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -171,8 +173,8 @@ export default function AdminPage() {
     },
     onError: () => {
       toast({
-        title: "标记失败",
-        description: "无法标记通知为已读，请稍后再试",
+        title: t("标记失败"),
+        description: t("无法标记通知为已读，请稍后再试"),
         variant: "destructive",
       });
     },
@@ -187,14 +189,14 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
       toast({
-        title: "已全部标记为已读",
-        description: "所有通知已标记为已读",
+        title: t("已全部标记为已读"),
+        description: t("所有通知已标记为已读"),
       });
     },
     onError: () => {
       toast({
-        title: "操作失败",
-        description: "无法标记所有通知为已读，请稍后再试",
+        title: t("操作失败"),
+        description: t("无法标记所有通知为已读，请稍后再试"),
         variant: "destructive",
       });
     },
@@ -211,8 +213,8 @@ export default function AdminPage() {
     },
     onError: () => {
       toast({
-        title: "删除失败",
-        description: "无法删除通知，请稍后再试",
+        title: t("删除失败"),
+        description: t("无法删除通知，请稍后再试"),
         variant: "destructive",
       });
     },
@@ -233,7 +235,7 @@ export default function AdminPage() {
     },
     onSuccess: (data: any) => {
       toast({
-        title: data.action === 'approve' ? "订阅已批准" : "订阅已拒绝",
+        title: data.action === 'approve' ? t("订阅已批准") : t("订阅已拒绝"),
         description: data.message,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pending"] });
@@ -242,8 +244,8 @@ export default function AdminPage() {
     },
     onError: (error: any) => {
       toast({
-        title: "操作失败",
-        description: error.message || "请稍后重试",
+        title: t("操作失败"),
+        description: error.message || t("请稍后重试"),
         variant: "destructive",
       });
     },
@@ -260,14 +262,14 @@ export default function AdminPage() {
   const handleCopyTxId = async (txId: string) => {
     await navigator.clipboard.writeText(txId);
     toast({
-      title: "已复制",
-      description: "交易ID已复制到剪贴板",
+      title: t("已复制"),
+      description: t("交易ID已复制到剪贴板"),
     });
   };
 
   const formatDate = (date: Date | string | null) => {
     if (!date) return "-";
-    return new Date(date).toLocaleDateString("zh-CN", {
+    return new Date(date).toLocaleDateString(language === "en" ? "en-US" : "zh-CN", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -284,10 +286,10 @@ export default function AdminPage() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     
-    if (diffMins < 1) return "刚刚";
-    if (diffMins < 60) return `${diffMins}分钟前`;
-    if (diffHours < 24) return `${diffHours}小时前`;
-    if (diffDays < 7) return `${diffDays}天前`;
+    if (diffMins < 1) return t("刚刚");
+    if (diffMins < 60) return `${diffMins}${t("分钟前")}`;
+    if (diffHours < 24) return `${diffHours}${t("小时前")}`;
+    if (diffDays < 7) return `${diffDays}${t("天前")}`;
     return formatDate(date);
   };
 
@@ -305,11 +307,11 @@ export default function AdminPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge variant="default" data-testid="badge-status-active">活跃</Badge>;
+        return <Badge variant="default" data-testid="badge-status-active">{t("活跃")}</Badge>;
       case 'pending':
-        return <Badge variant="outline" className="border-yellow-500 text-yellow-600" data-testid="badge-status-pending">待验证</Badge>;
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-600" data-testid="badge-status-pending">{t("待验证")}</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" data-testid="badge-status-rejected">已拒绝</Badge>;
+        return <Badge variant="destructive" data-testid="badge-status-rejected">{t("已拒绝")}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -317,8 +319,8 @@ export default function AdminPage() {
 
   const getPlanBadge = (planType: string) => {
     return planType === 'quarterly' 
-      ? <Badge variant="secondary">季度</Badge>
-      : <Badge variant="outline">月订阅</Badge>;
+      ? <Badge variant="secondary">{t("季度")}</Badge>
+      : <Badge variant="outline">{t("月订阅")}</Badge>;
   };
 
   const filteredUsers = allUsers.filter(u => 
@@ -337,9 +339,9 @@ export default function AdminPage() {
       <div className="p-4 md:p-6 lg:p-8 max-w-4xl mx-auto">
         <Alert variant="destructive" data-testid="alert-no-access">
           <Shield className="h-4 w-4" />
-          <AlertTitle>无权访问</AlertTitle>
+          <AlertTitle>{t("无权访问")}</AlertTitle>
           <AlertDescription>
-            你没有管理员权限访问此页面。
+            {t("你没有管理员权限访问此页面。")}
           </AlertDescription>
         </Alert>
       </div>
@@ -353,8 +355,8 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <Shield className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold" data-testid="text-admin-title">管理后台</h1>
-              <p className="text-muted-foreground">管理用户支付和订阅</p>
+              <h1 className="text-3xl md:text-4xl font-bold" data-testid="text-admin-title">{t("管理后台")}</h1>
+              <p className="text-muted-foreground">{t("管理用户支付和订阅")}</p>
             </div>
           </div>
           
@@ -385,7 +387,7 @@ export default function AdminPage() {
             </PopoverTrigger>
             <PopoverContent className="w-80 p-0" align="end">
               <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="font-semibold">通知</h3>
+                <h3 className="font-semibold">{t("通知")}</h3>
                 <div className="flex items-center gap-2">
                   {notifications.length > 0 && (
                     <Button
@@ -396,7 +398,7 @@ export default function AdminPage() {
                       data-testid="button-mark-all-read"
                     >
                       <CheckCheck className="h-4 w-4 mr-1" />
-                      全部已读
+                      {t("全部已读")}
                     </Button>
                   )}
                 </div>
@@ -404,7 +406,7 @@ export default function AdminPage() {
               <ScrollArea className="h-[300px]">
                 {notifications.length === 0 ? (
                   <div className="p-4 text-center text-muted-foreground">
-                    暂无通知
+                    {t("暂无通知")}
                   </div>
                 ) : (
                   <div className="divide-y">
@@ -459,7 +461,7 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card data-testid="card-pending-count">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">待验证支付</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t("待验证支付")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -471,7 +473,7 @@ export default function AdminPage() {
 
         <Card data-testid="card-active-count">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">活跃订阅</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t("活跃订阅")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -485,7 +487,7 @@ export default function AdminPage() {
 
         <Card data-testid="card-users-count">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">总用户数</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t("总用户数")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -499,16 +501,16 @@ export default function AdminPage() {
       <Tabs defaultValue="pending" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="pending" data-testid="tab-pending">
-            待验证 ({pendingSubscriptions.length})
+            {t("待验证")} ({pendingSubscriptions.length})
           </TabsTrigger>
           <TabsTrigger value="subscriptions" data-testid="tab-subscriptions">
-            所有订阅
+            {t("所有订阅")}
           </TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users">
-            用户管理
+            {t("用户管理")}
           </TabsTrigger>
           <TabsTrigger value="analytics" data-testid="tab-analytics">
-            访问统计
+            {t("访问统计")}
           </TabsTrigger>
         </TabsList>
 
@@ -519,9 +521,9 @@ export default function AdminPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5" />
-                    待验证支付
+                    {t("待验证支付")}
                   </CardTitle>
-                  <CardDescription>验证用户提交的交易ID并激活订阅</CardDescription>
+                  <CardDescription>{t("验证用户提交的交易ID并激活订阅")}</CardDescription>
                 </div>
                 <Button 
                   variant="outline" 
@@ -530,17 +532,17 @@ export default function AdminPage() {
                   data-testid="button-refresh-pending"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  刷新
+                  {t("刷新")}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {pendingLoading ? (
-                <p className="text-muted-foreground py-4">加载中...</p>
+                <p className="text-muted-foreground py-4">{t("加载中...")}</p>
               ) : pendingSubscriptions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>暂无待验证的支付</p>
+                  <p>{t("暂无待验证的支付")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -556,10 +558,10 @@ export default function AdminPage() {
                               {getPlanBadge(sub.planType)}
                             </div>
                             <p className="text-sm text-muted-foreground" data-testid={`text-email-${sub.id}`}>
-                              {sub.user.email || "无邮箱"}
+                              {sub.user.email || t("无邮箱")}
                             </p>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">交易ID:</span>
+                              <span className="text-sm text-muted-foreground">{t("交易ID:")}</span>
                               <code className="text-xs bg-muted px-2 py-1 rounded max-w-[200px] truncate" data-testid={`text-txid-${sub.id}`}>
                                 {sub.transactionId}
                               </code>
@@ -574,10 +576,10 @@ export default function AdminPage() {
                               </Button>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              金额: <span className="font-medium">{sub.amount} {sub.currency}</span>
+                              {t("金额:")} <span className="font-medium">{sub.amount} {sub.currency}</span>
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              提交时间: {formatDate(sub.createdAt)}
+                              {t("提交时间:")} {formatDate(sub.createdAt)}
                             </p>
                           </div>
                           <div className="flex gap-2">
@@ -587,7 +589,7 @@ export default function AdminPage() {
                               data-testid={`button-approve-${sub.id}`}
                             >
                               <CheckCircle2 className="h-4 w-4 mr-2" />
-                              批准
+                              {t("批准")}
                             </Button>
                             <Button 
                               variant="destructive"
@@ -596,7 +598,7 @@ export default function AdminPage() {
                               data-testid={`button-reject-${sub.id}`}
                             >
                               <XCircle className="h-4 w-4 mr-2" />
-                              拒绝
+                              {t("拒绝")}
                             </Button>
                           </div>
                         </div>
@@ -614,14 +616,14 @@ export default function AdminPage() {
             <CardHeader>
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <CardTitle>所有订阅记录</CardTitle>
-                  <CardDescription>查看所有用户的订阅历史</CardDescription>
+                  <CardTitle>{t("所有订阅记录")}</CardTitle>
+                  <CardDescription>{t("查看所有用户的订阅历史")}</CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input 
-                      placeholder="搜索用户或交易ID..." 
+                      placeholder={t("搜索用户或交易ID...")}
                       className="pl-8 w-64"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -641,19 +643,19 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               {subscriptionsLoading ? (
-                <p className="text-muted-foreground py-4">加载中...</p>
+                <p className="text-muted-foreground py-4">{t("加载中...")}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>用户</TableHead>
-                        <TableHead>邮箱</TableHead>
-                        <TableHead>计划</TableHead>
-                        <TableHead>金额</TableHead>
-                        <TableHead>状态</TableHead>
-                        <TableHead>交易ID</TableHead>
-                        <TableHead>到期时间</TableHead>
+                        <TableHead>{t("用户")}</TableHead>
+                        <TableHead>{t("邮箱")}</TableHead>
+                        <TableHead>{t("计划")}</TableHead>
+                        <TableHead>{t("金额")}</TableHead>
+                        <TableHead>{t("状态")}</TableHead>
+                        <TableHead>{t("交易ID")}</TableHead>
+                        <TableHead>{t("到期时间")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -685,14 +687,14 @@ export default function AdminPage() {
             <CardHeader>
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <CardTitle>用户管理</CardTitle>
-                  <CardDescription>查看和管理所有用户</CardDescription>
+                  <CardTitle>{t("用户管理")}</CardTitle>
+                  <CardDescription>{t("查看和管理所有用户")}</CardDescription>
                 </div>
                 <div className="flex gap-2">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input 
-                      placeholder="搜索用户名或邮箱..." 
+                      placeholder={t("搜索用户名或邮箱...")}
                       className="pl-8 w-64"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -712,18 +714,18 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               {usersLoading ? (
-                <p className="text-muted-foreground py-4">加载中...</p>
+                <p className="text-muted-foreground py-4">{t("加载中...")}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>用户名</TableHead>
-                        <TableHead>邮箱</TableHead>
-                        <TableHead>会员状态</TableHead>
-                        <TableHead>练习次数</TableHead>
-                        <TableHead>到期时间</TableHead>
-                        <TableHead>注册时间</TableHead>
+                        <TableHead>{t("用户名")}</TableHead>
+                        <TableHead>{t("邮箱")}</TableHead>
+                        <TableHead>{t("会员状态")}</TableHead>
+                        <TableHead>{t("练习次数")}</TableHead>
+                        <TableHead>{t("到期时间")}</TableHead>
+                        <TableHead>{t("注册时间")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -733,18 +735,18 @@ export default function AdminPage() {
                           <TableRow key={u.id} data-testid={`row-user-${u.id}`}>
                             <TableCell className="font-medium">
                               {u.username}
-                              {u.isAdmin && <Badge variant="secondary" className="ml-2">管理员</Badge>}
+                              {u.isAdmin && <Badge variant="secondary" className="ml-2">{t("管理员")}</Badge>}
                             </TableCell>
                             <TableCell>{u.email || "-"}</TableCell>
                             <TableCell>
                               {u.isPremium ? (
                                 isExpired ? (
-                                  <Badge variant="destructive">已过期</Badge>
+                                  <Badge variant="destructive">{t("已过期")}</Badge>
                                 ) : (
-                                  <Badge variant="default">高级会员</Badge>
+                                  <Badge variant="default">{t("高级会员")}</Badge>
                                 )
                               ) : (
-                                <Badge variant="secondary">免费用户</Badge>
+                                <Badge variant="secondary">{t("免费用户")}</Badge>
                               )}
                             </TableCell>
                             <TableCell>{u.practiceCount}</TableCell>
@@ -771,7 +773,7 @@ export default function AdminPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              访问统计
+              {t("访问统计")}
             </h2>
             <Button 
               variant="outline" 
@@ -780,14 +782,14 @@ export default function AdminPage() {
               data-testid="button-refresh-analytics"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              刷新
+              {t("刷新")}
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card data-testid="card-total-visits">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">总访问次数</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t("总访问次数")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
@@ -801,7 +803,7 @@ export default function AdminPage() {
 
             <Card data-testid="card-unique-sessions">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">独立会话数</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t("独立会话数")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
@@ -815,7 +817,7 @@ export default function AdminPage() {
 
             <Card data-testid="card-today-visits">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">今日访问</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">{t("今日访问")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-2">
@@ -831,13 +833,13 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card data-testid="card-visits-chart">
               <CardHeader>
-                <CardTitle className="text-base">过去30天访问趋势</CardTitle>
+                <CardTitle className="text-base">{t("过去30天访问趋势")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {visitsLoading ? (
-                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("加载中...")}</p>
                 ) : visitsByDate.length === 0 ? (
-                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("暂无数据")}</p>
                 ) : (
                   <ResponsiveContainer width="100%" height={250}>
                     <LineChart data={visitsByDate}>
@@ -852,8 +854,8 @@ export default function AdminPage() {
                       />
                       <YAxis fontSize={12} />
                       <Tooltip 
-                        labelFormatter={(value) => `日期: ${value}`}
-                        formatter={(value: number) => [value, '访问次数']}
+                        labelFormatter={(value) => `${t("日期:")} ${value}`}
+                        formatter={(value: number) => [value, t("访问次数")]}
                       />
                       <Line 
                         type="monotone" 
@@ -872,14 +874,14 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Globe className="h-4 w-4" />
-                  访问来源国家/地区
+                  {t("访问来源国家/地区")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {countriesLoading ? (
-                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("加载中...")}</p>
                 ) : topCountries.length === 0 ? (
-                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("暂无数据")}</p>
                 ) : (
                   <ResponsiveContainer width="100%" height={250}>
                     <BarChart data={topCountries} layout="vertical">
@@ -891,7 +893,7 @@ export default function AdminPage() {
                         width={100}
                         fontSize={12}
                       />
-                      <Tooltip formatter={(value: number) => [value, '访问次数']} />
+                      <Tooltip formatter={(value: number) => [value, t("访问次数")]} />
                       <Bar dataKey="count" fill="#2563eb" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -903,14 +905,14 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Monitor className="h-4 w-4" />
-                  浏览器分布
+                  {t("浏览器分布")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {browsersLoading ? (
-                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("加载中...")}</p>
                 ) : topBrowsers.length === 0 ? (
-                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("暂无数据")}</p>
                 ) : (
                   <div className="flex items-center gap-4">
                     <ResponsiveContainer width="60%" height={200}>
@@ -928,7 +930,7 @@ export default function AdminPage() {
                             <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value: number) => [value, '访问次数']} />
+                        <Tooltip formatter={(value: number) => [value, t("访问次数")]} />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="flex-1 space-y-2">
@@ -952,14 +954,14 @@ export default function AdminPage() {
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Smartphone className="h-4 w-4" />
-                  设备类型分布
+                  {t("设备类型分布")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {devicesLoading ? (
-                  <p className="text-muted-foreground py-8 text-center">加载中...</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("加载中...")}</p>
                 ) : topDevices.length === 0 ? (
-                  <p className="text-muted-foreground py-8 text-center">暂无数据</p>
+                  <p className="text-muted-foreground py-8 text-center">{t("暂无数据")}</p>
                 ) : (
                   <div className="space-y-4">
                     {topDevices.map((device, index) => {

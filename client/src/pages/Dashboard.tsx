@@ -31,11 +31,14 @@ import Progress from "@/pages/Progress";
 import Subscription from "@/pages/Subscription";
 import Admin from "@/pages/Admin";
 import type { User } from "@shared/schema";
+import { useLocale } from "@/lib/i18n";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 type View = "learn" | "practice" | "progress" | "subscription" | "admin";
 
 function DashboardContent() {
   const { user } = useAuth() as { user: User | null };
+  const { language, t } = useLocale();
   const [currentView, setCurrentView] = useState<View>("learn");
   const { setOpenMobile } = useSidebar();
 
@@ -75,11 +78,11 @@ function DashboardContent() {
   const pendingCount = pendingPayments?.length || 0;
 
   const menuItems = [
-    { id: "learn" as View, title: "学习", icon: Home },
-    { id: "practice" as View, title: "练习", icon: MessageSquare },
-    { id: "progress" as View, title: "进度", icon: BarChart },
-    { id: "subscription" as View, title: "订阅", icon: CreditCard },
-    ...(isAdmin ? [{ id: "admin" as View, title: "管理后台", icon: Shield }] : []),
+    { id: "learn" as View, title: t("学习"), icon: Home },
+    { id: "practice" as View, title: t("练习"), icon: MessageSquare },
+    { id: "progress" as View, title: t("进度"), icon: BarChart },
+    { id: "subscription" as View, title: t("订阅"), icon: CreditCard },
+    ...(isAdmin ? [{ id: "admin" as View, title: t("管理后台"), icon: Shield }] : []),
   ];
 
   const handleNavigation = (view: View) => {
@@ -120,7 +123,7 @@ function DashboardContent() {
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-              斯瓦希里语学习
+              {t("斯瓦希里语学习")}
             </SidebarGroupLabel>
             <Separator />
             <SidebarGroupContent className="mt-4">
@@ -159,14 +162,14 @@ function DashboardContent() {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" data-testid="text-username">
-                  {user?.username || "用户"}
+                  {user?.username || t("用户")}
                 </p>
                 <Badge
                   variant={user?.isPremium ? "default" : "secondary"}
                   className="text-xs"
                   data-testid={`badge-${user?.isPremium ? "premium" : "free"}`}
                 >
-                  {user?.isPremium ? "高级会员" : "免费用户"}
+                  {user?.isPremium ? t("高级会员") : t("免费用户")}
                 </Badge>
               </div>
             </div>
@@ -181,17 +184,18 @@ function DashboardContent() {
             data-testid="button-logout"
           >
             <LogOut className="w-5 h-5 mr-2" />
-            退出登录
+            {t("退出登录")}
           </Button>
         </SidebarFooter>
       </Sidebar>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="md:hidden flex items-center gap-3 p-3 border-b bg-background">
-          <SidebarTrigger data-testid="button-sidebar-toggle">
+        <header className="flex items-center gap-3 p-3 border-b bg-background">
+          <SidebarTrigger className="md:hidden" data-testid="button-sidebar-toggle">
             <Menu className="w-5 h-5" />
           </SidebarTrigger>
-          <span className="font-semibold">斯瓦希里语学习</span>
+          <span className="font-semibold">{t("斯瓦希里语学习")}</span>
+          <div className="ml-auto"><LanguageToggle /></div>
         </header>
         <main className="flex-1 overflow-auto bg-background">
           <div className="px-4 pt-4 space-y-3">
@@ -204,7 +208,9 @@ function DashboardContent() {
                 <Bell className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                 <AlertDescription className="text-amber-800 dark:text-amber-200 flex items-center justify-between">
                   <span>
-                    您有 <strong>{pendingCount}</strong> 笔待验证的支付，请及时处理
+                    {language === "en"
+                      ? <>You have <strong>{pendingCount}</strong> payment{pendingCount === 1 ? "" : "s"} waiting for verification.</>
+                      : <>您有 <strong>{pendingCount}</strong> 笔待验证的支付，请及时处理</>}
                   </span>
                   <Button 
                     size="sm" 
@@ -216,7 +222,7 @@ function DashboardContent() {
                     }}
                     data-testid="button-go-to-admin"
                   >
-                    前往处理
+                    {t("前往处理")}
                   </Button>
                 </AlertDescription>
               </Alert>

@@ -12,6 +12,7 @@ import { Share2, Copy, Check, MessageCircle, Users, BookOpen, Trophy, Flame } fr
 import { SiWechat, SiWhatsapp, SiX, SiTelegram, SiFacebook } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { useLocale } from "@/lib/i18n";
 
 interface LearningProgress {
   completedLessons: number;
@@ -32,6 +33,7 @@ export function ShareButton({ variant = "default", size = "default", className =
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const { language, t } = useLocale();
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "https://swahili-ai.replit.app";
   
@@ -39,7 +41,21 @@ export function ShareButton({ variant = "default", size = "default", className =
     ? Math.round((progress.completedLessons / progress.totalLessons) * 100) 
     : 0;
 
-  const baseMessage = `【推荐】发现一个超棒的斯瓦希里语学习平台！
+  const baseMessage = language === "en" ? `Check out this Swahili learning platform!
+
+I'm learning Swahili with an AI tutor and loving it.
+
+- Practice conversations with AI anytime
+- Lessons for beginners through advanced learners
+- A structured 90-lesson learning path
+
+Come learn Swahili with me!
+Karibu! (Welcome!)
+
+Start your 7-day free trial:
+${appUrl}
+
+#Swahili #LanguageLearning #LearnWithAI` : `【推荐】发现一个超棒的斯瓦希里语学习平台！
 
 我正在用AI老师学习斯瓦希里语，效果真的很好！
 
@@ -55,7 +71,25 @@ ${appUrl}
 
 #斯瓦希里语 #语言学习 #AI学习`;
 
-  const progressMessage = progress ? `【分享学习成果】我正在学斯瓦希里语！
+  const progressMessage = progress ? (language === "en" ? `I'm learning Swahili!
+
+My learning progress:
+- Lessons completed: ${progress.completedLessons} / ${progress.totalLessons}
+- Completion: ${completionRate}%
+- Practice sessions: ${progress.practiceCount}
+${progress.learningDays ? `- Learning streak: ${progress.learningDays} days` : ""}
+
+Learn Swahili with an AI tutor:
+- Practice conversations anytime
+- Lessons for every level
+- A structured 9-month learning path
+
+Karibu! (Welcome!)
+
+Try it free:
+${appUrl}
+
+#Swahili #LanguageLearning #MyProgress` : `【分享学习成果】我正在学斯瓦希里语！
 
 我的学习进度：
 - 已完成 ${progress.completedLessons} / ${progress.totalLessons} 节课程
@@ -74,7 +108,7 @@ Karibu! (欢迎!)
 点击链接免费试用：
 ${appUrl}
 
-#斯瓦希里语 #语言学习 #我的学习成果` : baseMessage;
+#斯瓦希里语 #语言学习 #我的学习成果`) : baseMessage;
 
   const shareMessage = showProgress && progress ? progressMessage : baseMessage;
 
@@ -86,14 +120,14 @@ ${appUrl}
       await navigator.clipboard.writeText(shareMessage);
       setCopied(true);
       toast({
-        title: "复制成功",
-        description: "分享内容已复制到剪贴板，可粘贴到微信或其他平台",
+        title: t("复制成功"),
+        description: t("分享内容已复制到剪贴板，可粘贴到微信或其他平台"),
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       toast({
-        title: "复制失败",
-        description: "请手动复制分享内容",
+        title: t("复制失败"),
+        description: t("请手动复制分享内容"),
         variant: "destructive",
       });
     }
@@ -107,8 +141,8 @@ ${appUrl}
       action: () => {
         handleCopy();
         toast({
-          title: "内容已复制",
-          description: "请打开微信，粘贴分享给好友或朋友圈",
+          title: t("内容已复制"),
+          description: t("请打开微信，粘贴分享给好友或朋友圈"),
         });
       },
     },
@@ -151,17 +185,17 @@ ${appUrl}
       <DialogTrigger asChild>
         <Button variant={variant} size={size} className={className} data-testid="button-share">
           <Share2 className="w-4 h-4 mr-2" />
-          邀请好友
+          {t("邀请好友")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md" data-testid="dialog-share">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
-            邀请好友一起学习
+            {t("邀请好友一起学习")}
           </DialogTitle>
           <DialogDescription>
-            分享给朋友，一起学习斯瓦希里语！
+            {t("分享给朋友，一起学习斯瓦希里语！")}
           </DialogDescription>
         </DialogHeader>
 
@@ -170,25 +204,25 @@ ${appUrl}
             <div className="p-4 bg-primary/10 rounded-lg space-y-3" data-testid="section-progress-stats">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="w-5 h-5 text-primary" />
-                <p className="text-sm font-medium">我的学习成果</p>
+                <p className="text-sm font-medium">{t("我的学习成果")}</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm">
-                    课程 <span className="font-semibold">{progress.completedLessons}/{progress.totalLessons}</span>
+                    {t("课程")} <span className="font-semibold">{progress.completedLessons}/{progress.totalLessons}</span>
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MessageCircle className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm">
-                    练习 <span className="font-semibold">{progress.practiceCount}次</span>
+                    {t("练习")} <span className="font-semibold">{progress.practiceCount}</span>
                   </span>
                 </div>
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>完成进度</span>
+                  <span>{t("完成进度")}</span>
                   <span>{completionRate}%</span>
                 </div>
                 <Progress value={completionRate} className="h-2" />
@@ -196,7 +230,7 @@ ${appUrl}
               {progress.learningDays && (
                 <div className="flex items-center gap-2 pt-1">
                   <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm">连续学习 <span className="font-semibold">{progress.learningDays}天</span></span>
+                  <span className="text-sm">{t("连续学习")} <span className="font-semibold">{progress.learningDays} {t("天")}</span></span>
                 </div>
               )}
             </div>
@@ -205,7 +239,7 @@ ${appUrl}
           <div className="p-4 bg-muted rounded-lg">
             <div className="flex items-start gap-3 mb-3">
               <MessageCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-              <p className="text-sm font-medium">分享内容预览：</p>
+              <p className="text-sm font-medium">{t("分享内容预览：")}</p>
             </div>
             <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
               {shareMessage.slice(0, 180)}...
@@ -213,7 +247,7 @@ ${appUrl}
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-medium">选择分享平台：</p>
+            <p className="text-sm font-medium">{t("选择分享平台：")}</p>
             <div className="grid grid-cols-5 gap-2">
               {shareLinks.map((link) => (
                 <button
@@ -223,7 +257,7 @@ ${appUrl}
                   data-testid={`button-share-${link.name.toLowerCase()}`}
                 >
                   <link.icon className="w-6 h-6" />
-                  <span className="text-xs">{link.name}</span>
+                  <span className="text-xs">{t(link.name)}</span>
                 </button>
               ))}
             </div>
@@ -239,19 +273,19 @@ ${appUrl}
               {copied ? (
                 <>
                   <Check className="w-4 h-4" />
-                  已复制
+                  {t("已复制")}
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  复制分享内容
+                  {t("复制分享内容")}
                 </>
               )}
             </Button>
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            邀请好友一起学习，让语言学习更有趣！
+            {t("邀请好友一起学习，让语言学习更有趣！")}
           </p>
         </div>
       </DialogContent>

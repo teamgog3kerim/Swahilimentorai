@@ -1,34 +1,36 @@
 import { UserPlus, Target, MessageCircle, TrendingUp } from "lucide-react";
+import { useLocale } from "@/lib/i18n";
 
 export function HowItWorks() {
+  const { t } = useLocale();
   const steps = [
     {
       number: "1",
       icon: UserPlus,
-      title: "注册账号",
+      title: t("注册账号"),
       titleSwahili: "Jisajili",
-      description: "只需几秒钟即可创建免费账号，开始你的学习之旅"
+      description: t("只需几秒钟即可创建免费账号，开始你的学习之旅")
     },
     {
       number: "2",
       icon: Target,
-      title: "选择级别",
+      title: t("选择级别"),
       titleSwahili: "Chagua Kiwango",
-      description: "根据你的当前水平选择初级、中级或高级课程"
+      description: t("根据你的当前水平选择初级、中级或高级课程")
     },
     {
       number: "3",
       icon: MessageCircle,
-      title: "与AI练习",
+      title: t("与AI练习"),
       titleSwahili: "Fanya Mazoezi",
-      description: "通过对话练习提升语言能力，AI导师即时给予反馈"
+      description: t("通过对话练习提升语言能力，AI导师即时给予反馈")
     },
     {
       number: "4",
       icon: TrendingUp,
-      title: "追踪进度",
+      title: t("追踪进度"),
       titleSwahili: "Fuatilia Maendeleo",
-      description: "查看详细的学习数据，见证自己的成长和进步"
+      description: t("查看详细的学习数据，见证自己的成长和进步")
     }
   ];
 
@@ -36,9 +38,9 @@ export function HowItWorks() {
     <section className="py-12 md:py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center mb-12 md:mb-16 space-y-4">
-          <h2 className="text-3xl md:text-4xl font-bold">如何开始学习</h2>
+          <h2 className="text-3xl md:text-4xl font-bold">{t("如何开始学习")}</h2>
           <p className="text-lg md:text-xl text-muted-foreground">
-            四步开启你的斯瓦希里语学习之旅
+            {t("四步开启你的斯瓦希里语学习之旅")}
           </p>
         </div>
 

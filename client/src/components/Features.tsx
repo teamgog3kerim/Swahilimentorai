@@ -3,31 +3,33 @@ import { MessageSquare, Volume2, BarChart3 } from "lucide-react";
 import aiChatImage from "@assets/generated_images/AI_chat_conversation_illustration_78dac1fe.png";
 import audioImage from "@assets/generated_images/Audio_waveform_with_text_0eb0f4a7.png";
 import progressImage from "@assets/generated_images/Progress_dashboard_illustration_8eda0ee7.png";
+import { useLocale } from "@/lib/i18n";
 
 export function Features() {
+  const { t } = useLocale();
   const features = [
     {
       icon: MessageSquare,
       image: aiChatImage,
-      title: "AI会话练习",
+      title: t("AI会话练习"),
       titleSwahili: "Mazoezi ya Mazungumzo",
-      description: "与AI导师进行真实对话，即时获得反馈和纠正，提升口语能力",
+      description: t("与AI导师进行真实对话，即时获得反馈和纠正，提升口语能力"),
       color: "text-primary"
     },
     {
       icon: Volume2,
       image: audioImage,
-      title: "音频+文字学习",
+      title: t("音频+文字学习"),
       titleSwahili: "Sauti na Maandishi",
-      description: "每节课都包含标准发音音频和文字对照，同时提升听力和阅读能力",
+      description: t("每节课都包含标准发音音频和文字对照，同时提升听力和阅读能力"),
       color: "text-chart-2"
     },
     {
       icon: BarChart3,
       image: progressImage,
-      title: "学习进度追踪",
+      title: t("学习进度追踪"),
       titleSwahili: "Ufuatiliaji wa Maendeleo",
-      description: "详细的学习数据分析，帮助你了解自己的进步和需要改进的地方",
+      description: t("详细的学习数据分析，帮助你了解自己的进步和需要改进的地方"),
       color: "text-chart-3"
     }
   ];
@@ -36,9 +38,9 @@ export function Features() {
     <section className="py-12 md:py-16 lg:py-20 bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center mb-12 md:mb-16 space-y-4">
-          <h2 className="text-3xl md:text-4xl font-bold">为什么选择我们</h2>
+          <h2 className="text-3xl md:text-4xl font-bold">{t("为什么选择我们")}</h2>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            结合AI技术和语言教学的最佳实践，打造高效的学习体验
+            {t("结合AI技术和语言教学的最佳实践，打造高效的学习体验")}
           </p>
         </div>
 

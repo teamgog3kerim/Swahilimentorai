@@ -3,13 +3,15 @@ import { CheckCircle2 } from "lucide-react";
 import heroImage from "@assets/generated_images/Chinese_learners_using_Swahili_app_148614f4.png";
 import { ShareButton } from "@/components/ShareButton";
 import { Link } from "wouter";
+import { useLocale } from "@/lib/i18n";
 
 export function Hero() {
+  const { t } = useLocale();
   const features = [
-    "AI导师24/7随时练习",
-    "初级、中级、高级课程",
-    "音频+文字双重教学",
-    "个性化学习进度追踪"
+    t("AI导师24/7随时练习"),
+    t("初级、中级、高级课程"),
+    t("音频+文字双重教学"),
+    t("个性化学习进度追踪")
   ];
 
   return (
@@ -21,14 +23,14 @@ export function Hero() {
           <div className="space-y-6 md:space-y-8">
             <div className="space-y-4">
               <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                用AI学习
-                <span className="text-primary block mt-2">斯瓦希里语</span>
+                {t("用AI学习")}
+                <span className="text-primary block mt-2">{t("斯瓦希里语")}</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
                 Jifunze Kiswahili na AI
               </p>
               <p className="text-base md:text-lg text-foreground/80">
-                专为中文母语者设计的AI语言学习平台，让你轻松掌握斯瓦希里语的听说读写
+                {t("专为中文母语者设计的AI语言学习平台，让你轻松掌握斯瓦希里语的听说读写")}
               </p>
             </div>
 
@@ -48,7 +50,7 @@ export function Hero() {
                 data-testid="button-start-free"
                 asChild
               >
-                <Link href="/signup">免费注册开始学习</Link>
+                <Link href="/signup">{t("免费注册开始学习")}</Link>
               </Button>
               <Button 
                 variant="outline" 
@@ -57,13 +59,13 @@ export function Hero() {
                 data-testid="button-view-pricing"
                 onClick={() => document.getElementById("pricing")?.scrollIntoView({ behavior: "smooth" })}
               >
-                查看定价
+                {t("查看定价")}
               </Button>
               <ShareButton variant="ghost" size="lg" className="text-base font-semibold" />
             </div>
 
             <p className="text-sm text-muted-foreground">
-              支持邮箱注册 • 7天免费试用 • 无需信用卡
+              {t("支持邮箱注册 • 7天免费试用 • 无需信用卡")}
             </p>
           </div>
 

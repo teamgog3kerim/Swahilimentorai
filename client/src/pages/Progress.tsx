@@ -5,8 +5,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserProgress, Lesson } from "@shared/schema";
+import { useLocale } from "@/lib/i18n";
 
 export default function ProgressPage() {
+  const { language, t } = useLocale();
   const { data: progress, isLoading: progressLoading } = useQuery<UserProgress[]>({
     queryKey: ["/api/progress"],
   });
@@ -43,25 +45,25 @@ export default function ProgressPage() {
 
   const stats = [
     {
-      title: "已完成课程",
+      title: t("已完成课程"),
       value: completedLessons.length.toString(),
       icon: BookOpen,
       color: "text-blue-600",
     },
     {
-      title: "学习天数",
+      title: t("学习天数"),
       value: "7",
       icon: Flame,
       color: "text-orange-600",
     },
     {
-      title: "练习次数",
+      title: t("练习次数"),
       value: "0",
       icon: MessageSquare,
       color: "text-green-600",
     },
     {
-      title: "成就徽章",
+      title: t("成就徽章"),
       value: "3",
       icon: Trophy,
       color: "text-purple-600",
@@ -69,16 +71,16 @@ export default function ProgressPage() {
   ];
 
   const levels = [
-    { id: "beginner", name: "初学者", nameSwahili: "Mwanzo" },
-    { id: "intermediate", name: "中级", nameSwahili: "Kati" },
-    { id: "advanced", name: "高级", nameSwahili: "Juu" },
+    { id: "beginner", name: t("初学者"), nameSwahili: "Mwanzo" },
+    { id: "intermediate", name: t("中级"), nameSwahili: "Kati" },
+    { id: "advanced", name: t("高级"), nameSwahili: "Juu" },
   ];
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto" data-testid="page-progress">
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">学习进度</h1>
-        <p className="text-muted-foreground text-lg">追踪你的学习成果</p>
+        <h1 className="text-4xl md:text-5xl font-bold mb-2">{t("学习进度")}</h1>
+        <p className="text-muted-foreground text-lg">{t("追踪你的学习成果")}</p>
       </div>
 
       {isLoading ? (
@@ -120,13 +122,13 @@ export default function ProgressPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>总体进度</CardTitle>
+              <CardTitle>{t("总体进度")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    已完成 {completedLessons.length} / {totalLessons} 课程
+                    {t("已完成")} {completedLessons.length} / {totalLessons} {t("课程")}
                   </span>
                   <span className="font-semibold">{completionRate.toFixed(0)}%</span>
                 </div>
@@ -137,7 +139,7 @@ export default function ProgressPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>各级别进度</CardTitle>
+              <CardTitle>{t("各级别进度")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {levels.map((level) => {
@@ -169,7 +171,7 @@ export default function ProgressPage() {
           {recentLessons && recentLessons.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>最近学习</CardTitle>
+                <CardTitle>{t("最近学习")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -180,12 +182,12 @@ export default function ProgressPage() {
                       data-testid={`recent-lesson-${idx}`}
                     >
                       <div className="flex-1">
-                        <p className="font-medium">{item.lesson?.titleSwahili}</p>
-                        <p className="text-sm text-muted-foreground">{item.lesson?.titleChinese}</p>
+                        <p className="font-medium">{language === "en" ? item.lesson?.title : item.lesson?.titleSwahili}</p>
+                        <p className="text-sm text-muted-foreground">{language === "en" ? item.lesson?.titleSwahili : item.lesson?.titleChinese}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge variant={item.progress.completed ? "default" : "secondary"}>
-                          {item.progress.completed ? "已完成" : "学习中"}
+                          {item.progress.completed ? t("已完成") : t("学习中")}
                         </Badge>
                         <Clock className="w-4 h-4 text-muted-foreground" />
                       </div>
@@ -198,17 +200,17 @@ export default function ProgressPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>成就徽章</CardTitle>
+              <CardTitle>{t("成就徽章")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
                 {[
-                  { name: "初学者", unlocked: true },
-                  { name: "坚持者", unlocked: true },
-                  { name: "对话者", unlocked: true },
-                  { name: "中级达人", unlocked: false },
-                  { name: "高级大师", unlocked: false },
-                  { name: "全能学霸", unlocked: false },
+                  { name: t("初学者"), unlocked: true },
+                  { name: t("坚持者"), unlocked: true },
+                  { name: t("对话者"), unlocked: true },
+                  { name: t("中级达人"), unlocked: false },
+                  { name: t("高级大师"), unlocked: false },
+                  { name: t("全能学霸"), unlocked: false },
                 ].map((badge, idx) => (
                   <div
                     key={idx}

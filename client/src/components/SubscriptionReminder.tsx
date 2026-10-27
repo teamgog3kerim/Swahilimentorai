@@ -4,6 +4,7 @@ import { AlertCircle, Clock, Crown, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { User } from "@shared/schema";
+import { useLocale } from "@/lib/i18n";
 
 interface SubscriptionReminderProps {
   user: User;
@@ -58,6 +59,7 @@ function getReminderType(user: User): ReminderType {
 }
 
 export function SubscriptionReminder({ user, onUpgrade }: SubscriptionReminderProps) {
+  const { t } = useLocale();
   const [dismissed, setDismissed] = useState(false);
   
   // Admins don't need subscription reminders - they have full access
@@ -90,41 +92,41 @@ export function SubscriptionReminder({ user, onUpgrade }: SubscriptionReminderPr
     trial_expiring_soon: {
       variant: "default",
       icon: Clock,
-      title: "试用期即将结束",
-      description: `您的7天免费试用还剩 ${daysLeft} 天。订阅后可无限制练习对话。`,
-      buttonText: "立即订阅",
+      title: t("试用期即将结束"),
+      description: `${t("您的7天免费试用还剩")} ${daysLeft} ${t("天。订阅后可无限制练习对话。")}`,
+      buttonText: t("立即订阅"),
       canDismiss: true,
     },
     trial_expiring_today: {
       variant: "destructive",
       icon: AlertCircle,
-      title: "试用期今天到期",
-      description: `您的免费试用将在 ${hoursLeft} 小时内结束。立即订阅以继续学习。`,
-      buttonText: "立即订阅",
+      title: t("试用期今天到期"),
+      description: `${t("您的免费试用将在")} ${hoursLeft} ${t("小时内结束。立即订阅以继续学习。")}`,
+      buttonText: t("立即订阅"),
       canDismiss: false,
     },
     trial_expired: {
       variant: "destructive",
       icon: AlertCircle,
-      title: "试用期已结束",
-      description: "您的7天免费试用已结束。订阅以继续无限制练习和访问所有课程。",
-      buttonText: "订阅继续学习",
+      title: t("试用期已结束"),
+      description: t("您的7天免费试用已结束。订阅以继续无限制练习和访问所有课程。"),
+      buttonText: t("订阅继续学习"),
       canDismiss: false,
     },
     subscription_expiring: {
       variant: "default",
       icon: Crown,
-      title: "订阅即将到期",
-      description: `您的高级订阅还剩 ${subDaysLeft} 天。续订以保持无限制访问。`,
-      buttonText: "续订",
+      title: t("订阅即将到期"),
+      description: `${t("您的高级订阅还剩")} ${subDaysLeft} ${t("天。续订以保持无限制访问。")}`,
+      buttonText: t("续订"),
       canDismiss: true,
     },
     subscription_expired: {
       variant: "destructive",
       icon: AlertCircle,
-      title: "订阅已过期",
-      description: "您的高级订阅已过期。续订以继续无限制访问所有功能。",
-      buttonText: "立即续订",
+      title: t("订阅已过期"),
+      description: t("您的高级订阅已过期。续订以继续无限制访问所有功能。"),
+      buttonText: t("立即续订"),
       canDismiss: false,
     },
   };

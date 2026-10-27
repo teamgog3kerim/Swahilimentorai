@@ -263,6 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { sessionId, content } = validation.data;
+      const responseLanguage = req.body?.language === "en" ? "English" : "Chinese";
 
       // Check if premium subscription is expired (server-side validation)
       // Admins have full access without subscription
@@ -300,7 +301,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         advanced: "高级 (advanced)"
       };
 
-      const systemPrompt = `你是一位耐心的斯瓦希里语老师，专门为中国学习者提供帮助。学生目前处于${levelDescriptions[session.level as keyof typeof levelDescriptions] || session.level}水平。
+      const systemPrompt = responseLanguage === "English" ? `You are a patient Swahili teacher helping English-speaking learners. The student is currently at ${session.level} level.
+
+Follow these rules:
+1. Respond primarily in Swahili with English translations in parentheses
+2. Adjust your language complexity based on the student's level
+3. Be encouraging and supportive when correcting mistakes
+4. Provide clear explanations and examples in English
+5. Keep the conversation natural and interactive
+6. If the student asks in English, respond in Swahili with English translations`
+      : `你是一位耐心的斯瓦希里语老师，专门为中文学习者提供帮助。学生目前处于${levelDescriptions[session.level as keyof typeof levelDescriptions] || session.level}水平。
 
 请遵循以下规则：
 1. 主要用斯瓦希里语回应，并在括号中提供中文翻译
@@ -308,17 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 3. 纠正错误时要鼓励和支持
 4. 提供清晰的解释和例子
 5. 保持对话自然和互动
-6. 如果学生用中文提问，用斯瓦希里语回答并提供中文翻译
+6. 如果学生用中文提问，用斯瓦希里语回答并提供中文翻译`;
 
-You are a patient Swahili teacher helping Chinese learners. The student is currently at ${session.level} level.
-
-Follow these rules:
-1. Respond primarily in Swahili with Chinese translations in parentheses
-2. Adjust your language complexity based on the student's level
-3. Be encouraging and supportive when correcting mistakes
-4. Provide clear explanations and examples
-5. Keep the conversation natural and interactive
-6. If the student asks in Chinese, respond in Swahili with Chinese translations`;
 
       // Build messages array for OpenAI
       const messages: any[] = [

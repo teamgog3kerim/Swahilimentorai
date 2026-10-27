@@ -15,8 +15,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { ChatSession, ChatMessage, User } from "@shared/schema";
 import { differenceInDays, formatDistanceToNow } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { enUS, zhCN } from "date-fns/locale";
 import { Link } from "wouter";
+import { useLocale } from "@/lib/i18n";
 
 const LEVELS = [
   { id: "beginner", name: "初学者", nameSwahili: "Mwanzo", icon: GraduationCap, color: "bg-green-500" },
@@ -35,6 +36,7 @@ const QUICK_REPLIES = [
 
 export default function Practice() {
   const { user } = useAuth() as { user: User | null };
+  const { language, t } = useLocale();
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -72,8 +74,8 @@ export default function Practice() {
         return;
       }
       toast({
-        title: "创建会话失败",
-        description: "请稍后重试",
+        title: t("创建会话失败"),
+        description: t("请稍后重试"),
         variant: "destructive",
       });
     },
@@ -84,6 +86,7 @@ export default function Practice() {
       const res = await apiRequest("POST", "/api/chat/message", {
         sessionId: currentSessionId,
         content,
+        language,
       });
       return res.json();
     },
@@ -99,8 +102,8 @@ export default function Practice() {
         setShowUpgradeModal(true);
       } else {
         toast({
-          title: "错误",
-          description: error.message || "发送消息失败",
+          title: t("错误"),
+          description: error.message || t("发送消息失败"),
           variant: "destructive",
         });
       }
@@ -164,7 +167,7 @@ export default function Practice() {
   // Admins have full access without subscription
   const isAdmin = user?.isAdmin === true;
   const isPremium = isAdmin || (user?.isPremium && !isExpired);
-  const remainingPractices = isPremium ? "无限" : Math.max(0, 10 - practiceCount);
+  const remainingPractices = isPremium ? t("无限") : Math.max(0, 10 - practiceCount);
 
   return (
     <div className="h-full flex flex-col" data-testid="page-practice">
@@ -172,8 +175,8 @@ export default function Practice() {
         <div className="px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div>
-              <h1 className="text-2xl font-bold">AI 练习</h1>
-              <p className="text-sm text-muted-foreground">与AI老师练习斯瓦希里语对话</p>
+              <h1 className="text-2xl font-bold">{t("AI 练习")}</h1>
+              <p className="text-sm text-muted-foreground">{t("与AI老师练习斯瓦希里语对话")}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -181,7 +184,7 @@ export default function Practice() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2" data-testid="button-level-select">
                   <currentLevelInfo.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{currentLevelInfo.name}</span>
+                  <span className="hidden sm:inline">{t(currentLevelInfo.name)}</span>
                   <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -193,7 +196,7 @@ export default function Practice() {
                     data-testid={`menu-level-${level.id}`}
                   >
                     <level.icon className="w-4 h-4 mr-2" />
-                    {level.name} ({level.nameSwahili})
+                    {t(level.name)} ({level.nameSwahili})
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -208,13 +211,13 @@ export default function Practice() {
             </Button>
             <div className="flex items-center gap-2 pl-2 border-l">
               <div className="text-right">
-                <p className="text-xs text-muted-foreground">剩余</p>
+                <p className="text-xs text-muted-foreground">{t("剩余")}</p>
                 <p className="text-sm font-bold" data-testid="text-practice-count">
                   {remainingPractices}
                 </p>
               </div>
               <Badge variant={isPremium ? "default" : "secondary"} data-testid="badge-subscription-status">
-                {isPremium ? "高级" : "免费"}
+                {isPremium ? t("高级会员") : t("免费")}
               </Badge>
             </div>
           </div>
@@ -225,12 +228,12 @@ export default function Practice() {
         <div className="px-4 md:px-6 pt-4">
           <Alert variant="destructive" data-testid="alert-subscription-expired">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>订阅已过期</AlertTitle>
+            <AlertTitle>{t("订阅已过期")}</AlertTitle>
             <AlertDescription className="flex items-center justify-between">
-              <span>你的高级订阅已过期，现在使用免费版限制（10次练习）。</span>
+              <span>{t("你的高级订阅已过期，现在使用免费版限制（10次练习）。")}</span>
               <Link href="/subscription">
                 <Button variant="outline" size="sm" className="ml-4">
-                  续费订阅
+                  {t("续费订阅")}
                 </Button>
               </Link>
             </AlertDescription>
@@ -244,7 +247,7 @@ export default function Practice() {
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
                 <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-muted-foreground">加载中...</p>
+                  <p className="text-muted-foreground">{t("加载中...")}</p>
               </div>
             </div>
           ) : session?.messages && session.messages.length > 0 ? (
@@ -303,8 +306,8 @@ export default function Practice() {
                 <CardContent className="pt-6 text-center space-y-6">
                   <div>
                     <Bot className="w-16 h-16 mx-auto mb-4 text-primary" />
-                    <h2 className="text-xl font-bold mb-2">Karibu! 欢迎来到AI练习</h2>
-                    <p className="text-muted-foreground">选择一个级别开始与AI老师对话</p>
+                    <h2 className="text-xl font-bold mb-2">{t("Karibu! 欢迎来到AI练习")}</h2>
+                    <p className="text-muted-foreground">{t("选择一个级别开始与AI老师对话")}</p>
                   </div>
                   <div className="grid gap-3">
                     {LEVELS.map((level) => (
@@ -320,7 +323,7 @@ export default function Practice() {
                           <level.icon className="w-5 h-5 text-white" />
                         </div>
                         <div className="text-left">
-                          <p className="font-medium">{level.name}</p>
+                          <p className="font-medium">{t(level.name)}</p>
                           <p className="text-xs text-muted-foreground">{level.nameSwahili}</p>
                         </div>
                       </Button>
@@ -334,7 +337,7 @@ export default function Practice() {
                       data-testid="button-view-history"
                     >
                       <History className="w-4 h-4" />
-                      查看历史会话 ({sessions.length})
+                      {t("查看历史会话")} ({sessions.length})
                     </Button>
                   )}
                 </CardContent>
@@ -345,8 +348,8 @@ export default function Practice() {
               <Card className="max-w-md">
                 <CardContent className="pt-6 text-center">
                   <Bot className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-2">开始与AI老师对话</p>
-                  <p className="text-sm text-muted-foreground">尝试用斯瓦希里语或中文打招呼</p>
+                  <p className="text-muted-foreground mb-2">{t("开始与AI老师对话")}</p>
+                  <p className="text-sm text-muted-foreground">{t("尝试用斯瓦希里语或中文打招呼")}</p>
                 </CardContent>
               </Card>
             </div>
@@ -366,7 +369,7 @@ export default function Practice() {
                   className="text-xs"
                   data-testid={`button-quick-${idx}`}
                 >
-                  {reply.text} <span className="text-muted-foreground ml-1">({reply.translation})</span>
+                  {reply.text} <span className="text-muted-foreground ml-1">({t(reply.translation)})</span>
                 </Button>
               ))}
             </div>
@@ -376,7 +379,7 @@ export default function Practice() {
               ref={inputRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={currentSessionId ? "输入你的消息..." : "请先选择级别开始对话"}
+              placeholder={currentSessionId ? t("输入你的消息...") : t("请先选择级别开始对话")}
               disabled={sendMessageMutation.isPending || !currentSessionId}
               className="flex-1"
               data-testid="input-message"
@@ -397,34 +400,34 @@ export default function Practice() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-primary" />
-              升级到高级会员
+              {t("升级到高级会员")}
             </DialogTitle>
             <DialogDescription>
-              你已达到免费练习次数上限（10次）
+              {t("你已达到免费练习次数上限（10次）")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <p>升级到高级会员可以获得：</p>
+            <p>{t("升级到高级会员可以获得：")}</p>
             <ul className="space-y-2 ml-4">
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
-                <span>无限次AI对话练习</span>
+                <span>{t("无限次AI对话练习")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
-                <span>访问所有课程级别</span>
+                <span>{t("访问所有课程级别")}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">✓</span>
-                <span>离线模式</span>
+                <span>{t("离线模式")}</span>
               </li>
             </ul>
             <div className="flex gap-3 pt-4">
               <Button onClick={() => setShowUpgradeModal(false)} variant="outline" className="flex-1">
-                稍后
+                {t("稍后")}
               </Button>
               <Button onClick={() => window.location.hash = "subscription"} className="flex-1" data-testid="button-upgrade-now">
-                立即升级
+                {t("立即升级")}
               </Button>
             </div>
           </div>
@@ -436,10 +439,10 @@ export default function Practice() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="w-5 h-5" />
-              历史会话
+              {t("历史会话")}
             </DialogTitle>
             <DialogDescription>
-              继续之前的对话或开始新对话
+              {t("继续之前的对话或开始新对话")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -455,7 +458,7 @@ export default function Practice() {
                   data-testid={`button-new-${level.id}`}
                 >
                   <Plus className="w-3 h-3" />
-                  {level.name}
+                  {t(level.name)}
                 </Button>
               ))}
             </div>
@@ -477,14 +480,14 @@ export default function Practice() {
                         </div>
                         <div className="text-left flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {levelInfo.name} 练习
+                            {t(levelInfo.name)} {t("练习")}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {s.createdAt ? formatDistanceToNow(new Date(s.createdAt), { addSuffix: true, locale: zhCN }) : ""}
+                            {s.createdAt ? formatDistanceToNow(new Date(s.createdAt), { addSuffix: true, locale: language === "en" ? enUS : zhCN }) : ""}
                           </p>
                         </div>
                         {currentSessionId === s.id && (
-                          <Badge variant="outline" className="text-xs">当前</Badge>
+                          <Badge variant="outline" className="text-xs">{t("当前")}</Badge>
                         )}
                       </Button>
                     );
@@ -492,7 +495,7 @@ export default function Practice() {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <History className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">暂无历史会话</p>
+                    <p className="text-sm">{t("暂无历史会话")}</p>
                   </div>
                 )}
               </div>
