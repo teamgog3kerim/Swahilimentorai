@@ -9,40 +9,58 @@ import { APP_SLOGAN } from "@/lib/brand";
 export function Hero() {
   const { t } = useLocale();
   const features = [
-    t("互动练习与随堂自测"),
-    t("初级、中级、高级课程"),
-    t("字母、词汇、数字和情景对话"),
-    t("个性化学习进度追踪")
+    t("从字母到日常对话，循序渐进地学习"),
+    t("互动练习与随堂自测，边学边巩固"),
+    t("中文界面配有汉字近似读音提示"),
+    t("两种语言的学习进度分别保存")
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center pt-16 md:pt-20">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/5" />
-      
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12 md:py-16 lg:py-20 relative">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-          <div className="space-y-6 md:space-y-8">
-            <div className="space-y-4">
-              <p className="text-sm font-medium text-primary" data-testid="brand-slogan">{APP_SLOGAN}</p>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                {t("学习")}
-                <span className="text-primary block mt-2">{t("阿姆哈拉语与斯瓦希里语")}</span>
-              </h1>
-              <p className="text-lg md:text-xl text-muted-foreground">
-                አማርኛ · Kiswahili
+    <section className="relative isolate flex min-h-[100dvh] items-center overflow-hidden bg-background pt-16 md:pt-20">
+      <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.09] via-background to-accent/[0.12]" />
+        <div className="absolute -right-28 top-10 h-80 w-80 rounded-full bg-primary/[0.08] blur-3xl md:h-[30rem] md:w-[30rem]" />
+        <div className="absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-accent/[0.12] blur-3xl" />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      </div>
+
+      <div className="relative mx-auto w-full max-w-7xl px-4 py-12 md:px-6 md:py-16 lg:px-8 lg:py-20">
+        <div className="grid items-center gap-10 md:grid-cols-[1.04fr_0.96fr] md:gap-12 lg:gap-16">
+          <div className="space-y-7 md:space-y-8">
+            <div className="space-y-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary md:text-sm" data-testid="brand-slogan">{APP_SLOGAN}</p>
+              <div className="space-y-3">
+                <h1 className="max-w-2xl text-4xl font-bold leading-[1.12] tracking-tight text-foreground [text-wrap:balance] md:text-5xl lg:text-[3.5rem]">
+                  {t("学习")}
+                  <span className="mt-2 block text-primary">{t("阿姆哈拉语与斯瓦希里语")}</span>
+                </h1>
+                <p className="text-lg font-medium tracking-wide text-foreground/75 md:text-xl">
+                  አማርኛ · Kiswahili
+                </p>
+              </div>
+              <p className="max-w-xl text-base leading-7 text-muted-foreground md:text-lg md:leading-8">
+                {t("选择中文或英语界面，按自己的节奏，从字母、单词和数字学到日常对话。")}
               </p>
-              <p className="text-base md:text-lg text-foreground/80">
-                {t("为中文和英语使用者提供阿姆哈拉语与斯瓦希里语课程，从字母和词汇到数字与真实场景对话。")}
-              </p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-background/65 px-3.5 py-2 text-sm text-foreground/80 shadow-sm backdrop-blur-sm">
+                <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                <span>{t("界面语言可选中文或英语")}</span>
+              </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {features.map((feature, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span className="text-base">{feature}</span>
+                <div key={index} className="flex items-start gap-3.5 rounded-xl border border-primary/[0.08] bg-background/50 px-3.5 py-3 transition-transform duration-200 hover:translate-x-1 motion-reduce:transition-none motion-reduce:hover:translate-x-0">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" aria-hidden="true" />
+                  <span className="text-sm leading-6 text-foreground/85 md:text-base">{feature}</span>
                 </div>
               ))}
+            </div>
+
+            <div className="border-l-2 border-primary/30 pl-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{t("开始很简单")}</p>
+              <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                {t("切换界面语言，选择阿姆哈拉语或斯瓦希里语，再从课程与练习开始。")}
+              </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -67,7 +85,7 @@ export function Hero() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              {t("支持邮箱注册 • 7天免费试用 • 无需信用卡")}
+              {t("注册后即可选择学习语言；引导课程与自测无需连接实时 AI。")}
             </p>
           </div>
 
