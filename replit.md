@@ -5,6 +5,7 @@ This project is a **Swahili AI Tutor**, a language learning platform for Chinese
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Chinese is the primary/default interface. English is optional and should only be enabled when a user selects it; keep their selection saved for later visits.
 
 ## System Architecture
 
