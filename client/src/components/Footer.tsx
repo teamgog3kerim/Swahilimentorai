@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { GraduationCap, Coins } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
+import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 
 export function Footer() {
   const { language, t } = useLocale();
@@ -24,8 +25,8 @@ export function Footer() {
             <div className="flex items-center gap-2">
               <GraduationCap className="h-8 w-8 text-primary" />
               <div className="flex flex-col">
-                <span className="font-bold text-lg">{t("语言学堂")}</span>
-                <span className="text-xs text-muted-foreground">{t("阿姆哈拉语与斯瓦希里语")}</span>
+                <span className="font-bold text-lg">{APP_NAME}</span>
+                <span className="text-xs text-muted-foreground">{APP_SLOGAN}</span>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -69,7 +70,7 @@ export function Footer() {
             </div>
           </div>
           <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Language Academy. {t("保留所有权利。")}
+            © {new Date().getFullYear()} {APP_NAME}. {t("保留所有权利。")}
           </p>
         </div>
       </div>

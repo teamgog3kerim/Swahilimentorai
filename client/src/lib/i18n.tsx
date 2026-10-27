@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { APP_NAME, APP_SLOGAN, APP_TITLE } from "./brand";
 
 export type Language = "zh" | "en";
 
 const translations: Record<string, string> = JSON.parse(String.raw`{
-  "语言学堂": "Language Academy",
+  "Afri Panda": "Afri Panda",
   "四步开始您的语言学习之旅": "Start your language learning journey in four steps",
-  "欢迎加入语言学堂！您可以选择阿姆哈拉语或斯瓦希里语。": "Welcome to Language Academy! Choose Amharic or Swahili to get started.",
+  "欢迎加入 Afri Panda！您可以选择阿姆哈拉语或斯瓦希里语。": "Welcome to Afri Panda! Choose Amharic or Swahili to get started.",
   "阿姆哈拉语与斯瓦希里语": "Amharic & Swahili",
   "多语言学习账户": "Language learning account",
   "登录您的语言学习账户": "Log in to your language learning account",
@@ -175,7 +176,7 @@ const translations: Record<string, string> = JSON.parse(String.raw`{
   "登录失败": "Sign-in failed",
   "请检查您的邮箱和密码": "Check your email and password and try again.",
   "注册成功": "Account created",
-  "欢迎加入斯瓦希里语学习平台！您已获得7天免费试用。": "Welcome to Swahili AI! Your 7-day free trial is ready.",
+  "欢迎加入斯瓦希里语学习平台！您已获得7天免费试用。": "Welcome to Afri Panda! Your 7-day free trial is ready.",
   "注册失败": "Sign-up failed",
   "请稍后重试": "Please try again.",
   "您有": "You have",
@@ -257,7 +258,7 @@ const translations: Record<string, string> = JSON.parse(String.raw`{
   "每周获取免费斯瓦希里语学习资料": "Get free Swahili learning resources every week.",
   "支付由Binance Pay提供": "Payments powered by Binance Pay",
   "四步开启你的斯瓦希里语学习之旅": "Start your Swahili learning journey in four steps.",
-  "欢迎加入斯瓦希里语学习平台！您已获得7天免费试用。": "Welcome to Swahili AI! Your 7-day free trial is ready.",
+  "欢迎加入斯瓦希里语学习平台！您已获得7天免费试用。": "Welcome to Afri Panda! Your 7-day free trial is ready.",
   "新用户可享受7天免费试用。": "New learners get a 7-day free trial.",
   "我正在": "I am",
   "笔待验证的支付，请及时处理": "payment(s) need verification.",
@@ -550,14 +551,12 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = language === "en" ? "en" : "zh-CN";
-    document.title = language === "en"
-      ? "Swahili AI Tutor — Learn Swahili with AI"
-      : "Swahili AI Tutor - 斯瓦希里语AI学习平台";
+    document.title = APP_TITLE;
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (description) {
       description.content = language === "en"
-        ? "An AI-powered Swahili learning platform with conversation practice, audio lessons, and courses for every level."
-        : "专为中文母语者设计的斯瓦希里语AI学习平台。使用AI导师进行会话练习，包含音频和文本教学。";
+        ? `${APP_NAME} — ${APP_SLOGAN}. Learn Amharic or Swahili with interactive lessons in Chinese or English.`
+        : `${APP_NAME} — ${APP_SLOGAN}。用中文或英语学习阿姆哈拉语与斯瓦希里语。`;
     }
   }, [language]);
 

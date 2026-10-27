@@ -32,6 +32,7 @@ import Subscription from "@/pages/Subscription";
 import Admin from "@/pages/Admin";
 import type { User } from "@shared/schema";
 import { useLocale } from "@/lib/i18n";
+import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { TrackProvider, useTrack } from "@/contexts/TrackContext";
 import { TrackChooser } from "@/components/learning/TrackChooser";
@@ -112,8 +113,11 @@ function DashboardContent() {
       <Sidebar>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-              {t("语言学堂")}
+            <SidebarGroupLabel className="h-auto px-4 py-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-lg font-bold">{APP_NAME}</span>
+                <span className="text-xs leading-relaxed text-muted-foreground">{APP_SLOGAN}</span>
+              </div>
             </SidebarGroupLabel>
             <Separator />
             <SidebarGroupContent className="mt-4">
@@ -183,7 +187,7 @@ function DashboardContent() {
           <SidebarTrigger className="md:hidden" data-testid="button-sidebar-toggle">
             <Menu className="w-5 h-5" />
           </SidebarTrigger>
-            <span className="font-semibold text-sm sm:text-base min-w-0 flex-1 truncate">{t("语言学堂")}{track ? ` · ${track === "amharic" ? (language === "en" ? "Amharic" : "阿姆哈拉语") : (language === "en" ? "Swahili" : "斯瓦希里语")}` : ""}</span>
+            <span className="font-semibold text-sm sm:text-base min-w-0 flex-1 truncate">{APP_NAME}{track ? ` · ${track === "amharic" ? (language === "en" ? "Amharic" : "阿姆哈拉语") : (language === "en" ? "Swahili" : "斯瓦希里语")}` : ""}</span>
           <div className="shrink-0"><LanguageToggle /></div>
             {track && <Button variant="outline" size="sm" onClick={() => setTrack(track === "amharic" ? "swahili" : "amharic")} data-testid="button-switch-language">
               {track === "amharic" ? (language === "en" ? "Switch to Swahili" : "切换到斯瓦希里语") : (language === "en" ? "Switch to Amharic" : "切换到阿姆哈拉语")}

@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useLocale } from "@/lib/i18n";
+import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
@@ -82,6 +83,8 @@ export default function Login() {
             <CardTitle className="text-2xl" data-testid="text-login-title">{t("登录")}</CardTitle>
           </div>
           <CardDescription>
+            <span className="mb-1 block font-semibold text-foreground">{APP_NAME}</span>
+            <span className="mb-3 block text-xs">{APP_SLOGAN}</span>
             {t("登录您的语言学习账户")}
           </CardDescription>
         </CardHeader>

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useLocale } from "@/lib/i18n";
+import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
@@ -55,7 +56,7 @@ export default function Signup() {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: t("注册成功"),
-        description: t("欢迎加入语言学堂！您可以选择阿姆哈拉语或斯瓦希里语。"),
+        description: t("欢迎加入 Afri Panda！您可以选择阿姆哈拉语或斯瓦希里语。"),
       });
       setLocation("/dashboard");
     } catch (error: any) {
@@ -87,6 +88,8 @@ export default function Signup() {
             <CardTitle className="text-2xl" data-testid="text-signup-title">{t("免费注册")}</CardTitle>
           </div>
           <CardDescription>
+            <span className="mb-1 block font-semibold text-foreground">{APP_NAME}</span>
+            <span className="mb-3 block text-xs">{APP_SLOGAN}</span>
             {t("创建账户，选择您想学的语言")}
           </CardDescription>
         </CardHeader>

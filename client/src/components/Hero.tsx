@@ -4,6 +4,7 @@ import heroImage from "@assets/generated_images/Chinese_learners_using_Swahili_a
 import { ShareButton } from "@/components/ShareButton";
 import { Link } from "wouter";
 import { useLocale } from "@/lib/i18n";
+import { APP_SLOGAN } from "@/lib/brand";
 
 export function Hero() {
   const { t } = useLocale();
@@ -22,6 +23,7 @@ export function Hero() {
         <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div className="space-y-6 md:space-y-8">
             <div className="space-y-4">
+              <p className="text-sm font-medium text-primary" data-testid="brand-slogan">{APP_SLOGAN}</p>
               <h1 className="text-4xl md:text-5xl font-bold leading-tight">
                 {t("学习")}
                 <span className="text-primary block mt-2">{t("阿姆哈拉语与斯瓦希里语")}</span>

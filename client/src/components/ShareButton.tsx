@@ -13,6 +13,7 @@ import { SiWechat, SiWhatsapp, SiX, SiTelegram, SiFacebook } from "react-icons/s
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useLocale } from "@/lib/i18n";
+import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 
 interface LearningProgress {
   completedLessons: number;
@@ -41,7 +42,9 @@ export function ShareButton({ variant = "default", size = "default", className =
     ? Math.round((progress.completedLessons / progress.totalLessons) * 100) 
     : 0;
 
-  const baseMessage = language === "en" ? `Learn Amharic or Swahili with me!
+  const baseMessage = language === "en" ? `${APP_NAME} — ${APP_SLOGAN}
+
+Learn Amharic or Swahili with me!
 
 - Choose a Chinese or English interface
 - Explore letters, vocabulary and numbers
@@ -51,7 +54,9 @@ export function ShareButton({ variant = "default", size = "default", className =
 Choose your learning path:
 ${appUrl}
 
-#Amharic #Swahili #LanguageLearning` : `一起来学习阿姆哈拉语或斯瓦希里语！
+#Amharic #Swahili #LanguageLearning` : `${APP_NAME} — ${APP_SLOGAN}
+
+一起来学习阿姆哈拉语或斯瓦希里语！
 
 - 自由选择中文或英语界面
 - 学习字母、词汇和数字
@@ -63,7 +68,9 @@ ${appUrl}
 
 #阿姆哈拉语 #斯瓦希里语 #语言学习`;
 
-  const progressMessage = progress ? (language === "en" ? `My language learning progress
+  const progressMessage = progress ? (language === "en" ? `${APP_NAME} — ${APP_SLOGAN}
+
+My language learning progress
 
 My learning progress:
 - Lessons completed: ${progress.completedLessons} / ${progress.totalLessons}
@@ -76,7 +83,9 @@ Learn Amharic or Swahili with a Chinese or English interface.
 Try it free:
 ${appUrl}
 
-#Amharic #Swahili #LanguageLearning #MyProgress` : `【分享语言学习成果】
+#Amharic #Swahili #LanguageLearning #MyProgress` : `${APP_NAME} — ${APP_SLOGAN}
+
+【分享语言学习成果】
 
 我的学习进度：
 - 已完成 ${progress.completedLessons} / ${progress.totalLessons} 节课程

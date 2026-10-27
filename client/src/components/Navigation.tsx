@@ -5,6 +5,7 @@ import { GraduationCap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/lib/i18n";
+import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 
 export function Navigation() {
   const { t } = useLocale();
@@ -13,10 +14,10 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           <Link href="/" className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-md px-2 py-1 -ml-2" data-testid="link-home">
-            <GraduationCap className="h-7 w-7 md:h-8 md:w-8 text-primary" />
+            <GraduationCap className="hidden sm:block h-7 w-7 md:h-8 md:w-8 text-primary shrink-0" />
             <div className="flex flex-col">
-              <span className="font-bold text-lg md:text-xl">{t("语言学堂")}</span>
-              <span className="text-xs text-muted-foreground hidden sm:block">አማርኛ · Kiswahili</span>
+              <span className="font-bold text-base md:text-xl whitespace-nowrap">{APP_NAME}</span>
+              <span className="max-w-56 text-[11px] leading-tight text-muted-foreground hidden lg:block">{APP_SLOGAN}</span>
             </div>
           </Link>
 

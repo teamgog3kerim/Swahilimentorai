@@ -1,7 +1,7 @@
-# Swahili Learning Platform for Chinese Speakers
+# Afri Panda
 
 ## Overview
-This project is a **Swahili AI Tutor**, a language learning platform for Chinese- and English-speaking learners. The app interface can be switched between Simplified Chinese and English, with the selection saved in the browser. It offers AI-powered conversational practice, structured lessons across three proficiency levels, and progress tracking. The platform operates on a freemium model with USDT-based payments.
+**Afri Panda** is an African language learning platform for Chinese- and English-speaking learners, with Amharic and Swahili courses. Its user-selected slogan is **“the African languages Academy for Chinese people”**. Keep the name and this English slogan consistent in both interfaces. The interface defaults to Simplified Chinese, with optional English saved in the browser. Guided lessons, conversations and self-checks work independently of optional live AI. The platform also supports progress tracking and manually reviewed USDT-based subscriptions.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

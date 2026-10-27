@@ -1,7 +1,7 @@
-const CACHE_NAME = 'language-academy-v7';
-const STATIC_CACHE = 'static-v6';
-const DYNAMIC_CACHE = 'dynamic-v6';
-const LESSONS_CACHE = 'lessons-v6';
+const CACHE_NAME = 'afri-panda-v8';
+const STATIC_CACHE = `${CACHE_NAME}-static`;
+const DYNAMIC_CACHE = `${CACHE_NAME}-dynamic`;
+const LESSONS_CACHE = `${CACHE_NAME}-lessons`;
 
 const STATIC_ASSETS = [
   '/',
