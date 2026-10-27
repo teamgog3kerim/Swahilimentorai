@@ -72,7 +72,7 @@ const translations: Record<string, string> = JSON.parse(String.raw`{
   "学员评价": "Learner stories",
   "学习者故事": "Learner stories",
   "阿姆哈拉语": "Amharic",
-  "阿姆哈拉语与斯瓦希里语的示例学习故事，并非经核实的学员评价。": "Illustrative Amharic and Swahili learner stories—not verified testimonials.",
+  "阿姆哈拉语与斯瓦希里语的示例学习故事。": "Illustrative Amharic and Swahili learner stories.",
   "我把斯瓦希里语问候语和日常会话结合练习，再通过随堂自测检查自己掌握了多少。": "I practise Swahili greetings and everyday conversations, then use the lesson quizzes to check my understanding.",
   "阿姆哈拉语课程从菲德尔字母开始，配合词汇卡片，让我能按自己的节奏练习阅读和问候语。": "I start with Amharic’s Fidel letters and use vocabulary cards to practise reading and greetings at my own pace.",
   "斯瓦希里语课程让我能按等级选择学习内容，回看之前的课程，并追踪自己的学习进度。": "I choose Swahili lessons by level, revisit earlier topics and follow my learning progress.",

@@ -46,7 +46,7 @@ export function Testimonials() {
         <div className="text-center mb-12 md:mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl font-bold">{t("学习者故事")}</h2>
           <p className="text-lg md:text-xl text-muted-foreground">
-            {t("阿姆哈拉语与斯瓦希里语的示例学习故事，并非经核实的学员评价。")}
+            {t("阿姆哈拉语与斯瓦希里语的示例学习故事。")}
           </p>
         </div>
 

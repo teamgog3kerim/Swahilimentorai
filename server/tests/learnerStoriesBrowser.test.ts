@@ -30,7 +30,9 @@ test("Learner stories cover both courses in Chinese and English on desktop and m
         await expect(section.locator('[lang="sw"]')).toHaveCount(2);
         await expect(section.getByText(locale === "en" ? "Amharic" : "阿姆哈拉语", { exact: true })).toHaveCount(2);
         await expect(section.getByText(locale === "en" ? "Swahili" : "斯瓦希里语", { exact: true })).toHaveCount(2);
-        await expect(section).toContainText(locale === "en" ? "not verified testimonials" : "并非经核实的学员评价");
+        await expect(section).toContainText(locale === "en" ? "Illustrative Amharic and Swahili learner stories." : "阿姆哈拉语与斯瓦希里语的示例学习故事。");
+        await expect(section).not.toContainText("not verified testimonials");
+        await expect(section).not.toContainText("并非经核实");
         await expect(section).toContainText(locale === "en" ? "Amharic’s Fidel letters" : "菲德尔字母");
         await expect(section).toContainText(locale === "en" ? "Amharic numbers" : "阿姆哈拉语数字");
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
