@@ -14,16 +14,16 @@ export function HowItWorks() {
     {
       number: "2",
       icon: Target,
-      title: t("选择级别"),
+      title: t("选择语言与级别"),
       titleSwahili: "Chagua Kiwango",
-      description: t("根据你的当前水平选择初级、中级或高级课程")
+      description: t("选择阿姆哈拉语或斯瓦希里语，并从适合您的级别开始")
     },
     {
       number: "3",
       icon: MessageCircle,
-      title: t("与AI练习"),
+      title: t("互动练习与随堂自测"),
       titleSwahili: "Fanya Mazoezi",
-      description: t("通过对话练习提升语言能力，AI导师即时给予反馈")
+      description: t("通过字母卡片、词汇翻卡和情景对话，在自己的节奏下练习")
     },
     {
       number: "4",
@@ -40,7 +40,7 @@ export function HowItWorks() {
         <div className="text-center mb-12 md:mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl font-bold">{t("如何开始学习")}</h2>
           <p className="text-lg md:text-xl text-muted-foreground">
-            {t("四步开启你的斯瓦希里语学习之旅")}
+            {t("四步开始您的语言学习之旅")}
           </p>
         </div>
 

@@ -8,9 +8,9 @@ import { useLocale } from "@/lib/i18n";
 export function Hero() {
   const { t } = useLocale();
   const features = [
-    t("AI导师24/7随时练习"),
+    t("互动练习与随堂自测"),
     t("初级、中级、高级课程"),
-    t("音频+文字双重教学"),
+    t("字母、词汇、数字和情景对话"),
     t("个性化学习进度追踪")
   ];
 
@@ -23,14 +23,14 @@ export function Hero() {
           <div className="space-y-6 md:space-y-8">
             <div className="space-y-4">
               <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                {t("用AI学习")}
-                <span className="text-primary block mt-2">{t("斯瓦希里语")}</span>
+                {t("学习")}
+                <span className="text-primary block mt-2">{t("阿姆哈拉语与斯瓦希里语")}</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground">
-                Jifunze Kiswahili na AI
+                አማርኛ · Kiswahili
               </p>
               <p className="text-base md:text-lg text-foreground/80">
-                {t("专为中文母语者设计的AI语言学习平台，让你轻松掌握斯瓦希里语的听说读写")}
+                {t("为中文和英语使用者提供阿姆哈拉语与斯瓦希里语课程，从字母和词汇到数字与真实场景对话。")}
               </p>
             </div>
 
@@ -73,7 +73,7 @@ export function Hero() {
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img 
                 src={heroImage} 
-                alt="Chinese learners using Swahili learning app" 
+                alt={t("阿姆哈拉语与斯瓦希里语")}
                 className="w-full h-auto"
               />
             </div>

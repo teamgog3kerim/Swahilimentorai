@@ -15,8 +15,8 @@ export function Navigation() {
           <Link href="/" className="flex items-center gap-2 hover-elevate active-elevate-2 rounded-md px-2 py-1 -ml-2" data-testid="link-home">
             <GraduationCap className="h-7 w-7 md:h-8 md:w-8 text-primary" />
             <div className="flex flex-col">
-              <span className="font-bold text-lg md:text-xl">Swahili AI</span>
-              <span className="text-xs text-muted-foreground hidden sm:block">{t("斯瓦希里语")}</span>
+              <span className="font-bold text-lg md:text-xl">{t("语言学堂")}</span>
+              <span className="text-xs text-muted-foreground hidden sm:block">አማርኛ · Kiswahili</span>
             </div>
           </Link>
 

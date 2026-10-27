@@ -18,6 +18,8 @@ import { differenceInDays, formatDistanceToNow } from "date-fns";
 import { enUS, zhCN } from "date-fns/locale";
 import { Link } from "wouter";
 import { useLocale } from "@/lib/i18n";
+import { useTrack } from "@/contexts/TrackContext";
+import { AmharicPractice } from "@/components/learning/AmharicPractice";
 
 const LEVELS = [
   { id: "beginner", name: "初学者", nameSwahili: "Mwanzo", icon: GraduationCap, color: "bg-green-500" },
@@ -34,9 +36,10 @@ const QUICK_REPLIES = [
   { text: "Sijui", translation: "我不知道" },
 ];
 
-export default function Practice() {
+function PracticeChat() {
   const { user } = useAuth() as { user: User | null };
   const { language, t } = useLocale();
+  const { track } = useTrack();
   const { toast } = useToast();
   const [message, setMessage] = useState("");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -47,25 +50,25 @@ export default function Practice() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: session, isLoading: sessionLoading, refetch: refetchSession } = useQuery<ChatSession & { messages: ChatMessage[] }>({
-    queryKey: ["/api/chat/session", currentSessionId],
+    queryKey: [`/api/chat/session/${currentSessionId}?language=${track || "swahili"}`],
     enabled: !!currentSessionId,
     staleTime: 0,
   });
 
   const { data: sessions } = useQuery<ChatSession[]>({
-    queryKey: ["/api/chat/sessions"],
+    queryKey: [`/api/chat/sessions?language=${track || "swahili"}`],
     enabled: !!user,
   });
 
   const createSessionMutation = useMutation({
     mutationFn: async (level: string) => {
-      const res = await apiRequest("POST", "/api/chat/session", { level });
+      const res = await apiRequest("POST", "/api/chat/session", { level, language: track || "swahili" });
       return res.json();
     },
     onSuccess: (data) => {
       setCurrentSessionId(data.id);
       setSelectedLevel(data.level || "beginner");
-      queryClient.invalidateQueries({ queryKey: ["/api/chat/sessions"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/chat/sessions?language=${track || "swahili"}`] });
       setShowHistoryModal(false);
     },
     onError: (error: Error) => {
@@ -175,8 +178,8 @@ export default function Practice() {
         <div className="px-4 md:px-6 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div>
-              <h1 className="text-2xl font-bold">{t("AI 练习")}</h1>
-              <p className="text-sm text-muted-foreground">{t("与AI老师练习斯瓦希里语对话")}</p>
+          <h1 className="text-2xl font-bold">{language === "en" ? "AI conversation practice" : "AI 对话练习"}</h1>
+              <p className="text-sm text-muted-foreground">{language === "en" ? `Practice ${track === "amharic" ? "Amharic" : "Swahili"} with an AI tutor` : `与 AI 老师练习${track === "amharic" ? "阿姆哈拉语" : "斯瓦希里语"}对话`}</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -357,7 +360,7 @@ export default function Practice() {
         </ScrollArea>
 
         <div className="border-t bg-card p-4 md:p-6 space-y-3">
-          {currentSessionId && session?.messages && session.messages.length < 4 && (
+      {track === "swahili" && currentSessionId && session?.messages && session.messages.length < 4 && (
             <div className="flex flex-wrap gap-2">
               {QUICK_REPLIES.map((reply, idx) => (
                 <Button
@@ -505,4 +508,9 @@ export default function Practice() {
       </Dialog>
     </div>
   );
+}
+
+export default function Practice() {
+  const { track, practiceLessonId } = useTrack();
+  return track === "amharic" ? <AmharicPractice initialLessonId={practiceLessonId} /> : <PracticeChat />;
 }

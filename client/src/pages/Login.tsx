@@ -82,7 +82,7 @@ export default function Login() {
             <CardTitle className="text-2xl" data-testid="text-login-title">{t("登录")}</CardTitle>
           </div>
           <CardDescription>
-            {t("登录您的斯瓦希里语学习账户")}
+            {t("登录您的语言学习账户")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

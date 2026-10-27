@@ -3,6 +3,7 @@ import { lessons } from "@shared/schema";
 import { sql } from "drizzle-orm";
 import { curriculumLessons } from "../scripts/add-curriculum";
 import { moreLessons } from "../scripts/add-more-curriculum";
+import { amharicLessons } from "./curriculum/amharic";
 
 export const sampleLessons = [
   // Beginner Level Lessons
@@ -213,12 +214,15 @@ export async function seedLessons({ onlyIfEmpty = false } = {}) {
   return db.transaction(async (tx) => {
     // Serialize initialization across instances without overwriting existing lessons.
     await tx.execute(sql`select pg_advisory_xact_lock(53849120)`);
-    const existing = await tx.select({ level: lessons.level, title: lessons.title }).from(lessons);
-    if (onlyIfEmpty && existing.length) return 0;
-    const known = new Set(existing.map((lesson) => `${lesson.level}:${lesson.title}`));
+    const existing = await tx.select({ language: lessons.language, level: lessons.level, title: lessons.title }).from(lessons);
+    // Preserve the original Swahili curriculum and user progress. New Amharic
+    // content is additive even when the existing installation is not empty.
+    const swahili = onlyIfEmpty && existing.some((lesson) => lesson.language === "swahili")
+      ? [] : [...curriculumLessons, ...moreLessons].map((lesson) => ({ ...lesson, language: "swahili" }));
+    const known = new Set(existing.map((lesson) => `${lesson.language}:${lesson.level}:${lesson.title}`));
     let inserted = 0;
-    for (const lesson of [...curriculumLessons, ...moreLessons]) {
-      const key = `${lesson.level}:${lesson.title}`;
+    for (const lesson of [...swahili, ...amharicLessons]) {
+      const key = `${lesson.language}:${lesson.level}:${lesson.title}`;
       if (known.has(key)) continue;
       const content = lesson.content as Record<string, any>;
       const normalized = { ...content };

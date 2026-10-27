@@ -1,20 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, MessageSquare, Flame, Trophy, Clock } from "lucide-react";
+import { BookOpen, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import type { UserProgress, Lesson } from "@shared/schema";
 import { useLocale } from "@/lib/i18n";
+import { useTrack } from "@/contexts/TrackContext";
 
 export default function ProgressPage() {
   const { language, t } = useLocale();
-  const { data: progress, isLoading: progressLoading } = useQuery<UserProgress[]>({
-    queryKey: ["/api/progress"],
+  const { track } = useTrack();
+  const { data: progress, isLoading: progressLoading, isError: progressError, refetch: refetchProgress } = useQuery<UserProgress[]>({
+    queryKey: [`/api/progress?language=${track || "swahili"}`],
+    enabled: !!track,
   });
 
-  const { data: allLessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
-    queryKey: ["/api/lessons"],
+  const { data: allLessons, isLoading: lessonsLoading, isError: lessonsError, refetch: refetchLessons } = useQuery<Lesson[]>({
+    queryKey: [`/api/lessons?language=${track || "swahili"}`],
+    enabled: !!track,
   });
 
   const isLoading = progressLoading || lessonsLoading;
@@ -34,7 +39,7 @@ export default function ProgressPage() {
     ).length;
   };
 
-  const recentLessons = progress
+  const recentLessons = [...(progress || [])]
     ?.sort((a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime())
     .slice(0, 5)
     .map((p) => ({
@@ -42,33 +47,6 @@ export default function ProgressPage() {
       lesson: allLessons?.find((l) => l.id === p.lessonId),
     }))
     .filter((item) => item.lesson);
-
-  const stats = [
-    {
-      title: t("已完成课程"),
-      value: completedLessons.length.toString(),
-      icon: BookOpen,
-      color: "text-blue-600",
-    },
-    {
-      title: t("学习天数"),
-      value: "7",
-      icon: Flame,
-      color: "text-orange-600",
-    },
-    {
-      title: t("练习次数"),
-      value: "0",
-      icon: MessageSquare,
-      color: "text-green-600",
-    },
-    {
-      title: t("成就徽章"),
-      value: "3",
-      icon: Trophy,
-      color: "text-purple-600",
-    },
-  ];
 
   const levels = [
     { id: "beginner", name: t("初学者"), nameSwahili: "Mwanzo" },
@@ -79,8 +57,9 @@ export default function ProgressPage() {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto" data-testid="page-progress">
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">{t("学习进度")}</h1>
-        <p className="text-muted-foreground text-lg">{t("追踪你的学习成果")}</p>
+        <p className="text-xs uppercase tracking-[.22em] text-primary">{track === "amharic" ? "አማርኛ · AMHARIC" : "Kiswahili · SWAHILI"}</p>
+        <h1 className="mt-2 text-4xl md:text-5xl font-bold mb-2">{language === "en" ? "Your progress" : "学习进度"}</h1>
+        <p className="text-muted-foreground text-lg">{language === "en" ? "A clear view of the lessons you have completed on this track." : "查看当前学习路径中已完成的课程。"}</p>
       </div>
 
       {isLoading ? (
@@ -98,28 +77,13 @@ export default function ProgressPage() {
             ))}
           </div>
         </div>
+      ) : progressError || lessonsError ? (
+        <Card><CardContent className="py-12 text-center">
+          <p className="text-muted-foreground">{language === "en" ? "Progress could not be loaded." : "学习进度暂时无法加载。"}</p>
+          <Button className="mt-4" variant="outline" onClick={() => { refetchProgress(); refetchLessons(); }}>{language === "en" ? "Retry" : "重试"}</Button>
+        </CardContent></Card>
       ) : (
         <div className="space-y-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {stats.map((stat) => (
-              <Card key={stat.title} data-testid={`card-stat-${stat.title}`}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                    <span className="text-3xl font-bold" data-testid={`text-${stat.title}-value`}>
-                      {stat.value}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
           <Card>
             <CardHeader>
               <CardTitle>{t("总体进度")}</CardTitle>
@@ -152,7 +116,7 @@ export default function ProgressPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-semibold">{level.name}</p>
-                        <p className="text-sm text-muted-foreground">{level.nameSwahili}</p>
+                  <p className="text-sm text-muted-foreground">{track === "amharic" ? (language === "en" ? "Amharic" : "阿姆哈拉语") : level.nameSwahili}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">
@@ -182,8 +146,8 @@ export default function ProgressPage() {
                       data-testid={`recent-lesson-${idx}`}
                     >
                       <div className="flex-1">
-                        <p className="font-medium">{language === "en" ? item.lesson?.title : item.lesson?.titleSwahili}</p>
-                        <p className="text-sm text-muted-foreground">{language === "en" ? item.lesson?.titleSwahili : item.lesson?.titleChinese}</p>
+                        <p className="font-medium">{language === "en" ? item.lesson?.title : track === "amharic" ? item.lesson?.title : item.lesson?.titleSwahili}</p>
+                        <p className="text-sm text-muted-foreground">{language === "en" ? (track === "amharic" ? item.lesson?.titleChinese : item.lesson?.titleSwahili) : item.lesson?.titleChinese}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge variant={item.progress.completed ? "default" : "secondary"}>
@@ -198,34 +162,6 @@ export default function ProgressPage() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("成就徽章")}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
-                {[
-                  { name: t("初学者"), unlocked: true },
-                  { name: t("坚持者"), unlocked: true },
-                  { name: t("对话者"), unlocked: true },
-                  { name: t("中级达人"), unlocked: false },
-                  { name: t("高级大师"), unlocked: false },
-                  { name: t("全能学霸"), unlocked: false },
-                ].map((badge, idx) => (
-                  <div
-                    key={idx}
-                    className={`flex flex-col items-center p-4 bg-muted rounded-md ${
-                      !badge.unlocked && "opacity-50 grayscale"
-                    }`}
-                    data-testid={`badge-achievement-${idx}`}
-                  >
-                    <Trophy className={`w-8 h-8 mb-2 ${badge.unlocked ? "text-primary" : "text-muted-foreground"}`} />
-                    <p className="text-xs text-center font-medium">{badge.name}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
     </div>

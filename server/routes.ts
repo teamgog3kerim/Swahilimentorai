@@ -48,7 +48,8 @@ const progressSchema = z.object({
 
 const chatSessionSchema = z.object({
   lessonId: z.string().optional(),
-  level: z.string(),
+  level: z.enum(["beginner", "intermediate", "advanced"]),
+  language: z.enum(["swahili", "amharic"]).default("swahili"),
 });
 
 const chatMessageSchema = z.object({
@@ -87,13 +88,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await seedLessons({ onlyIfEmpty: true });
   await setupAuth(app);
 
+  app.use(["/api/lessons", "/api/progress", "/api/chat/sessions"], (req: any, res, next) => {
+    const result = z.enum(["swahili", "amharic"]).safeParse(req.query.language ?? "swahili");
+    if (!result.success) return res.status(400).json({ message: "Language must be swahili or amharic." });
+    req.learningLanguage = result.data;
+    next();
+  });
 
   // ==================== LESSON ROUTES ====================
   
   // GET /api/lessons - Return all lessons
   app.get('/api/lessons', isAuthenticated, async (req: any, res) => {
     try {
-      const lessons = await storage.getAllLessons();
+      const lessons = await storage.getAllLessons(req.learningLanguage);
       res.json(lessons);
     } catch (error) {
       console.error("Error fetching lessons:", error);
@@ -108,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!['beginner', 'intermediate', 'advanced'].includes(level)) {
         return res.status(400).json({ message: "Invalid level. Must be beginner, intermediate, or advanced" });
       }
-      const lessons = await storage.getLessonsByLevel(level);
+      const lessons = await storage.getLessonsByLevel(level, req.learningLanguage);
       res.json(lessons);
     } catch (error) {
       console.error("Error fetching lessons by level:", error);
@@ -140,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      const progress = await storage.getUserProgress(user.id);
+      const progress = await storage.getUserProgress(user.id, req.learningLanguage);
       res.json(progress);
     } catch (error) {
       console.error("Error fetching user progress:", error);
@@ -170,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: user.id,
         lessonId,
         completed,
-        completedAt: completedAt ? new Date(completedAt) : (completed ? new Date() : undefined),
+        completedAt: completed ? (completedAt ? new Date(completedAt) : new Date()) : null,
       };
 
       const progress = await storage.upsertUserProgress(progressData);
@@ -196,12 +203,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
       }
 
-      const { lessonId, level } = validation.data;
+      const { lessonId, level, language } = validation.data;
+      if (lessonId) {
+        const lesson = await storage.getLesson(lessonId);
+        if (!lesson || lesson.language !== language) {
+          return res.status(400).json({ message: "Lesson does not belong to the selected language." });
+        }
+      }
 
       const sessionData = {
         userId: user.id,
         lessonId: lessonId || null,
         level,
+        language,
       };
 
       const session = await storage.createChatSession(sessionData);
@@ -220,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
 
-      const sessions = await storage.getUserChatSessions(user.id);
+      const sessions = await storage.getUserChatSessions(user.id, req.learningLanguage);
       res.json(sessions);
     } catch (error) {
       console.error("Error fetching chat sessions:", error);
@@ -313,24 +327,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         advanced: "高级 (advanced)"
       };
 
-      const systemPrompt = responseLanguage === "English" ? `You are a patient Swahili teacher helping English-speaking learners. The student is currently at ${session.level} level.
+      const targetLanguage = session.language === "amharic" ? "Amharic" : "Swahili";
+      const targetChinese = session.language === "amharic" ? "阿姆哈拉语" : "斯瓦希里语";
+      const systemPrompt = responseLanguage === "English" ? `You are a patient ${targetLanguage} teacher helping English-speaking learners. The student is currently at ${session.level} level.
 
 Follow these rules:
-1. Respond primarily in Swahili with English translations in parentheses
+1. Respond primarily in ${targetLanguage} with English translations in parentheses. For Amharic, include Ethiopic script and Latin transliteration.
 2. Adjust your language complexity based on the student's level
 3. Be encouraging and supportive when correcting mistakes
 4. Provide clear explanations and examples in English
 5. Keep the conversation natural and interactive
-6. If the student asks in English, respond in Swahili with English translations`
-      : `你是一位耐心的斯瓦希里语老师，专门为中文学习者提供帮助。学生目前处于${levelDescriptions[session.level as keyof typeof levelDescriptions] || session.level}水平。
+6. If the student asks in English, respond in ${targetLanguage} with English translations`
+      : `你是一位耐心的${targetChinese}老师，专门为中文学习者提供帮助。学生目前处于${levelDescriptions[session.level as keyof typeof levelDescriptions] || session.level}水平。
 
 请遵循以下规则：
-1. 主要用斯瓦希里语回应，并在括号中提供中文翻译
+1. 主要用${targetChinese}回应，并在括号中提供中文翻译。阿姆哈拉语需提供埃塞俄比亚文字和拉丁字母转写。
 2. 根据学生的水平调整你的语言复杂度
 3. 纠正错误时要鼓励和支持
 4. 提供清晰的解释和例子
 5. 保持对话自然和互动
-6. 如果学生用中文提问，用斯瓦希里语回答并提供中文翻译`;
+6. 如果学生用中文提问，用${targetChinese}回答并提供中文翻译`;
 
 
       // Build messages array for OpenAI

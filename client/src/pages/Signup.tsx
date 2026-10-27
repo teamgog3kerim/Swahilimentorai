@@ -55,7 +55,7 @@ export default function Signup() {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: t("注册成功"),
-        description: t("欢迎加入斯瓦希里语学习平台！您已获得7天免费试用。"),
+        description: t("欢迎加入语言学堂！您可以选择阿姆哈拉语或斯瓦希里语。"),
       });
       setLocation("/dashboard");
     } catch (error: any) {
@@ -87,7 +87,7 @@ export default function Signup() {
             <CardTitle className="text-2xl" data-testid="text-signup-title">{t("免费注册")}</CardTitle>
           </div>
           <CardDescription>
-            {t("创建账户，开始学习斯瓦希里语")}
+            {t("创建账户，选择您想学的语言")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

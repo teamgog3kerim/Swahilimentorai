@@ -37,16 +37,16 @@ export interface IStorage {
   updateUserPremiumStatus(userId: string, isPremium: boolean, endsAt: Date | null): Promise<void>;
   incrementPracticeCount(userId: string): Promise<void>;
   
-  getAllLessons(): Promise<Lesson[]>;
-  getLessonsByLevel(level: string): Promise<Lesson[]>;
+  getAllLessons(language?: string): Promise<Lesson[]>;
+  getLessonsByLevel(level: string, language?: string): Promise<Lesson[]>;
   getLesson(id: string): Promise<Lesson | undefined>;
   
-  getUserProgress(userId: string): Promise<UserProgress[]>;
+  getUserProgress(userId: string, language?: string): Promise<UserProgress[]>;
   upsertUserProgress(progress: InsertUserProgress): Promise<UserProgress>;
   
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
   getChatSession(id: string): Promise<ChatSession | undefined>;
-  getUserChatSessions(userId: string): Promise<ChatSession[]>;
+  getUserChatSessions(userId: string, language?: string): Promise<ChatSession[]>;
   
   createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getChatMessages(sessionId: string): Promise<ChatMessage[]>;
@@ -173,12 +173,12 @@ export class DbStorage implements IStorage {
     }
   }
 
-  async getAllLessons(): Promise<Lesson[]> {
-    return await db.select().from(lessons).orderBy(lessons.orderIndex);
+  async getAllLessons(language = "swahili"): Promise<Lesson[]> {
+    return await db.select().from(lessons).where(eq(lessons.language, language)).orderBy(lessons.orderIndex);
   }
 
-  async getLessonsByLevel(level: string): Promise<Lesson[]> {
-    return await db.select().from(lessons).where(eq(lessons.level, level)).orderBy(lessons.orderIndex);
+  async getLessonsByLevel(level: string, language = "swahili"): Promise<Lesson[]> {
+    return await db.select().from(lessons).where(and(eq(lessons.level, level), eq(lessons.language, language))).orderBy(lessons.orderIndex);
   }
 
   async getLesson(id: string): Promise<Lesson | undefined> {
@@ -186,8 +186,11 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getUserProgress(userId: string): Promise<UserProgress[]> {
-    return await db.select().from(userProgress).where(eq(userProgress.userId, userId));
+  async getUserProgress(userId: string, language = "swahili"): Promise<UserProgress[]> {
+    const rows = await db.select({ progress: userProgress }).from(userProgress)
+      .innerJoin(lessons, eq(userProgress.lessonId, lessons.id))
+      .where(and(eq(userProgress.userId, userId), eq(lessons.language, language)));
+    return rows.map((row) => row.progress);
   }
 
   async upsertUserProgress(progress: InsertUserProgress): Promise<UserProgress> {
@@ -217,8 +220,8 @@ export class DbStorage implements IStorage {
     return result[0];
   }
 
-  async getUserChatSessions(userId: string): Promise<ChatSession[]> {
-    return await db.select().from(chatSessions).where(eq(chatSessions.userId, userId)).orderBy(desc(chatSessions.createdAt));
+  async getUserChatSessions(userId: string, language = "swahili"): Promise<ChatSession[]> {
+    return await db.select().from(chatSessions).where(and(eq(chatSessions.userId, userId), eq(chatSessions.language, language))).orderBy(desc(chatSessions.createdAt));
   }
 
   async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {

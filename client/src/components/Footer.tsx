@@ -35,12 +35,12 @@ export function Footer() {
             <div className="flex items-center gap-2">
               <GraduationCap className="h-8 w-8 text-primary" />
               <div className="flex flex-col">
-                <span className="font-bold text-lg">Swahili AI</span>
-                <span className="text-xs text-muted-foreground">{t("斯瓦希里语学习")}</span>
+                <span className="font-bold text-lg">{t("语言学堂")}</span>
+                <span className="text-xs text-muted-foreground">{t("阿姆哈拉语与斯瓦希里语")}</span>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              {t("专为中文母语者打造的AI驱动斯瓦希里语学习平台")}
+              {t("为中文和英语使用者提供阿姆哈拉语与斯瓦希里语课程，从字母和词汇到数字与真实场景对话。")}
             </p>
           </div>
 
@@ -106,7 +106,7 @@ export function Footer() {
             </div>
           </div>
           <p className="text-center text-sm text-muted-foreground">
-            © 2025 Swahili AI Tutor. {t("保留所有权利。")}
+            © {new Date().getFullYear()} Language Academy. {t("保留所有权利。")}
           </p>
         </div>
       </div>

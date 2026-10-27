@@ -30,6 +30,7 @@ export const users = pgTable("users", {
 
 export const lessons = pgTable("lessons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  language: text("language").notNull().default("swahili"),
   level: text("level").notNull(),
   title: text("title").notNull(),
   titleSwahili: text("title_swahili").notNull(),
@@ -53,6 +54,7 @@ export const chatSessions = pgTable("chat_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
   lessonId: varchar("lesson_id").references(() => lessons.id),
+  language: text("language").notNull().default("swahili"),
   level: text("level").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

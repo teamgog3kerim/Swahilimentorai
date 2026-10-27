@@ -14,94 +14,8 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { saveLessonOffline, isLessonDownloaded, deleteLessonOffline, getAllOfflineLessons, type OfflineLesson } from "@/lib/offlineStorage";
 import type { Lesson, UserProgress } from "@shared/schema";
 import { useLocale } from "@/lib/i18n";
-
-interface VocabItem {
-  swahili: string;
-  chinese: string;
-  english?: string;
-  pronunciation?: string;
-}
-
-interface PhraseItem {
-  swahili: string;
-  chinese: string;
-  english?: string;
-}
-
-interface DialogueLine {
-  speaker: string;
-  swahili: string;
-  chinese: string;
-  english?: string;
-}
-
-interface DialogueItem {
-  lines: DialogueLine[];
-}
-
-interface LessonContent {
-  vocabulary?: VocabItem[];
-  phrases?: PhraseItem[];
-  dialogues?: DialogueItem[];
-}
-
-function LessonContentView({ content, language, t }: { content: Record<string, unknown>; language: "zh" | "en"; t: (text: string) => string }) {
-  const lessonContent = content as LessonContent;
-  
-  return (
-    <div className="space-y-6 mt-4">
-      {lessonContent.vocabulary && lessonContent.vocabulary.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-3">{t("词汇 (Vocabulary)")}</h3>
-          <div className="space-y-2">
-            {lessonContent.vocabulary.map((item, idx) => (
-              <div key={idx} className="p-3 bg-muted rounded-md">
-                <p className="font-medium text-lg">{item.swahili}</p>
-                <p className="text-muted-foreground">{language === "en" ? item.english || `Chinese: ${item.chinese}` : item.chinese}</p>
-                {item.pronunciation && (
-                  <p className="text-sm text-muted-foreground italic">{item.pronunciation}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {lessonContent.phrases && lessonContent.phrases.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-3">{t("常用短语 (Phrases)")}</h3>
-          <div className="space-y-2">
-            {lessonContent.phrases.map((item, idx) => (
-              <div key={idx} className="p-3 bg-muted rounded-md">
-                <p className="font-medium text-lg">{item.swahili}</p>
-                <p className="text-muted-foreground">{language === "en" ? item.english || `Chinese: ${item.chinese}` : item.chinese}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {lessonContent.dialogues && lessonContent.dialogues.length > 0 && (
-        <div>
-          <h3 className="text-lg font-semibold mb-3">{t("对话 (Dialogues)")}</h3>
-          <div className="space-y-4">
-            {lessonContent.dialogues.map((dialogue, idx) => (
-              <div key={idx} className="space-y-2">
-                {dialogue.lines.map((line, lineIdx) => (
-                  <div key={lineIdx} className="p-3 bg-muted rounded-md">
-                    <p className="text-sm font-semibold text-primary mb-1">{line.speaker}:</p>
-                    <p className="font-medium">{line.swahili}</p>
-                    <p className="text-sm text-muted-foreground">{language === "en" ? line.english || `Chinese: ${line.chinese}` : line.chinese}</p>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+import { useTrack } from "@/contexts/TrackContext";
+import { LessonContentView as FocusedLessonContentView } from "@/components/learning/LessonContentView";
 
 interface LearnProps {
   onNavigateToPractice: (lessonId?: string) => void;
@@ -112,6 +26,7 @@ type Level = "beginner" | "intermediate" | "advanced";
 export default function Learn({ onNavigateToPractice }: LearnProps) {
   const { user } = useAuth();
   const { language, t } = useLocale();
+  const { track } = useTrack();
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
@@ -119,19 +34,20 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
   const [downloadedLessonIds, setDownloadedLessonIds] = useState<Set<string>>(new Set());
   const [downloadingLessonIds, setDownloadingLessonIds] = useState<Set<string>>(new Set());
 
-  const { data: lessons, isLoading: lessonsLoading } = useQuery<Lesson[]>({
-    queryKey: selectedLevel ? [`/api/lessons/level/${selectedLevel}`] : ["/api/lessons"],
-    enabled: !!selectedLevel,
+  const { data: lessons, isLoading: lessonsLoading, isError: lessonsError, refetch: refetchLessons } = useQuery<Lesson[]>({
+    queryKey: selectedLevel ? [`/api/lessons/level/${selectedLevel}?language=${track || "swahili"}`] : [`/api/lessons?language=${track || "swahili"}`],
+    enabled: !!track,
   });
 
   const { data: progress } = useQuery<UserProgress[]>({
-    queryKey: ["/api/progress"],
+    queryKey: [`/api/progress?language=${track || "swahili"}`],
+    enabled: !!track,
   });
   const completion = useMutation({
     mutationFn: async ({ lessonId, completed }: { lessonId: string; completed: boolean }) =>
       apiRequest("POST", "/api/progress", { lessonId, completed }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/progress"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/progress?language=${track || "swahili"}`] });
       toast({ title: language === "en" ? "Progress saved" : "学习进度已保存" });
     },
     onError: () => toast({
@@ -142,6 +58,16 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
 
   const getLessonProgress = (lessonId: string) => {
     return progress?.find((p) => p.lessonId === lessonId);
+  };
+  const categoryLabel = (category: string) => {
+    if (track !== "amharic") return category;
+    const values: Record<string, [string, string]> = {
+      letters: ["Ethiopic letters", "埃塞俄比亚字母"],
+      words: ["Vocabulary", "词汇"],
+      numbers: ["Numbers", "数字"],
+      conversations: ["Conversations", "对话"],
+    };
+    return values[category]?.[language === "en" ? 0 : 1] || (language === "en" ? "Lesson" : "课程");
   };
 
   const levels = [
@@ -255,8 +181,9 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
       <OfflineIndicator />
       
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">{t("学习")}</h1>
-        <p className="text-muted-foreground text-lg">{t("选择你的学习级别")}</p>
+        <p className="text-xs uppercase tracking-[.22em] text-primary">{track === "amharic" ? "አማርኛ · AMHARIC" : "Kiswahili · SWAHILI"}</p>
+        <h1 className="mt-2 text-4xl md:text-5xl font-bold mb-2">{language === "en" ? "Learn" : "学习"}</h1>
+        <p className="text-muted-foreground text-lg">{language === "en" ? "Choose a level and build your language, one useful lesson at a time." : "选择学习级别，用一节节实用课程建立语言能力。"}</p>
       </div>
 
       {!selectedLevel ? (
@@ -274,7 +201,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                 </div>
                 <CardTitle className="text-2xl mb-1">{level.title}</CardTitle>
                 <CardDescription className="text-lg font-medium text-foreground/70">
-                  {level.titleSwahili}
+                  {track === "amharic" ? (level.id === "beginner" ? "ጀማሪ" : level.id === "intermediate" ? "መካከለኛ" : "የላቀ") : level.titleSwahili}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -313,6 +240,11 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                 </Card>
               ))}
             </div>
+          ) : lessonsError ? (
+            <Card><CardContent className="py-10 text-center">
+              <p className="text-muted-foreground">{language === "en" ? "Lessons could not be loaded. Check your connection and try again." : "课程暂时无法加载，请检查网络后重试。"}</p>
+              <Button className="mt-4" variant="outline" onClick={() => refetchLessons()}>{language === "en" ? "Retry" : "重试"}</Button>
+            </CardContent></Card>
           ) : lessons && lessons.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {lessons.map((lesson) => {
@@ -331,7 +263,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between mb-2">
-                        <CardTitle className="text-xl flex-1">{language === "en" ? lesson.title : lesson.titleSwahili}</CardTitle>
+                        <CardTitle className="text-xl flex-1">{language === "en" ? lesson.title : (track === "amharic" ? lesson.titleChinese : lesson.titleSwahili)}</CardTitle>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {isCompleted && (
                             <CheckCircle2 className="w-5 h-5 text-green-600" data-testid="icon-completed" />
@@ -354,12 +286,12 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                           </Button>
                         </div>
                       </div>
-                      <CardDescription className="text-base">{language === "en" ? lesson.titleSwahili : lesson.titleChinese}</CardDescription>
+                      <CardDescription className="text-base">{language === "en" ? (track === "amharic" ? lesson.title : lesson.titleSwahili) : lesson.titleChinese}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Badge variant="secondary">{lesson.category}</Badge>
+                          <Badge variant="secondary">{categoryLabel(lesson.category)}</Badge>
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
@@ -389,12 +321,12 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
       <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="dialog-lesson-detail">
           <DialogHeader>
-            <DialogTitle className="text-2xl">{language === "en" ? selectedLesson?.title : selectedLesson?.titleSwahili}</DialogTitle>
-            <DialogDescription className="text-lg">{language === "en" ? selectedLesson?.titleSwahili : selectedLesson?.titleChinese}</DialogDescription>
+            <DialogTitle className="text-2xl">{language === "en" ? selectedLesson?.title : (track === "amharic" ? selectedLesson?.titleChinese : selectedLesson?.titleSwahili)}</DialogTitle>
+            <DialogDescription className="text-lg">{language === "en" ? (track === "amharic" ? selectedLesson?.titleChinese : selectedLesson?.titleSwahili) : selectedLesson?.title}</DialogDescription>
           </DialogHeader>
 
           {selectedLesson?.content && typeof selectedLesson.content === 'object' ? (
-            <LessonContentView content={selectedLesson.content as Record<string, unknown>} language={language} t={t} />
+            <FocusedLessonContentView key={selectedLesson.id} content={selectedLesson.content as Record<string, unknown>} t={t} />
           ) : null}
 
           <div className="mt-6 flex flex-wrap gap-3">

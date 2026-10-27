@@ -35,43 +35,35 @@ export function ShareButton({ variant = "default", size = "default", className =
   const { toast } = useToast();
   const { language, t } = useLocale();
 
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "https://swahili-ai.replit.app";
+  const appUrl = window.location.origin;
   
   const completionRate = progress && progress.totalLessons > 0 
     ? Math.round((progress.completedLessons / progress.totalLessons) * 100) 
     : 0;
 
-  const baseMessage = language === "en" ? `Check out this Swahili learning platform!
+  const baseMessage = language === "en" ? `Learn Amharic or Swahili with me!
 
-I'm learning Swahili with an AI tutor and loving it.
+- Choose a Chinese or English interface
+- Explore letters, vocabulary and numbers
+- Practise conversations and check your understanding
+- Save your progress separately for each language
 
-- Practice conversations with AI anytime
-- Lessons for beginners through advanced learners
-- A structured 90-lesson learning path
-
-Come learn Swahili with me!
-Karibu! (Welcome!)
-
-Start your 7-day free trial:
+Choose your learning path:
 ${appUrl}
 
-#Swahili #LanguageLearning #LearnWithAI` : `【推荐】发现一个超棒的斯瓦希里语学习平台！
+#Amharic #Swahili #LanguageLearning` : `一起来学习阿姆哈拉语或斯瓦希里语！
 
-我正在用AI老师学习斯瓦希里语，效果真的很好！
+- 自由选择中文或英语界面
+- 学习字母、词汇和数字
+- 练习情景对话，进行随堂自测
+- 两种语言的学习进度分别保存
 
-- AI智能对话练习，24小时随时学
-- 专为中文母语者设计，从零开始也能轻松上手
-- 90节系统课程，9个月掌握一门新语言
-
-一起来学习非洲最美的语言吧！
-Karibu! (欢迎!)
-
-点击链接开始7天免费试用：
+选择您的学习路径：
 ${appUrl}
 
-#斯瓦希里语 #语言学习 #AI学习`;
+#阿姆哈拉语 #斯瓦希里语 #语言学习`;
 
-  const progressMessage = progress ? (language === "en" ? `I'm learning Swahili!
+  const progressMessage = progress ? (language === "en" ? `My language learning progress
 
 My learning progress:
 - Lessons completed: ${progress.completedLessons} / ${progress.totalLessons}
@@ -79,17 +71,12 @@ My learning progress:
 - Practice sessions: ${progress.practiceCount}
 ${progress.learningDays ? `- Learning streak: ${progress.learningDays} days` : ""}
 
-Learn Swahili with an AI tutor:
-- Practice conversations anytime
-- Lessons for every level
-- A structured 9-month learning path
-
-Karibu! (Welcome!)
+Learn Amharic or Swahili with a Chinese or English interface.
 
 Try it free:
 ${appUrl}
 
-#Swahili #LanguageLearning #MyProgress` : `【分享学习成果】我正在学斯瓦希里语！
+#Amharic #Swahili #LanguageLearning #MyProgress` : `【分享语言学习成果】
 
 我的学习进度：
 - 已完成 ${progress.completedLessons} / ${progress.totalLessons} 节课程
@@ -97,18 +84,12 @@ ${appUrl}
 - 练习次数 ${progress.practiceCount} 次
 ${progress.learningDays ? `- 连续学习 ${progress.learningDays} 天` : ""}
 
-这个AI学习平台真的很棒：
-- AI导师24小时在线，随时练习对话
-- 专为中文母语者设计
-- 从零基础到流利，9个月系统课程
-
-一起来学习非洲最美的语言吧！
-Karibu! (欢迎!)
+用中文或英语界面学习阿姆哈拉语和斯瓦希里语。
 
 点击链接免费试用：
 ${appUrl}
 
-#斯瓦希里语 #语言学习 #我的学习成果`) : baseMessage;
+#阿姆哈拉语 #斯瓦希里语 #语言学习 #我的学习成果`) : baseMessage;
 
   const shareMessage = showProgress && progress ? progressMessage : baseMessage;
 

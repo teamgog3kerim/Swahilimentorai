@@ -3,6 +3,20 @@ import React, { createContext, useContext, useEffect, useState, type ReactNode }
 export type Language = "zh" | "en";
 
 const translations: Record<string, string> = JSON.parse(String.raw`{
+  "语言学堂": "Language Academy",
+  "四步开始您的语言学习之旅": "Start your language learning journey in four steps",
+  "欢迎加入语言学堂！您可以选择阿姆哈拉语或斯瓦希里语。": "Welcome to Language Academy! Choose Amharic or Swahili to get started.",
+  "阿姆哈拉语与斯瓦希里语": "Amharic & Swahili",
+  "多语言学习账户": "Language learning account",
+  "登录您的语言学习账户": "Log in to your language learning account",
+  "创建账户，选择您想学的语言": "Create an account and choose your language",
+  "为中文和英语使用者提供阿姆哈拉语与斯瓦希里语课程，从字母和词汇到数字与真实场景对话。": "Learn Amharic or Swahili in Chinese or English, from letters and words to numbers and practical conversations.",
+  "互动练习与随堂自测": "Interactive practice and self-checks",
+  "字母、词汇、数字和情景对话": "Letters, vocabulary, numbers and conversations",
+  "选择语言与级别": "Choose a language and level",
+  "选择阿姆哈拉语或斯瓦希里语，并从适合您的级别开始": "Choose Amharic or Swahili, then start at the right level",
+  "通过字母卡片、词汇翻卡和情景对话，在自己的节奏下练习": "Practise at your own pace with letter cards, vocabulary flashcards and practical dialogues",
+  "提供文字转写与双语解释；发音播放取决于设备是否支持对应语言的语音": "Learn with transliteration and bilingual explanations; pronunciation playback depends on matching voices available on your device",
   "请使用 Google 登录管理员账户": "Use Google to sign in to the administrator account.",
   "斯瓦希里语": "Swahili",
   "斯瓦希里语学习": "Learn Swahili",

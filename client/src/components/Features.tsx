@@ -11,9 +11,9 @@ export function Features() {
     {
       icon: MessageSquare,
       image: aiChatImage,
-      title: t("AI会话练习"),
+      title: t("互动练习与随堂自测"),
       titleSwahili: "Mazoezi ya Mazungumzo",
-      description: t("与AI导师进行真实对话，即时获得反馈和纠正，提升口语能力"),
+      description: t("通过字母卡片、词汇翻卡和情景对话，在自己的节奏下练习"),
       color: "text-primary"
     },
     {
@@ -21,7 +21,7 @@ export function Features() {
       image: audioImage,
       title: t("音频+文字学习"),
       titleSwahili: "Sauti na Maandishi",
-      description: t("每节课都包含标准发音音频和文字对照，同时提升听力和阅读能力"),
+      description: t("提供文字转写与双语解释；发音播放取决于设备是否支持对应语言的语音"),
       color: "text-chart-2"
     },
     {

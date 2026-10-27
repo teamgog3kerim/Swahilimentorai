@@ -29,11 +29,20 @@ Authentication checks: `node --import tsx --test server/tests/accountPolicy.test
 OAuth navigation regression: `RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/googleSignInBrowser.test.ts`. It verifies embedded login/signup reach Google's sign-in form in a separate tab and standalone login stays in-tab, without entering Google credentials.
 
 ### Curriculum and browser verification
-- Startup initializes the supplied 90-lesson curriculum only when the lesson table is empty. Initialization is serialized and never replaces existing lessons or learner progress.
+- Startup initializes the supplied 90-lesson Swahili curriculum only when that track is empty, and adds missing Amharic lessons independently. Initialization is serialized and never replaces existing lessons or learner progress.
 - Lesson detail screens let learners mark lessons complete or incomplete, with progress saved to their account.
 - Private API responses must bypass the service worker cache. Only shared lessons and app assets are eligible for offline caching.
 - Run the signed-in browser journey with `RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/appBrowser.test.ts`. It uses temporary accounts, removes them afterwards, and checks Chinese-first defaults, English persistence, progress saves, admin management, logout/login, and mobile layout. `TEST_CHROMIUM_PATH` can override the browser executable.
 - AI tutoring requires its integration configuration. Newsletter subscription and the guide/blog/legal content pages are not implemented; do not present them as functional.
+
+### Amharic and Swahili learning tracks
+- The product supports Chinese- and English-speaking learners choosing either Amharic or Swahili. Chinese stays the default interface; the target language is a separate choice, not inferred from interface language.
+- Every new signed-in dashboard mount presents a course chooser. Learners can switch tracks at any time. Do not silently inherit another user's browser-wide course preference.
+- The supplied Amharic foundation has 31 lessons: 33 seven-order Fidel families (231 characters), 39 additional labialized syllables, 8 vocabulary lessons, 3 number lessons, and 12 practical conversation lessons. Every explanation, definition and quiz has Chinese and English versions, with native script and approximate Latin transliteration.
+- Amharic flashcards, self-checks and scripted role-play work without AI credentials. Pronunciation uses a matching device voice only, with an explicit unavailable state otherwise; never substitute English TTS for Amharic. No prerecorded native audio or speech-recognition scoring is claimed.
+- Language-scoped lesson, progress and chat-session query URLs use `?language=amharic|swahili`; omitted language preserves Swahili behavior. Existing lesson/progress IDs remain unchanged. Session target language is stored server-side; chat-message `language` means interface language (`zh` or `en`), not target language.
+- Development schema changes use `npm run db:push`; production receives the schema diff through Publish, not startup-time DDL.
+- Content integrity: `node --import tsx --test server/tests/amharicCurriculum.test.ts`. Track API isolation: `RUN_HTTP_TESTS=1 node --import tsx --test server/tests/languageTracks.test.ts`. Interactive bilingual journey: `RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/amharicBrowser.test.ts`.
 
 ### Data Storage
 PostgreSQL, hosted on Neon serverless, serves as the primary database. Key tables include `users`, `lessons`, `user_progress`, `chat_sessions`, `chat_messages`, and `subscriptions`. Lesson content is stored as JSONB, encompassing vocabulary, phrases, dialogues, and grammar across a 9-month, 90-lesson curriculum divided into Beginner, Intermediate, and Advanced levels. Drizzle Kit manages schema migrations.

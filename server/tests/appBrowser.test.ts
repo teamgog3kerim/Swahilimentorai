@@ -41,6 +41,7 @@ test("Chinese-first account, learning progress, and admin browser journey", {
     await page.locator('input[name="password"]').fill(password);
     await page.locator('input[name="confirmPassword"]').fill(password);
     await page.locator('button[type="submit"]').click();
+    await page.getByTestId("button-choose-swahili").click();
     await page.getByTestId("card-level-beginner").click();
     await expect(page.locator('[data-testid^="card-lesson-"]').first()).toBeVisible();
     const user = await storage.getUserByEmail(email);
@@ -54,10 +55,11 @@ test("Chinese-first account, learning progress, and admin browser journey", {
     assert.ok((await storage.getUserProgress(user.id)).some((entry) => entry.completed));
     await page.getByTestId("button-close-lesson").click();
     await page.reload();
+    await page.getByTestId("button-choose-swahili").click();
     await page.getByTestId("card-level-beginner").click();
     await expect(page.getByTestId("icon-completed").first()).toBeVisible();
     await page.getByTestId("button-nav-progress").click();
-    await expect(page.getByRole("heading", { name: "Learning progress", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your progress", exact: true })).toBeVisible();
     await page.getByTestId("button-nav-practice").click();
     await expect(page.getByTestId("page-practice")).toBeVisible();
     await page.getByTestId("button-start-beginner").click();
@@ -73,6 +75,7 @@ test("Chinese-first account, learning progress, and admin browser journey", {
     const target = await storage.createUserWithPassword(`browser-target-${randomUUID()}@gmail.com`, "Browser target", "not-a-real-password");
     ids.add(target.id);
     await page.reload();
+    await page.getByTestId("button-choose-swahili").click();
     await page.getByTestId("button-nav-admin").click();
     await page.getByTestId("tab-users").click();
     await page.getByTestId("input-search-users").fill(target.email);

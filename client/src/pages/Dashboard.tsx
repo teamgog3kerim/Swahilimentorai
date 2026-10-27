@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -6,7 +6,6 @@ import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Me
 import { ShareButton } from "@/components/ShareButton";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { SubscriptionReminder } from "@/components/SubscriptionReminder";
-import type { UserProgress, Lesson } from "@shared/schema";
 import {
   Sidebar,
   SidebarContent,
@@ -34,33 +33,17 @@ import Admin from "@/pages/Admin";
 import type { User } from "@shared/schema";
 import { useLocale } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { TrackProvider, useTrack } from "@/contexts/TrackContext";
+import { TrackChooser } from "@/components/learning/TrackChooser";
 
 type View = "learn" | "practice" | "progress" | "subscription" | "admin";
 
 function DashboardContent() {
   const { user } = useAuth() as { user: (User & { googleConnected: boolean }) | null };
   const { language, t } = useLocale();
+  const { track, setTrack, setPracticeLessonId } = useTrack();
   const [currentView, setCurrentView] = useState<View>("learn");
   const { setOpenMobile } = useSidebar();
-
-  const { data: progressData } = useQuery<UserProgress[]>({
-    queryKey: ["/api/progress"],
-  });
-
-  const { data: lessonsData } = useQuery<Lesson[]>({
-    queryKey: ["/api/lessons"],
-  });
-
-  const completedLessons = progressData?.filter((p) => p.completed)?.length || 0;
-  const totalLessons = lessonsData?.length || 90;
-  const practiceCount = user?.practiceCount || 0;
-
-  const learningProgress = {
-    completedLessons,
-    totalLessons,
-    practiceCount,
-    learningDays: 7,
-  };
 
   const { data: adminCheck } = useQuery<{ isAdmin: boolean }>({
     queryKey: ["/api/admin/check"],
@@ -104,7 +87,10 @@ function DashboardContent() {
   const renderView = () => {
     switch (currentView) {
       case "learn":
-        return <Learn onNavigateToPractice={(_lessonId?: string) => setCurrentView("practice")} />;
+        return <Learn onNavigateToPractice={(lessonId?: string) => {
+          setPracticeLessonId(lessonId || null);
+          setCurrentView("practice");
+        }} />;
       case "practice":
         return <Practice />;
       case "progress":
@@ -114,7 +100,10 @@ function DashboardContent() {
       case "admin":
         return <Admin />;
       default:
-        return <Learn onNavigateToPractice={(_lessonId?: string) => setCurrentView("practice")} />;
+        return <Learn onNavigateToPractice={(lessonId?: string) => {
+          setPracticeLessonId(lessonId || null);
+          setCurrentView("practice");
+        }} />;
     }
   };
 
@@ -124,7 +113,7 @@ function DashboardContent() {
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel className="text-lg font-bold px-4 py-4">
-              {t("斯瓦希里语学习")}
+              {t("语言学堂")}
             </SidebarGroupLabel>
             <Separator />
             <SidebarGroupContent className="mt-4">
@@ -151,8 +140,6 @@ function DashboardContent() {
               <ShareButton 
                 variant="outline" 
                 className="w-full justify-start" 
-                showProgress={true}
-                progress={learningProgress}
               />
             </div>
             <div className="flex items-center gap-3 mb-4">
@@ -196,8 +183,11 @@ function DashboardContent() {
           <SidebarTrigger className="md:hidden" data-testid="button-sidebar-toggle">
             <Menu className="w-5 h-5" />
           </SidebarTrigger>
-          <span className="font-semibold">{t("斯瓦希里语学习")}</span>
-          <div className="ml-auto"><LanguageToggle /></div>
+            <span className="font-semibold text-sm sm:text-base min-w-0 flex-1 truncate">{t("语言学堂")}{track ? ` · ${track === "amharic" ? (language === "en" ? "Amharic" : "阿姆哈拉语") : (language === "en" ? "Swahili" : "斯瓦希里语")}` : ""}</span>
+          <div className="shrink-0"><LanguageToggle /></div>
+            {track && <Button variant="outline" size="sm" onClick={() => setTrack(track === "amharic" ? "swahili" : "amharic")} data-testid="button-switch-language">
+              {track === "amharic" ? (language === "en" ? "Switch to Swahili" : "切换到斯瓦希里语") : (language === "en" ? "Switch to Amharic" : "切换到阿姆哈拉语")}
+            </Button>}
         </header>
         <main className="flex-1 overflow-auto bg-background">
           <div className="px-4 pt-4 space-y-3">
@@ -236,7 +226,7 @@ function DashboardContent() {
               />
             )}
           </div>
-          {renderView()}
+          {track ? <Fragment key={track}>{renderView()}</Fragment> : <TrackChooser onChoose={setTrack} />}
         </main>
       </div>
     </div>
@@ -250,8 +240,10 @@ export default function Dashboard() {
   };
 
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <DashboardContent />
-    </SidebarProvider>
+    <TrackProvider>
+      <SidebarProvider style={style as React.CSSProperties}>
+        <DashboardContent />
+      </SidebarProvider>
+    </TrackProvider>
   );
 }
