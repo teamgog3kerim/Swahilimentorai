@@ -88,6 +88,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await seedLessons({ onlyIfEmpty: true });
   await setupAuth(app);
 
+  app.get("/api/capabilities", isAuthenticated, (_req, res) => {
+    res.json({ aiTutorAvailable: Boolean(openai) });
+  });
+
   app.use(["/api/lessons", "/api/progress", "/api/chat/sessions"], (req: any, res, next) => {
     const result = z.enum(["swahili", "amharic"]).safeParse(req.query.language ?? "swahili");
     if (!result.success) return res.status(400).json({ message: "Language must be swahili or amharic." });

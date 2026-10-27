@@ -1,5 +1,6 @@
 import { eq, and, desc, sql, count } from "drizzle-orm";
 import { db } from "./db";
+import { normalizeCourseContent } from "../shared/courseContent";
 import {
   type User,
   type InsertUser,
@@ -174,16 +175,19 @@ export class DbStorage implements IStorage {
   }
 
   async getAllLessons(language = "swahili"): Promise<Lesson[]> {
-    return await db.select().from(lessons).where(eq(lessons.language, language)).orderBy(lessons.orderIndex);
+    const rows = await db.select().from(lessons).where(eq(lessons.language, language)).orderBy(lessons.orderIndex);
+    return rows.map(lesson => ({ ...lesson, content: normalizeCourseContent(lesson.content as Record<string, any>, lesson.language, lesson.title) }));
   }
 
   async getLessonsByLevel(level: string, language = "swahili"): Promise<Lesson[]> {
-    return await db.select().from(lessons).where(and(eq(lessons.level, level), eq(lessons.language, language))).orderBy(lessons.orderIndex);
+    const rows = await db.select().from(lessons).where(and(eq(lessons.level, level), eq(lessons.language, language))).orderBy(lessons.orderIndex);
+    return rows.map(lesson => ({ ...lesson, content: normalizeCourseContent(lesson.content as Record<string, any>, lesson.language, lesson.title) }));
   }
 
   async getLesson(id: string): Promise<Lesson | undefined> {
     const result = await db.select().from(lessons).where(eq(lessons.id, id)).limit(1);
-    return result[0];
+    const lesson = result[0];
+    return lesson ? { ...lesson, content: normalizeCourseContent(lesson.content as Record<string, any>, lesson.language, lesson.title) } : undefined;
   }
 
   async getUserProgress(userId: string, language = "swahili"): Promise<UserProgress[]> {

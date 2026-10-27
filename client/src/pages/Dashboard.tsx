@@ -92,7 +92,7 @@ function DashboardContent() {
           setCurrentView("practice");
         }} />;
       case "practice":
-        return <Practice />;
+        return <Practice onBackToLessons={() => setCurrentView("learn")} />;
       case "progress":
         return <Progress />;
       case "subscription":

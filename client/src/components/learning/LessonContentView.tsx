@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useLocale } from "@/lib/i18n";
 import { useTrack } from "@/contexts/TrackContext";
 import { PronunciationButton } from "./PronunciationButton";
+import { normalizeCourseContent } from "@shared/courseContent";
 
 interface VocabItem {
   term?: string;
@@ -21,6 +22,7 @@ interface DialogueLine {
   transliteration?: string;
 }
 interface LessonContent {
+  grammar?: { rule: string; ruleChinese?: string; examples?: string[]; examplesChinese?: string[] };
   letters?: { character: string; transliteration: string }[];
   vocabulary?: VocabItem[];
   phrases?: { swahili: string; chinese: string; english?: string }[];
@@ -40,7 +42,7 @@ export function LessonContentView({ content, t }: { content: Record<string, unkn
   const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
   const [quizChecked, setQuizChecked] = useState(false);
   const [quizRevealed, setQuizRevealed] = useState(false);
-  const lessonContent = content as LessonContent;
+  const lessonContent = normalizeCourseContent(content, track || "swahili") as LessonContent;
   const display = (en?: string, zh?: string) => language === "en" ? en || zh || "" : zh || en || "";
   const vocab = lessonContent.vocabulary || [];
   const quiz = lessonContent.quizzes?.[quizIndex];
@@ -88,6 +90,14 @@ export function LessonContentView({ content, t }: { content: Record<string, unkn
         <span className="text-5xl">{lessonContent.letters[activeLetter].character}</span>
         <span className="ml-4 text-lg font-medium">{lessonContent.letters[activeLetter].transliteration}</span>
         <PronunciationButton text={lessonContent.letters[activeLetter].character} targetLanguage={track || "amharic"} />
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" disabled={activeLetter === 0}
+            onClick={() => setActiveLetter((index) => Math.max(0, index - 1))}
+            data-testid="button-previous-letter">{language === "en" ? "Previous letter" : "上一个字母"}</Button>
+          <Button size="sm" variant="outline" disabled={activeLetter >= lessonContent.letters.length - 1}
+            onClick={() => setActiveLetter((index) => Math.min(lessonContent.letters!.length - 1, index + 1))}
+            data-testid="button-next-letter">{language === "en" ? "Next letter" : "下一个字母"}</Button>
+        </div>
       </div>}
     </section>}
 
@@ -102,11 +112,11 @@ export function LessonContentView({ content, t }: { content: Record<string, unkn
         {meaningVisible && <p className="mt-4 text-muted-foreground" aria-live="polite">{display(vocab[vocabIndex]?.english, vocab[vocabIndex]?.chinese)}</p>}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button variant="outline" disabled={vocabIndex === 0} onClick={() => setVocabCard(vocabIndex - 1)}>{language === "en" ? "Previous" : "上一张"}</Button>
+        <Button variant="outline" disabled={vocabIndex === 0} onClick={() => setVocabCard(vocabIndex - 1)} data-testid="button-previous-flashcard">{language === "en" ? "Previous" : "上一张"}</Button>
         <Button variant="outline" data-testid="button-reveal-meaning" onClick={() => setMeaningVisible((visible) => !visible)}>
           {meaningVisible ? (language === "en" ? "Hide meaning" : "隐藏释义") : (language === "en" ? "Reveal meaning" : "查看释义")}
         </Button>
-        <Button variant="outline" disabled={vocabIndex >= vocab.length - 1} onClick={() => setVocabCard(vocabIndex + 1)}>{language === "en" ? "Next card" : "下一张"}</Button>
+        <Button variant="outline" disabled={vocabIndex >= vocab.length - 1} onClick={() => setVocabCard(vocabIndex + 1)} data-testid="button-next-flashcard">{language === "en" ? "Next card" : "下一张"}</Button>
       </div>
     </section>}
 
@@ -115,6 +125,16 @@ export function LessonContentView({ content, t }: { content: Record<string, unkn
       <div className="space-y-2">{lessonContent.phrases.map((item, idx) => <div key={idx} className="rounded-md bg-muted p-3">
         <p className="text-lg font-medium">{item.swahili}</p><p className="text-muted-foreground">{display(item.english, item.chinese)}</p>
       </div>)}</div>
+    </section>}
+
+    {lessonContent.grammar && <section data-testid="lesson-grammar" className="rounded-xl border bg-muted/50 p-4">
+      <h3 className="mb-3 text-lg font-semibold">{language === "en" ? "Grammar" : "语法"}</h3>
+      <p>{display(lessonContent.grammar.rule, lessonContent.grammar.ruleChinese)}</p>
+      <ul className="mt-3 space-y-2">
+        {lessonContent.grammar.examples?.map((example, index) => <li key={index} className="rounded-md bg-background p-3">
+          {display(example, lessonContent.grammar?.examplesChinese?.[index])}
+        </li>)}
+      </ul>
     </section>}
 
     {!!lessonContent.dialogues?.length && <section>
@@ -133,13 +153,17 @@ export function LessonContentView({ content, t }: { content: Record<string, unkn
       <p className="mt-3 font-medium">{display(quiz.question.english, quiz.question.chinese)}</p>
       <div className="mt-3 grid gap-2">{quiz.options.map((option, index) => <button key={index} data-testid={`quiz-option-${index}`} disabled={quizChecked || quizRevealed}
         aria-pressed={quizAnswer === index}
-        className={`rounded-lg border p-3 text-left ${quizChecked && quizAnswer === index ? (index === quiz.answer ? "border-emerald-500 bg-emerald-50" : "border-rose-400 bg-rose-50") : ""}`}
+         className={`rounded-lg border p-3 text-left ${quizChecked && quizAnswer === index ? (index === quiz.answer ? "border-emerald-500 bg-emerald-50" : "border-rose-400 bg-rose-50") : quizAnswer === index ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "hover:border-primary/50"}`}
         onClick={() => setQuizAnswer(index)}>{option}</button>)}</div>
       {quizChecked && quizAnswer !== null && <p className="mt-3 text-sm">{quizAnswer === quiz.answer ? (language === "en" ? "Correct. " : "回答正确。") : (language === "en" ? "Not quite. " : "再看一看。")}{display(quiz.explanation.english, quiz.explanation.chinese)}</p>}
       {quizRevealed && <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm text-sky-950">
         <strong>{language === "en" ? "Answer revealed:" : "答案已揭晓："}</strong> {quiz.options[quiz.answer]} · {display(quiz.explanation.english, quiz.explanation.chinese)}
       </p>}
       <div className="mt-3 flex flex-wrap gap-2">
+        {quizIndex > 0 && <Button variant="outline" data-testid="button-previous-question"
+          onClick={() => { setQuizIndex((index) => index - 1); setQuizAnswer(null); setQuizChecked(false); setQuizRevealed(false); }}>
+          {language === "en" ? "Previous question" : "上一题"}
+        </Button>}
         {!quizChecked && !quizRevealed && <Button data-testid="button-check-answer" disabled={quizAnswer === null} onClick={() => setQuizChecked(true)}>{language === "en" ? "Check answer" : "检查答案"}</Button>}
         {!quizChecked && !quizRevealed && quizAnswer === null && <Button variant="outline" data-testid="button-reveal-answer" onClick={() => setQuizRevealed(true)}>{language === "en" ? "Reveal answer" : "查看答案"}</Button>}
         {(quizChecked || quizRevealed) && <Button data-testid={quizIndex + 1 === lessonContent.quizzes.length ? "button-retry-quiz" : "button-next-question"} variant="outline"

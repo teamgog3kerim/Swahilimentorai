@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { GraduationCap, BookOpen, Award, Clock, CheckCircle2, Lock, Download, Check } from "lucide-react";
@@ -31,8 +31,10 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
   const isOnline = useOnlineStatus();
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const lessonDialogRef = useRef<HTMLDivElement>(null);
   const [downloadedLessonIds, setDownloadedLessonIds] = useState<Set<string>>(new Set());
   const [downloadingLessonIds, setDownloadingLessonIds] = useState<Set<string>>(new Set());
+  const [offlineStorageAvailable, setOfflineStorageAvailable] = useState(true);
 
   const { data: lessons, isLoading: lessonsLoading, isError: lessonsError, refetch: refetchLessons } = useQuery<Lesson[]>({
     queryKey: selectedLevel ? [`/api/lessons/level/${selectedLevel}?language=${track || "swahili"}`] : [`/api/lessons?language=${track || "swahili"}`],
@@ -102,11 +104,15 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
   };
 
   useEffect(() => {
+    if (selectedLesson) lessonDialogRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [selectedLesson?.id]);
+
+  useEffect(() => {
     async function loadDownloadedLessons() {
       const offlineLessons = await getAllOfflineLessons();
       setDownloadedLessonIds(new Set(offlineLessons.map(l => l.id)));
     }
-    loadDownloadedLessons();
+    loadDownloadedLessons().catch(() => setOfflineStorageAvailable(false));
   }, []);
 
   const handleStartPractice = () => {
@@ -272,7 +278,8 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                             size="icon"
                             variant={isDownloaded ? "default" : "ghost"}
                             onClick={(e) => handleDownloadLesson(lesson, e)}
-                            disabled={isDownloading}
+                            disabled={isDownloading || !offlineStorageAvailable}
+                            title={!offlineStorageAvailable ? (language === "en" ? "Offline storage is unavailable in this browser" : "此浏览器暂不支持离线存储") : undefined}
                             className="h-8 w-8"
                             data-testid={`button-download-${lesson.id}`}
                           >
@@ -319,17 +326,39 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
       )}
 
       <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="dialog-lesson-detail">
+        <DialogContent ref={lessonDialogRef} className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="dialog-lesson-detail">
           <DialogHeader>
             <DialogTitle className="text-2xl">{language === "en" ? selectedLesson?.title : (track === "amharic" ? selectedLesson?.titleChinese : selectedLesson?.titleSwahili)}</DialogTitle>
             <DialogDescription className="text-lg">{language === "en" ? (track === "amharic" ? selectedLesson?.titleChinese : selectedLesson?.titleSwahili) : selectedLesson?.title}</DialogDescription>
           </DialogHeader>
+
+          {selectedLesson && lessons && (() => {
+            const lessonIndex = lessons.findIndex((lesson) => lesson.id === selectedLesson.id);
+            return <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/30 px-3 py-2">
+              <Button variant="outline" size="sm" disabled={lessonIndex <= 0}
+                onClick={() => lessonIndex > 0 && setSelectedLesson(lessons[lessonIndex - 1])}
+                data-testid="button-previous-lesson">
+                {language === "en" ? "Previous lesson" : "上一课"}
+              </Button>
+              <span className="text-sm text-muted-foreground" data-testid="text-lesson-position">
+                {lessonIndex >= 0 ? `${lessonIndex + 1} / ${lessons.length}` : ""}
+              </span>
+              <Button variant="outline" size="sm" disabled={lessonIndex < 0 || lessonIndex >= lessons.length - 1}
+                onClick={() => lessonIndex >= 0 && lessonIndex < lessons.length - 1 && setSelectedLesson(lessons[lessonIndex + 1])}
+                data-testid="button-next-lesson">
+                {language === "en" ? "Next lesson" : "下一课"}
+              </Button>
+            </div>;
+          })()}
 
           {selectedLesson?.content && typeof selectedLesson.content === 'object' ? (
             <FocusedLessonContentView key={selectedLesson.id} content={selectedLesson.content as Record<string, unknown>} t={t} />
           ) : null}
 
           <div className="mt-6 flex flex-wrap gap-3">
+            <Button variant="outline" onClick={() => setSelectedLesson(null)} data-testid="button-back-to-lesson-list">
+              {language === "en" ? "Back to lessons" : "返回课程列表"}
+            </Button>
             <Button
               variant="outline"
               disabled={!selectedLesson || completion.isPending}

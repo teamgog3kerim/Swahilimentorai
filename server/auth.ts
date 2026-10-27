@@ -172,7 +172,9 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ message: "未登录" });
+      // A session-status probe is not a protected resource. All protected
+      // routes still use isAuthenticated and return 401 when signed out.
+      return res.json(null);
     }
     const user = req.user as any;
     res.json({

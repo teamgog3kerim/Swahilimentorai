@@ -49,12 +49,14 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+  app.use("/api", (_req, res) => res.status(404).json({ message: "API endpoint not found" }));
 
-    res.status(status).json({ message });
-    throw err;
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    if (res.headersSent) return next(err);
+    const candidate = Number(err.status || err.statusCode || 500);
+    const status = candidate >= 400 && candidate <= 599 ? candidate : 500;
+    console.error(`Request failed: ${req.method} ${req.path} (${status})`);
+    res.status(status).json({ message: status >= 500 ? "Internal Server Error" : "Invalid request" });
   });
 
   // importantly only setup vite in development and after

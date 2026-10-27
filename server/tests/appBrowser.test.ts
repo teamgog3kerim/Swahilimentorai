@@ -62,8 +62,15 @@ test("Chinese-first account, learning progress, and admin browser journey", {
     await expect(page.getByRole("heading", { name: "Your progress", exact: true })).toBeVisible();
     await page.getByTestId("button-nav-practice").click();
     await expect(page.getByTestId("page-practice")).toBeVisible();
-    await page.getByTestId("button-start-beginner").click();
-    await expect(page.getByTestId("input-message")).toBeEnabled();
+    const capabilities = await (await page.request.get(`${base}/api/capabilities`)).json();
+    if (capabilities.aiTutorAvailable) {
+      await page.getByTestId("button-ai-practice").click();
+      await page.getByTestId("button-start-beginner").click();
+      await expect(page.getByTestId("input-message")).toBeEnabled();
+    } else {
+      await expect(page.getByTestId("button-ai-practice")).toBeDisabled();
+      await expect(page.getByTestId("select-practice-lesson")).toBeVisible();
+    }
     await page.getByTestId("button-nav-subscription").click();
     await expect(page.getByRole("heading", { name: "Subscription", exact: true })).toBeVisible();
     await page.screenshot({ path: "/tmp/swahili-qa-dashboard.png" });

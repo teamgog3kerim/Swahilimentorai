@@ -15,6 +15,16 @@ test("Language APIs isolate curriculum, progress, and conversations while preser
     const user = await storage.createUserWithPassword(`tracks-test-${randomUUID()}@gmail.com`, "Temporary track learner", await bcrypt.hash(password, 10));
     id = user.id;
     const base = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    const anonymous = await fetch(`${base}/api/auth/user`);
+    assert.equal(anonymous.status, 200);
+    assert.equal(await anonymous.json(), null);
+    assert.equal((await fetch(`${base}/api/lessons`)).status, 401);
+    const malformed = await fetch(`${base}/api/auth/login`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: "{invalid",
+    });
+    assert.equal(malformed.status, 400);
+    assert.equal((await fetch(`${base}/api/auth/providers`)).status, 200, "Malformed requests must not crash the app");
+    assert.equal((await fetch(`${base}/api/not-a-real-endpoint`)).status, 404);
     const login = await fetch(`${base}/api/auth/login`, {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ email: user.email, password }),
@@ -27,6 +37,10 @@ test("Language APIs isolate curriculum, progress, and conversations while preser
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     const swahili = await (await request("/api/lessons")).json();
+    assert.equal(typeof (await (await request("/api/capabilities")).json()).aiTutorAvailable, "boolean");
+    assert.equal(swahili.find((lesson: any) => lesson.title === "Numbers 1-20").content.vocabulary.length, 20);
+    assert.match(swahili.find((lesson: any) => lesson.title === "Telling Time").content.grammar.rule, /six hours/);
+    assert.ok(swahili.filter((lesson: any) => lesson.content.grammar).every((lesson: any) => lesson.content.grammar.ruleChinese));
     const amharic = await (await request("/api/lessons?language=amharic")).json();
     assert.ok(swahili.length >= 90);
     assert.ok(amharic.length >= 31);

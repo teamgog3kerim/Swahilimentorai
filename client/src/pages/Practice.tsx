@@ -106,7 +106,9 @@ function PracticeChat() {
       } else {
         toast({
           title: t("错误"),
-          description: error.message || t("发送消息失败"),
+          description: error.message.includes("503")
+            ? (language === "en" ? "Live AI is unavailable. Return to guided practice to continue learning." : "实时 AI 暂不可用，请返回互动练习继续学习。")
+            : (language === "en" ? "Couldn't send your message. Your draft is saved; please try again." : "消息未发送，草稿已保留，请重试。"),
           variant: "destructive",
         });
       }
@@ -156,8 +158,9 @@ function PracticeChat() {
     if (!message.trim() || sendMessageMutation.isPending) return;
 
     const messageContent = message;
-    setMessage("");
-    await sendMessageMutation.mutateAsync(messageContent);
+    sendMessageMutation.mutate(messageContent, {
+      onSuccess: () => setMessage((current) => current === messageContent ? "" : current),
+    });
   };
 
   const practiceCount = user?.practiceCount || 0;
@@ -510,7 +513,26 @@ function PracticeChat() {
   );
 }
 
-export default function Practice() {
+export default function Practice({ onBackToLessons }: { onBackToLessons: () => void }) {
   const { track, practiceLessonId } = useTrack();
-  return track === "amharic" ? <AmharicPractice initialLessonId={practiceLessonId} /> : <PracticeChat />;
+  const { language } = useLocale();
+  const [mode, setMode] = useState<"guided" | "ai">("guided");
+  const { data: capabilities, isError, refetch } = useQuery<{ aiTutorAvailable: boolean }>({
+    queryKey: ["/api/capabilities"],
+    enabled: track === "swahili",
+  });
+  return <div>
+    <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
+      <Button variant="outline" onClick={onBackToLessons} data-testid="button-back-to-courses">
+        {language === "en" ? "Back to courses" : "返回课程"}
+      </Button>
+      {track === "swahili" && <>
+        <Button variant={mode === "guided" ? "default" : "outline"} onClick={() => setMode("guided")} data-testid="button-guided-practice">{language === "en" ? "Guided practice" : "互动练习"}</Button>
+        <Button variant={mode === "ai" ? "default" : "outline"} disabled={!capabilities?.aiTutorAvailable} onClick={() => setMode("ai")} data-testid="button-ai-practice">{language === "en" ? "Live AI tutor" : "实时 AI 导师"}</Button>
+        {!capabilities?.aiTutorAvailable && <p className="text-sm text-muted-foreground" role="status">{language === "en" ? "Live AI is unavailable. Guided practice is ready to use." : "实时 AI 暂不可用，您仍可使用互动练习。"}</p>}
+        {isError && <Button variant="outline" onClick={() => refetch()}>{language === "en" ? "Retry AI availability check" : "重新检查 AI 服务"}</Button>}
+      </>}
+    </div>
+    {track === "swahili" && mode === "ai" ? <PracticeChat /> : <AmharicPractice initialLessonId={practiceLessonId} />}
+  </div>;
 }

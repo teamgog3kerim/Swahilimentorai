@@ -1,4 +1,4 @@
-const CACHE_NAME = 'language-academy-v6';
+const CACHE_NAME = 'language-academy-v7';
 const STATIC_CACHE = 'static-v6';
 const DYNAMIC_CACHE = 'dynamic-v6';
 const LESSONS_CACHE = 'lessons-v6';
