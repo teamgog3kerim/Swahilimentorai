@@ -6,6 +6,7 @@
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Chinese is the primary/default interface. English is optional and should only be enabled when a user selects it; keep their selection saved for later visits.
+Learner stories must represent Amharic learners as well as Swahili learners. Do not present illustrative stories as verified customer testimonials.
 
 ## System Architecture
 
