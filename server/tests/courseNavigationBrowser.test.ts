@@ -101,7 +101,7 @@ test("All courses render, bounded course/exercise navigation works, and AI failu
     await expect(page.getByTestId("select-practice-lesson")).toHaveValue(numbers.id);
     await page.getByTestId("quiz-option-0").click();
     await page.getByTestId("button-check-answer").click();
-    await expect(page.getByTestId("page-practice")).toContainText("Correct");
+    await expect(page.getByTestId("page-practice")).toContainText("That’s right.");
     await page.getByTestId("button-next-question").click();
     await page.getByTestId("button-previous-question").click();
     await expect(page.getByTestId("button-check-answer")).toBeDisabled();
@@ -112,7 +112,7 @@ test("All courses render, bounded course/exercise navigation works, and AI failu
     await expect(page.getByTestId("button-previous-turn")).toBeDisabled();
     const lines = (firstConversation.content as any).dialogues[0].lines;
     for (let i = 1; i < lines.length; i++) await page.getByTestId("button-next-turn").click();
-    await expect(page.getByTestId("button-next-turn")).toHaveText("Restart conversation");
+    await expect(page.getByTestId("button-next-turn")).toHaveText("Restart dialogue");
     await page.getByTestId("button-previous-turn").click();
     await expect(page.getByTestId("button-next-turn")).toHaveText("Next turn");
     await page.getByTestId("button-next-practice-lesson").click();
@@ -121,20 +121,32 @@ test("All courses render, bounded course/exercise navigation works, and AI failu
     await page.getByTestId("button-back-to-courses").click();
     await expect(page.getByTestId("card-level-beginner")).toBeVisible();
 
-    // Test unavailable AI explicitly, without calling any external paid service.
-    await page.route("**/api/capabilities", route => route.fulfill({ json: { aiTutorAvailable: true } }));
-    await page.route("**/api/chat/message", route => route.fulfill({ status: 503, json: { message: "AI unavailable" } }));
-    await page.reload();
-    await page.getByTestId("button-choose-swahili").click();
-    await page.getByTestId("button-nav-practice").click();
-    await page.getByTestId("button-ai-practice").click();
-    await page.getByTestId("button-start-beginner").click();
-    await page.getByTestId("input-message").fill("Habari");
-    await page.getByTestId("button-send").click();
-    await expect(page.getByText("Live AI is unavailable. Return to guided practice to continue learning.", { exact: true })).toBeVisible();
-    await expect(page.getByTestId("input-message")).toHaveValue("Habari");
-    await page.getByTestId("button-guided-practice").click();
-    await expect(page.getByTestId("select-practice-lesson")).toBeVisible();
+    await page.screenshot({ path: "/tmp/course-readiness-swahili.png", animations: "disabled" });
+
+    // Keep real service-worker coverage above. Network mocks need an isolated
+    // context because Playwright cannot intercept service-worker-owned fetches.
+    const aiContext = await browser.newContext({ serviceWorkers: "block" });
+    await aiContext.addCookies(await context.cookies());
+    await aiContext.addInitScript(() => {
+      new MutationObserver(() => document.getElementById("replit-dev-banner")?.remove())
+        .observe(document, { childList: true, subtree: true });
+    });
+    const aiPage = await aiContext.newPage();
+    aiPage.on("pageerror", error => errors.push(error.message));
+    await aiPage.route("**/api/capabilities", route => route.fulfill({ json: { aiTutorAvailable: true } }));
+    await aiPage.route("**/api/chat/message", route => route.fulfill({ status: 503, json: { message: "AI unavailable" } }));
+    await aiPage.goto(base);
+    await aiPage.getByTestId("button-language").click();
+    await aiPage.getByTestId("button-choose-swahili").click();
+    await aiPage.getByTestId("button-nav-practice").click();
+    await aiPage.getByTestId("button-ai-practice").click();
+    await aiPage.getByTestId("button-start-beginner").click();
+    await aiPage.getByTestId("input-message").fill("Habari");
+    await aiPage.getByTestId("button-send").click();
+    await expect(aiPage.getByText("Live AI is unavailable. Return to guided practice to continue learning.", { exact: true })).toBeVisible();
+    await expect(aiPage.getByTestId("input-message")).toHaveValue("Habari");
+    await aiPage.getByTestId("button-guided-practice").click();
+    await expect(aiPage.getByTestId("select-practice-lesson")).toBeVisible();
     assert.deepEqual(errors, []);
     console.log(`PASS: ${rendered} lessons across both courses and all levels rendered; bilingual/mobile navigation, grammar, flashcards, quizzes, role-play, progress and recoverable AI failures.`);
   } finally {

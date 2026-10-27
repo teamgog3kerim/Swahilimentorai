@@ -31,4 +31,6 @@ test("Numbers 1–20 includes twenty distinct bilingual numbers without duplicat
   assert.equal(corrected.vocabulary.length, 20);
   assert.equal(corrected.vocabulary[19].swahili, "Ishirini");
   assert.deepEqual(normalizeCourseContent(corrected, "swahili", "Numbers 1-20"), corrected);
+  const lowercase = { vocabulary: english.map(word => ({ swahili: word.toLowerCase(), english: word.toLowerCase(), chinese: word })) };
+  assert.equal(normalizeCourseContent(lowercase, "swahili", "Numbers 1-20").vocabulary.length, 20);
 });

@@ -32,7 +32,7 @@ interface LessonContent {
   quizzes?: { question: { english?: string; chinese?: string }; options: string[]; answer: number; explanation: { english?: string; chinese?: string } }[];
 }
 
-export function LessonContentView({ content, t }: { content: Record<string, unknown>; t: (text: string) => string }) {
+export function LessonContentView({ content, t, lessonTitle }: { content: Record<string, unknown>; t: (text: string) => string; lessonTitle?: string }) {
   const { language } = useLocale();
   const { track } = useTrack();
   const [activeLetter, setActiveLetter] = useState(0);
@@ -42,7 +42,7 @@ export function LessonContentView({ content, t }: { content: Record<string, unkn
   const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
   const [quizChecked, setQuizChecked] = useState(false);
   const [quizRevealed, setQuizRevealed] = useState(false);
-  const lessonContent = normalizeCourseContent(content, track || "swahili") as LessonContent;
+  const lessonContent = normalizeCourseContent(content, track || "swahili", lessonTitle) as LessonContent;
   const display = (en?: string, zh?: string) => language === "en" ? en || zh || "" : zh || en || "";
   const vocab = lessonContent.vocabulary || [];
   const quiz = lessonContent.quizzes?.[quizIndex];

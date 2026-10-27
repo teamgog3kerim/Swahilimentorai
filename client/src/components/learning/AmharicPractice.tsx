@@ -51,13 +51,20 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
     setCategory("all");
   }, [initialLessonId, target]);
 
+  useEffect(() => {
+    // Swahili answer choices are translated, so a selected option must not
+    // carry over to a differently ordered localized set of meanings.
+    setSelectedAnswer(null);
+    setChecked(false);
+    setAnswerRevealed(false);
+  }, [language]);
+
   const categoryLessons = useMemo(() => (lessons || []).filter((item) => matchesCategory(item, category, isAmharic)), [lessons, category, isAmharic]);
   const lesson = categoryLessons.find((item) => item.id === lessonId) || categoryLessons[0];
   const lessonPosition = lesson ? categoryLessons.findIndex((item) => item.id === lesson.id) : -1;
   const content = lesson?.content as any;
   const makeVocabularyChecks = (vocabulary: any[]): Quiz[] => vocabulary
     .filter((item) => (item?.term || item?.swahili) && (item?.english || item?.chinese))
-    .slice(0, 5)
     .map((item, questionIndex, candidates) => {
       const sourceTerm = item.term || item.swahili;
       const correctMeaning = english ? item.english || item.chinese : item.chinese || item.english;
@@ -216,7 +223,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
 
           {lines.length === 0 && content && <Card className="rounded-3xl">
             <CardContent className="p-5 md:p-7">
-              <LessonContentView content={{ ...content, quizzes: [] }} t={t} />
+              <LessonContentView content={{ ...content, quizzes: [] }} lessonTitle={lesson.title} t={t} />
             </CardContent>
           </Card>}
 
@@ -238,7 +245,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
               <strong>{english ? "Answer revealed:" : "答案已揭晓："}</strong> {quiz.options?.[quiz.answer ?? 0]} · {text(quiz.explanation?.english, quiz.explanation?.chinese, language)}
             </div>}
             <div className="mt-5 flex flex-wrap gap-2">
-              {!checked && selectedAnswer !== null && !answerRevealed && <Button onClick={() => setChecked(true)} data-testid="button-check-answer">{english ? "Check answer" : "检查答案"}</Button>}
+              {!checked && !answerRevealed && <Button disabled={selectedAnswer === null} onClick={() => setChecked(true)} data-testid="button-check-answer">{english ? "Check answer" : "检查答案"}</Button>}
               {!checked && selectedAnswer === null && !answerRevealed && <Button variant="outline" onClick={() => setAnswerRevealed(true)} data-testid="button-reveal-answer">{english ? "Reveal answer" : "查看答案"}</Button>}
               {questionIndex > 0 && <Button variant="outline" onClick={() => { setQuestionIndex((index) => index - 1); resetQuestionState(); }} data-testid="button-previous-question">{english ? "Previous question" : "上一题"}</Button>}
               {(checked || answerRevealed) && questionIndex + 1 < quizItems.length && <Button onClick={() => { setQuestionIndex((index) => index + 1); resetQuestionState(); }} data-testid="button-next-question">{english ? "Next question" : "下一题"}</Button>}

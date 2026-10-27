@@ -26,7 +26,7 @@ const grammarRules: Array<{ prefix: string; english?: string; chinese: string; e
 export function normalizeCourseContent(content: Record<string, any>, language: string, title?: string): Record<string, any> {
   // The imported lesson was labelled 1–20 but supplied only 1–10.
   if (language === "swahili" && title === "Numbers 1-20" && content?.vocabulary?.length === 10
-    && content.vocabulary[0]?.english === "One" && content.vocabulary[9]?.english === "Ten") {
+    && content.vocabulary[0]?.english?.toLowerCase() === "one" && content.vocabulary[9]?.english?.toLowerCase() === "ten") {
     const additionalNumbers = [
       ["Kumi na moja", "Eleven", "十一"], ["Kumi na mbili", "Twelve", "十二"],
       ["Kumi na tatu", "Thirteen", "十三"], ["Kumi na nne", "Fourteen", "十四"],

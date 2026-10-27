@@ -352,7 +352,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
           })()}
 
           {selectedLesson?.content && typeof selectedLesson.content === 'object' ? (
-            <FocusedLessonContentView key={selectedLesson.id} content={selectedLesson.content as Record<string, unknown>} t={t} />
+            <FocusedLessonContentView key={selectedLesson.id} content={selectedLesson.content as Record<string, unknown>} lessonTitle={selectedLesson.title} t={t} />
           ) : null}
 
           <div className="mt-6 flex flex-wrap gap-3">
