@@ -3,8 +3,9 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { request } from "@playwright/test";
 import { FREE_TRIAL_MS } from "../../shared/subscriptionAccess";
+import { SUBSCRIPTION_PLANS } from "../../shared/subscriptionPlans";
 
-test("88-hour signup, expiry paywall, payment approval and preserved progress", {
+test("88-hour signup, expiry paywall, retired payments and preserved legacy access", {
   skip: process.env.RUN_BROWSER_TESTS !== "1", timeout: 90_000,
 }, async () => {
   const { storage } = await import("../storage");
@@ -46,6 +47,10 @@ test("88-hour signup, expiry paywall, payment approval and preserved progress", 
       assert.equal((await learner.post(path, { data })).status(), 402, path);
     }
     assert.equal((await learner.post("/api/subscription/create", { data: { transactionId: "unverified" } })).status(), 410);
+    const plans = await (await learner.get("/api/subscription/plans")).json();
+    assert.deepEqual(plans.plans, SUBSCRIPTION_PLANS);
+    assert.equal(plans.provider, "Polar.sh");
+    assert.equal(plans.checkoutEnabled, false);
     const progress = await (await learner.get("/api/progress?language=amharic")).json();
     assert.ok(progress.some((entry: { lessonId: string; completed: boolean }) => entry.lessonId === lessonId && entry.completed));
     const catalog = await (await learner.get("/api/course-catalog?language=amharic")).json();
@@ -54,10 +59,16 @@ test("88-hour signup, expiry paywall, payment approval and preserved progress", 
     const payment = await learner.post("/api/subscription/verify-payment", { data: {
       transactionId: `test-not-a-real-payment-${randomUUID()}`, planType: "monthly",
     } });
-    assert.equal(payment.ok(), true, await payment.text());
-    const pending = await payment.json();
-    assert.equal(pending.status, "pending");
-    assert.equal((await learner.get("/api/lessons")).status(), 402, "Pending payment must not unlock courses");
+    assert.equal(payment.status(), 410, await payment.text());
+    assert.equal(await (await learner.get("/api/subscription")).json(), null);
+    assert.equal((await learner.get("/api/lessons")).status(), 402, "Retired payment endpoint must not unlock courses");
+    // Earlier pending payments remain resolvable, but new ones cannot be submitted.
+    const pending = await storage.createSubscription({
+      userId: ids[0], status: "pending", planType: "monthly", amount: 90,
+      currency: "USDT", paymentMethod: "Legacy test payment",
+      startDate: new Date(), endDate: new Date(Date.now() + 30 * 86400000),
+      transactionId: `legacy-fixture-${randomUUID()}`,
+    });
     assert.equal((await learner.post("/api/admin/subscription/action", { data: { subscriptionId: pending.id, action: "approve" } })).status(), 403);
     const approval = await admin.post("/api/admin/subscription/action", { data: { subscriptionId: pending.id, action: "approve" } });
     assert.equal(approval.ok(), true, await approval.text());

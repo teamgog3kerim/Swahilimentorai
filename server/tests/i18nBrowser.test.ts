@@ -121,10 +121,12 @@ test("principal public and learner flows stay bilingual without Chinese fallback
       await page.getByTestId("button-nav-subscription").click();
       await expect(page.getByRole("heading", { name: english ? "Subscription" : "订阅", exact: true })).toBeVisible();
       await check(english, "Subscription plans");
-      await page.getByTestId("button-subscribe-monthly").click();
-      await expect(page.getByTestId("dialog-payment")).toBeVisible();
-      await check(english, "Payment instructions");
-      await page.getByTestId("button-cancel-payment").click();
+      await expect(page.getByTestId("button-subscribe-quarterly")).toBeDisabled();
+      await expect(page.getByTestId("button-subscribe-semiannual")).toBeDisabled();
+      await expect(page.getByTestId("dialog-payment")).toHaveCount(0);
+      await expect(page.getByText(english
+        ? /USD checkout via Polar.sh is coming soon/
+        : /USD 结账将通过 Polar.sh 提供/)).toBeVisible();
     }
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");

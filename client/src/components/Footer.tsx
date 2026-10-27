@@ -71,7 +71,7 @@ export function Footer() {
         <div className="afri-footer__bottom">
           <div className="afri-footer__payment">
             <Coins aria-hidden="true" />
-            <span>{language === "en" ? "USDT (TRC20) · Payments reviewed manually" : "USDT（TRC20）· 付款经人工审核"}</span>
+            <span>{language === "en" ? "USD checkout via Polar.sh · coming soon, not available yet" : "USD 结账将通过 Polar.sh 提供 · 即将开放，目前不可用"}</span>
           </div>
           <p className="afri-footer__copyright">
             © {new Date().getFullYear()} {APP_NAME}. {t("保留所有权利。")}

@@ -12,6 +12,7 @@ import { seedLessons } from "./seedLessons";
 import type { User } from "@shared/schema";
 import { learnerStoryInputSchema, learnerStoryUpdateSchema } from "@shared/learnerStories";
 import { hasLearningAccess } from "@shared/subscriptionAccess";
+import { BILLING_PROVIDER, CHECKOUT_ENABLED, SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
 
 function managedUser(user: User) {
   const { passwordHash, googleId, ...safe } = user;
@@ -57,11 +58,6 @@ const chatSessionSchema = z.object({
 const chatMessageSchema = z.object({
   sessionId: z.string(),
   content: z.string(),
-});
-
-const subscriptionCreateSchema = z.object({
-  transactionId: z.string(),
-  planType: z.enum(['monthly', 'quarterly']).default('monthly'),
 });
 
 const adminActionSchema = z.object({
@@ -513,123 +509,18 @@ Follow these rules:
     }
   });
 
-  // POST /api/subscription/verify-payment - Submit payment for verification
-  app.post('/api/subscription/verify-payment', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = req.user;
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check if user already has an active subscription
-      const existingSubscription = await storage.getUserActiveSubscription(user.id);
-      if (existingSubscription && existingSubscription.status === "active") {
-        // Allow renewal if subscription expires within 4 days
-        const daysUntilExpiration = Math.floor((new Date(existingSubscription.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        if (daysUntilExpiration > 4) {
-          return res.status(400).json({ 
-            message: "You already have an active subscription. You can renew starting 4 days before expiration.",
-            subscription: existingSubscription,
-            daysUntilExpiration
-          });
-        }
-      }
-
-      const validation = subscriptionCreateSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
-      }
-
-      const { transactionId, planType } = validation.data;
-
-      // Validate transaction ID format (basic validation for TRC20)
-      // TRC20 transaction IDs are typically 64-character hexadecimal strings
-      if (!transactionId || transactionId.trim().length < 10) {
-        return res.status(400).json({ message: "Transaction ID must be at least 10 characters" });
-      }
-
-      // Check for duplicate transaction ID submissions
-      const existingTxSubscription = await storage.getSubscriptionByTransactionId(transactionId);
-      if (existingTxSubscription) {
-        return res.status(400).json({ 
-          message: "This transaction ID has already been submitted",
-          duplicate: true 
-        });
-      }
-
-      // Determine pricing and duration based on plan type
-      const planConfig = {
-        monthly: { amount: 90, days: 30 },
-        quarterly: { amount: 250, days: 90 }
-      };
-      const { amount, days } = planConfig[planType];
-
-      // Calculate dates (for when subscription is approved)
-      // For renewals, extend from current end date; for new subscriptions, start from now
-      const now = new Date();
-      let startDate: Date;
-      let endDate: Date;
-      
-      if (existingSubscription && existingSubscription.endDate) {
-        // Renewal: extend from current end date (or now if already expired)
-        const currentEndDate = new Date(existingSubscription.endDate);
-        startDate = currentEndDate > now ? currentEndDate : now;
-        endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + days); // Add days based on plan type
-      } else {
-        // New subscription: start from now
-        startDate = now;
-        endDate = new Date(now);
-        endDate.setDate(endDate.getDate() + days); // days from now based on plan type
-      }
-
-      // Create PENDING subscription - requires manual admin verification
-      // Admin must verify the transaction on Binance before activating
-      const subscriptionData = {
-        userId: user.id,
-        status: "pending", // Pending verification - admin must approve
-        planType,
-        amount,
-        currency: "USDT",
-        paymentMethod: "Binance Pay (TRC20)",
-        startDate,
-        endDate,
-        transactionId,
-      };
-
-      const subscription = await storage.createSubscription(subscriptionData);
-
-      await storage.createNotification({
-        type: 'new_subscription',
-        title: '新订阅申请',
-        message: `${user.username} (${user.email}) 提交了${planType === 'monthly' ? '月度' : '季度'}订阅申请，交易ID: ${transactionId}`,
-        metadata: { 
-          userId: user.id, 
-          email: user.email, 
-          subscriptionId: subscription.id,
-          planType,
-          amount,
-          transactionId 
-        },
-      });
-
-      // DO NOT update user premium status - this happens after admin verification
-      // await storage.updateUserPremiumStatus(user.id, true, endDate);
-
-      res.json({ 
-        ...subscription, 
-        message: "Payment submitted for verification. We'll activate your subscription within 1-2 hours after confirming the transaction." 
-      });
-    } catch (error) {
-      console.error("Error verifying payment:", error);
-      res.status(500).json({ message: "Failed to verify payment" });
-    }
+  // Public catalog; no purchase can activate access until Polar is connected.
+  app.get('/api/subscription/plans', (_req, res) => {
+    res.json({ provider: BILLING_PROVIDER, checkoutEnabled: CHECKOUT_ENABLED, plans: SUBSCRIPTION_PLANS });
   });
 
-  // Never grant access from an unverified transaction ID.
-  // The supported verify-payment route requires manual administrator approval.
+  // Retired cryptocurrency endpoints. Never accept a transaction or grant access.
+  app.post('/api/subscription/verify-payment', isAuthenticated, async (req: any, res) => {
+    res.status(410).json({ code: "PAYMENT_METHOD_RETIRED", message: "Cryptocurrency payments are no longer accepted. USD checkout via Polar.sh is not available yet." });
+  });
+
   app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
-    res.status(410).json({ message: "Please submit payment through /api/subscription/verify-payment for administrator approval." });
+    res.status(410).json({ code: "CHECKOUT_UNAVAILABLE", message: "USD checkout via Polar.sh is not available yet." });
   });
 
   // ==================== ADMIN ROUTES ====================

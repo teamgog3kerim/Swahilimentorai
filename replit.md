@@ -1,7 +1,7 @@
 # Afri Panda
 
 ## Overview
-**Afri Panda** is an African language learning platform for Chinese- and English-speaking learners, with Amharic and Swahili courses. Its user-selected slogan is **“the African languages Academy for Chinese people”**. Keep the name and this English slogan consistent in both interfaces. The interface defaults to Simplified Chinese, with optional English saved in the browser. Guided lessons, conversations and self-checks work independently of optional live AI. The platform also supports progress tracking and manually reviewed USDT-based subscriptions.
+**Afri Panda** is an African language learning platform for Chinese- and English-speaking learners, with Amharic and Swahili courses. Its user-selected slogan is **“the African languages Academy for Chinese people”**. Keep the name and this English slogan consistent in both interfaces. The interface defaults to Simplified Chinese, with optional English saved in the browser. Guided lessons, conversations and self-checks work independently of optional live AI. The platform also supports progress tracking and USD subscription plans; Polar.sh checkout will be integrated later.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -12,7 +12,7 @@ For landing-hero refinements, keep the existing image and signup/pricing/share b
 
 Keep the footer panda in the app's purple theme with a graduation cap and continuous gentle panda/cap animation after scroll reveal. Preserve bilingual greetings and reduced-motion support. Do not show a pause/resume animation button; the user explicitly requested its removal.
 
-New email and Google accounts receive an 88-hour free trial starting at registration. After expiry, learners must obtain a paid subscription to continue courses and practice; keep their progress. Never automatically charge, restart a trial on login or payment submission, or grant paid access before manual payment approval. Preserve already-issued access deadlines and administrator access.
+New email and Google accounts receive an 88-hour free trial starting at registration. After expiry, learners must obtain a paid subscription to continue courses and practice; keep their progress. Never charge automatically at trial expiry, restart a trial on login or plan selection, or grant paid access before verified payment. Preserve already-issued access deadlines and administrator access.
 
 ## System Architecture
 
@@ -61,7 +61,7 @@ OAuth navigation regression: `RUN_BROWSER_TESTS=1 node --import tsx --test serve
 PostgreSQL, hosted on Neon serverless, serves as the primary database. Key tables include `users`, `lessons`, `user_progress`, `chat_sessions`, `chat_messages`, and `subscriptions`. Lesson content is stored as JSONB, encompassing vocabulary, phrases, dialogues, and grammar across a 9-month, 90-lesson curriculum divided into Beginner, Intermediate, and Advanced levels. Drizzle Kit manages schema migrations.
 
 ### Recurring Subscription System
-The platform offers monthly (90 USDT) and quarterly (250 USDT) premium subscriptions via Binance Pay (TRC20 network). Payments are manually verified by an admin against a specified wallet address. The system includes expiration checks, a 7-day free trial for new users, and a renewal process that extends subscriptions from their current end date. Security features include server-side expiration checks, practice count limits for expired users, and duplicate transaction ID detection.
+Only two plans are offered: USD 88 every three months (quarterly) and USD 168 paid once for six months (semiannual). Both include full Amharic and Swahili course access. The user confirmed quarterly means one USD 88 payment every three months, not twice per quarter. Six months costs USD 176 on quarterly versus USD 168 upfront, saving USD 8. Polar.sh products and checkout will be integrated later; until then paid checkout is disabled and clearly labeled unavailable. Cryptocurrency instructions and new manual payment submissions are retired. Preserve historical subscription records and issued access; legacy admin review exists only to resolve earlier payments. Future integration must verify provider webhooks and map trusted products to these plans before granting access.
 
 ### Admin Panel
 An admin panel provides management capabilities for users with `isAdmin=true`. It includes a statistics dashboard, tabs for pending payments, active subscriptions, user management, and visit analytics. Admin API routes (`/api/admin/*`) are protected and facilitate actions like approving or rejecting subscriptions, and managing user data.
@@ -104,4 +104,4 @@ A `ShareButton` component enables users to share the platform on WeChat, WhatsAp
 -   **Replit AI Integrations**: Proxied access to OpenAI API (GPT-5 model).
 -   **Neon Database**: Serverless PostgreSQL hosting.
 -   **Google Fonts**: Inter and Noto Sans SC font families.
--   **Binance Pay**: For USDT (TRC20) subscription payments.
+-   **Polar.sh (planned)**: USD checkout for quarterly and six-month plans; not yet connected.

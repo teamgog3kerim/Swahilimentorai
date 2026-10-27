@@ -321,6 +321,9 @@ export default function AdminPage() {
   };
 
   const getPlanBadge = (planType: string) => {
+    if (planType === 'semiannual') {
+      return <Badge variant="secondary">{language === "en" ? "Six months" : "六个月"}</Badge>;
+    }
     return planType === 'quarterly' 
       ? <Badge variant="secondary">{t("季度")}</Badge>
       : <Badge variant="outline">{t("月订阅")}</Badge>;
