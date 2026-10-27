@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { chromium, expect } from "@playwright/test";
+import { expectEnglishInterface } from "./helpers/localeAssertions";
 
 test("Learner stories cover both courses in Chinese and English on desktop and mobile", {
   skip: process.env.RUN_BROWSER_TESTS !== "1", timeout: 60_000,
@@ -16,6 +17,7 @@ test("Learner stories cover both courses in Chinese and English on desktop and m
         .observe(document, { childList: true, subtree: true });
     });
     const page = await context.newPage();
+    await page.route("**/api/learner-stories", route => route.fulfill({ json: [] }));
     await page.goto(`https://${process.env.REPLIT_DEV_DOMAIN}`);
     const section = page.getByTestId("learner-stories");
     for (const locale of ["zh-CN", "en"]) {
@@ -35,6 +37,7 @@ test("Learner stories cover both courses in Chinese and English on desktop and m
         await expect(section).not.toContainText("并非经核实");
         await expect(section).toContainText(locale === "en" ? "Amharic’s Fidel letters" : "菲德尔字母");
         await expect(section).toContainText(locale === "en" ? "Amharic numbers" : "阿姆哈拉语数字");
+        if (locale === "en") await expectEnglishInterface(page, `Learner stories at ${width}px`);
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
         if (locale === "en" && width === 1280) {
           await section.screenshot({ path: "/tmp/afri-panda-learner-stories.png", animations: "disabled" });

@@ -21,24 +21,26 @@ import { useLocale } from "@/lib/i18n";
 import { useTrack } from "@/contexts/TrackContext";
 import { AmharicPractice } from "@/components/learning/AmharicPractice";
 
-const LEVELS = [
-  { id: "beginner", name: "初学者", nameSwahili: "Mwanzo", icon: GraduationCap, color: "bg-green-500" },
-  { id: "intermediate", name: "中级", nameSwahili: "Kati", icon: BookOpen, color: "bg-blue-500" },
-  { id: "advanced", name: "高级", nameSwahili: "Juu", icon: Award, color: "bg-purple-500" },
+const getLevels = (t: (key: string) => string) => [
+  { id: "beginner", name: t("初学者"), nameSwahili: "Mwanzo", icon: GraduationCap, color: "bg-green-500" },
+  { id: "intermediate", name: t("中级"), nameSwahili: "Kati", icon: BookOpen, color: "bg-blue-500" },
+  { id: "advanced", name: t("高级"), nameSwahili: "Juu", icon: Award, color: "bg-purple-500" },
 ];
 
-const QUICK_REPLIES = [
-  { text: "Habari!", translation: "你好！" },
-  { text: "Ndiyo", translation: "是的" },
-  { text: "Hapana", translation: "不是" },
-  { text: "Asante sana", translation: "非常感谢" },
-  { text: "Tafadhali", translation: "请" },
-  { text: "Sijui", translation: "我不知道" },
+const getQuickReplies = (t: (key: string) => string) => [
+  { text: "Habari!", translation: t("你好！") },
+  { text: "Ndiyo", translation: t("是的") },
+  { text: "Hapana", translation: t("不是") },
+  { text: "Asante sana", translation: t("非常感谢") },
+  { text: "Tafadhali", translation: t("请") },
+  { text: "Sijui", translation: t("我不知道") },
 ];
 
 function PracticeChat() {
   const { user } = useAuth() as { user: User | null };
   const { language, t } = useLocale();
+  const LEVELS = getLevels(t);
+  const QUICK_REPLIES = getQuickReplies(t);
   const { track } = useTrack();
   const { toast } = useToast();
   const [message, setMessage] = useState("");
@@ -190,7 +192,7 @@ function PracticeChat() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2" data-testid="button-level-select">
                   <currentLevelInfo.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{t(currentLevelInfo.name)}</span>
+                  <span className="hidden sm:inline">{currentLevelInfo.name}</span>
                   <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -202,7 +204,7 @@ function PracticeChat() {
                     data-testid={`menu-level-${level.id}`}
                   >
                     <level.icon className="w-4 h-4 mr-2" />
-                    {t(level.name)} ({level.nameSwahili})
+                    {level.name} ({level.nameSwahili})
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -329,7 +331,7 @@ function PracticeChat() {
                           <level.icon className="w-5 h-5 text-white" />
                         </div>
                         <div className="text-left">
-                          <p className="font-medium">{t(level.name)}</p>
+                          <p className="font-medium">{level.name}</p>
                           <p className="text-xs text-muted-foreground">{level.nameSwahili}</p>
                         </div>
                       </Button>
@@ -375,7 +377,7 @@ function PracticeChat() {
                   className="text-xs"
                   data-testid={`button-quick-${idx}`}
                 >
-                  {reply.text} <span className="text-muted-foreground ml-1">({t(reply.translation)})</span>
+                  {reply.text} <span className="text-muted-foreground ml-1">({reply.translation})</span>
                 </Button>
               ))}
             </div>
@@ -464,7 +466,7 @@ function PracticeChat() {
                   data-testid={`button-new-${level.id}`}
                 >
                   <Plus className="w-3 h-3" />
-                  {t(level.name)}
+                  {level.name}
                 </Button>
               ))}
             </div>
@@ -486,7 +488,7 @@ function PracticeChat() {
                         </div>
                         <div className="text-left flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {t(levelInfo.name)} {t("练习")}
+                            {levelInfo.name} {t("练习")}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {s.createdAt ? formatDistanceToNow(new Date(s.createdAt), { addSuffix: true, locale: language === "en" ? enUS : zhCN }) : ""}

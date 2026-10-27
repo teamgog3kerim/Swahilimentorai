@@ -329,7 +329,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
         <DialogContent ref={lessonDialogRef} className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="dialog-lesson-detail">
           <DialogHeader>
             <DialogTitle className="text-2xl">{language === "en" ? selectedLesson?.title : (track === "amharic" ? selectedLesson?.titleChinese : selectedLesson?.titleSwahili)}</DialogTitle>
-            <DialogDescription className="text-lg">{language === "en" ? (track === "amharic" ? selectedLesson?.titleChinese : selectedLesson?.titleSwahili) : selectedLesson?.title}</DialogDescription>
+            <DialogDescription className="text-lg" lang={language === "en" ? (track === "amharic" ? "am" : "sw") : "en"}>{language === "en" ? selectedLesson?.titleSwahili : selectedLesson?.title}</DialogDescription>
           </DialogHeader>
 
           {selectedLesson && lessons && (() => {

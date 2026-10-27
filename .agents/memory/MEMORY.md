@@ -1,3 +1,4 @@
 - [Optional AI configuration](optional-ai.md) — missing AI credentials must not stop non-AI features from starting.
 - [Service worker privacy and updates](offline-cache-privacy.md) — keep private APIs uncached; updates must not force reloads or display blocking prompts.
 - [Google embedded sign-in](google-embedded-auth.md) — Google returns a generic 403 inside preview iframes; start OAuth in a full browser tab.
+- [Locale browser audits](locale-browser-audits.md) — distinguish teaching content and old notifications from untranslated UI; keep tsx browser callbacks self-contained.

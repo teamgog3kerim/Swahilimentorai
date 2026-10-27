@@ -6,15 +6,15 @@ import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 export function Footer() {
   const { language, t } = useLocale();
   const productLinks = [
-    { label: "课程", href: "/signup" },
-    { label: "定价", href: "/#pricing" },
-    { label: "练习", href: "/signup" },
-    { label: "进度追踪", href: "/signup" }
+    { label: "课程", text: t("课程"), href: "/signup" },
+    { label: "定价", text: t("定价"), href: "/#pricing" },
+    { label: "练习", text: t("练习"), href: "/signup" },
+    { label: "进度追踪", text: t("进度追踪"), href: "/signup" }
   ];
 
   const resourceLinks = [
-    { label: "免费注册", href: "/signup" },
-    { label: "登录", href: "/login" }
+    { label: "免费注册", text: t("免费注册"), href: "/signup" },
+    { label: "登录", text: t("登录"), href: "/login" }
   ];
 
   return (
@@ -40,7 +40,7 @@ export function Footer() {
               {productLinks.map((link, index) => (
                 <li key={index}>
                   <a href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
-                    {t(link.label)}
+                    {link.text}
                   </a>
                 </li>
               ))}
@@ -53,7 +53,7 @@ export function Footer() {
               {resourceLinks.map((link, index) => (
                 <li key={index}>
                   <Link href={link.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid={`link-${link.label}`}>
-                    {t(link.label)}
+                    {link.text}
                   </Link>
                 </li>
               ))}

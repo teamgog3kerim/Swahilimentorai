@@ -147,7 +147,7 @@ export default function ProgressPage() {
                     >
                       <div className="flex-1">
                         <p className="font-medium">{language === "en" ? item.lesson?.title : track === "amharic" ? item.lesson?.title : item.lesson?.titleSwahili}</p>
-                        <p className="text-sm text-muted-foreground">{language === "en" ? (track === "amharic" ? item.lesson?.titleChinese : item.lesson?.titleSwahili) : item.lesson?.titleChinese}</p>
+                        <p className="text-sm text-muted-foreground" lang={language === "en" ? (track === "amharic" ? "am" : "sw") : "zh-CN"}>{language === "en" ? item.lesson?.titleSwahili : item.lesson?.titleChinese}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge variant={item.progress.completed ? "default" : "secondary"}>

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { chromium, expect } from "@playwright/test";
 import type { Lesson } from "../../shared/schema";
+import { expectEnglishInterface } from "./helpers/localeAssertions";
 
 test("All courses render, bounded course/exercise navigation works, and AI failures preserve drafts", {
   skip: process.env.RUN_BROWSER_TESTS !== "1",
@@ -61,6 +62,11 @@ test("All courses render, bounded course/exercise navigation works, and AI failu
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.getByTestId("button-back-to-lesson-list").click();
     await page.getByTestId("button-back-to-levels").click();
+    // Toasts contain a snapshot in the language used when the action happened.
+    // Dismiss that earlier Chinese message before auditing the English screen.
+    const savedToast = page.getByText("学习进度已保存", { exact: true });
+    if (await savedToast.isVisible()) await page.locator("[toast-close]").click();
+    await expect(savedToast).not.toBeVisible();
     await page.getByTestId("button-language").click();
 
     let rendered = 0;
@@ -77,6 +83,7 @@ test("All courses render, bounded course/exercise navigation works, and AI failu
         for (let i = 0; i < levelLessons.length; i++) {
           await expect(dialog.getByRole("heading", { name: levelLessons[i].title, exact: true })).toBeVisible();
           await expect(page.getByTestId("text-lesson-position")).toBeVisible();
+          await expectEnglishInterface(page, `${track}: ${levelLessons[i].title}`);
           const content = levelLessons[i].content as any;
           if (content.grammar) {
             await expect(page.getByTestId("lesson-grammar")).toContainText(content.grammar.rule);
@@ -141,10 +148,13 @@ test("All courses render, bounded course/exercise navigation works, and AI failu
     await aiPage.getByTestId("button-nav-practice").click();
     await aiPage.getByTestId("button-ai-practice").click();
     await aiPage.getByTestId("button-start-beginner").click();
+    await expect(aiPage.getByTestId("input-message")).toBeEnabled();
+    await expectEnglishInterface(aiPage, "Live AI controls and translated quick replies (no paid request)");
     await aiPage.getByTestId("input-message").fill("Habari");
     await aiPage.getByTestId("button-send").click();
     await expect(aiPage.getByText("Live AI is unavailable. Return to guided practice to continue learning.", { exact: true })).toBeVisible();
     await expect(aiPage.getByTestId("input-message")).toHaveValue("Habari");
+    await expectEnglishInterface(aiPage, "Recoverable AI failure");
     await aiPage.getByTestId("button-guided-practice").click();
     await expect(aiPage.getByTestId("select-practice-lesson")).toBeVisible();
     assert.deepEqual(errors, []);

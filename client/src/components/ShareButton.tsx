@@ -125,7 +125,7 @@ ${appUrl}
 
   const shareLinks = [
     {
-      name: "微信",
+      name: t("微信"),
       icon: SiWechat,
       color: "bg-green-500 hover:bg-green-600",
       action: () => {
@@ -247,7 +247,7 @@ ${appUrl}
                   data-testid={`button-share-${link.name.toLowerCase()}`}
                 >
                   <link.icon className="w-6 h-6" />
-                  <span className="text-xs">{t(link.name)}</span>
+                  <span className="text-xs">{link.name}</span>
                 </button>
               ))}
             </div>
