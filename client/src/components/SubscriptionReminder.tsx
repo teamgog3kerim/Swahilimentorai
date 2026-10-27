@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { differenceInDays, differenceInHours } from "date-fns";
+import { useEffect, useState } from "react";
 import { AlertCircle, Clock, Crown, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import type { User } from "@shared/schema";
+import type { Subscription, User } from "@shared/schema";
 import { useLocale } from "@/lib/i18n";
 
 interface SubscriptionReminderProps {
@@ -11,157 +11,109 @@ interface SubscriptionReminderProps {
   onUpgrade: () => void;
 }
 
-type ReminderType = "trial_expiring_soon" | "trial_expiring_today" | "trial_expired" | "subscription_expiring" | "subscription_expired" | null;
-
-function getTrialEndDate(user: User): Date {
-  const createdAt = new Date(user.createdAt);
-  const trialEnd = new Date(createdAt);
-  trialEnd.setDate(trialEnd.getDate() + 7);
-  return trialEnd;
-}
-
-function getReminderType(user: User): ReminderType {
-  const now = new Date();
-  
-  // Check if user has an active subscription (either isPremium or valid subscriptionEndsAt)
-  if (user.subscriptionEndsAt) {
-    const subEnd = new Date(user.subscriptionEndsAt);
-    const daysUntilExpiry = differenceInDays(subEnd, now);
-    
-    if (subEnd < now) {
-      return "subscription_expired";
-    }
-    if (daysUntilExpiry <= 3) {
-      return "subscription_expiring";
-    }
-    // Active subscription, no reminder needed
-    return null;
-  }
-  
-  // No subscription - check trial status
-  if (!user.isPremium && !user.subscriptionEndsAt) {
-    const trialEnd = getTrialEndDate(user);
-    const daysUntilExpiry = differenceInDays(trialEnd, now);
-    const hoursUntilExpiry = differenceInHours(trialEnd, now);
-    
-    if (trialEnd < now) {
-      return "trial_expired";
-    }
-    if (hoursUntilExpiry <= 24) {
-      return "trial_expiring_today";
-    }
-    if (daysUntilExpiry <= 3) {
-      return "trial_expiring_soon";
-    }
-  }
-  
-  return null;
-}
-
 export function SubscriptionReminder({ user, onUpgrade }: SubscriptionReminderProps) {
-  const { t } = useLocale();
+  const { language } = useLocale();
+  const english = language === "en";
   const [dismissed, setDismissed] = useState(false);
-  
-  // Admins don't need subscription reminders - they have full access
-  if (user.isAdmin) {
-    return null;
-  }
-  
-  const reminderType = getReminderType(user);
-  
-  if (!reminderType || dismissed) {
-    return null;
-  }
-  
-  const trialEnd = getTrialEndDate(user);
-  const now = new Date();
-  const daysLeft = Math.max(0, differenceInDays(trialEnd, now));
-  const hoursLeft = Math.max(0, differenceInHours(trialEnd, now));
-  
-  const subEnd = user.subscriptionEndsAt ? new Date(user.subscriptionEndsAt) : null;
-  const subDaysLeft = subEnd ? Math.max(0, differenceInDays(subEnd, now)) : 0;
-  
-  const reminderConfig: Record<NonNullable<ReminderType>, {
-    variant: "default" | "destructive";
-    icon: typeof AlertCircle;
-    title: string;
-    description: string;
-    buttonText: string;
-    canDismiss: boolean;
-  }> = {
-    trial_expiring_soon: {
-      variant: "default",
-      icon: Clock,
-      title: t("试用期即将结束"),
-      description: `${t("您的7天免费试用还剩")} ${daysLeft} ${t("天。订阅后可无限制练习对话。")}`,
-      buttonText: t("立即订阅"),
-      canDismiss: true,
-    },
-    trial_expiring_today: {
-      variant: "destructive",
-      icon: AlertCircle,
-      title: t("试用期今天到期"),
-      description: `${t("您的免费试用将在")} ${hoursLeft} ${t("小时内结束。立即订阅以继续学习。")}`,
-      buttonText: t("立即订阅"),
-      canDismiss: false,
-    },
-    trial_expired: {
-      variant: "destructive",
-      icon: AlertCircle,
-      title: t("试用期已结束"),
-      description: t("您的7天免费试用已结束。订阅以继续无限制练习和访问所有课程。"),
-      buttonText: t("订阅继续学习"),
-      canDismiss: false,
-    },
-    subscription_expiring: {
-      variant: "default",
-      icon: Crown,
-      title: t("订阅即将到期"),
-      description: `${t("您的高级订阅还剩")} ${subDaysLeft} ${t("天。续订以保持无限制访问。")}`,
-      buttonText: t("续订"),
-      canDismiss: true,
-    },
-    subscription_expired: {
-      variant: "destructive",
-      icon: AlertCircle,
-      title: t("订阅已过期"),
-      description: t("您的高级订阅已过期。续订以继续无限制访问所有功能。"),
-      buttonText: t("立即续订"),
-      canDismiss: false,
-    },
-  };
-  
-  const config = reminderConfig[reminderType];
-  const IconComponent = config.icon;
-  
+  const [now, setNow] = useState(() => Date.now());
+  const { data: subscription } = useQuery<Subscription>({
+    queryKey: ["/api/subscription"],
+    enabled: !user.isAdmin,
+    retry: false,
+  });
+
+  useEffect(() => {
+    const refresh = () => setNow(Date.now());
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user.subscriptionEndsAt) return;
+    const remaining = new Date(user.subscriptionEndsAt).getTime() - Date.now();
+    if (!Number.isFinite(remaining) || remaining > 2_147_483_646) return;
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.max(0, remaining) + 1);
+    return () => window.clearTimeout(timer);
+  }, [user.subscriptionEndsAt]);
+
+  if (user.isAdmin) return null;
+
+  const endDate = user.subscriptionEndsAt
+    ? user.subscriptionEndsAt instanceof Date
+      ? user.subscriptionEndsAt
+      : new Date(user.subscriptionEndsAt)
+    : null;
+  if (!endDate || !Number.isFinite(endDate.getTime())) return null;
+
+  // A null-ended premium account is a lifetime entitlement, not an expiring trial.
+  if (user.isPremium && user.subscriptionEndsAt == null) return null;
+
+  const remainingMs = endDate.getTime() - now;
+  const expired = remainingMs <= 0;
+  const remainingHours = Math.max(0, Math.ceil(remainingMs / 3_600_000));
+  const hasPaidRecord = Boolean(subscription);
+  const isPaid = hasPaidRecord;
+  const isInReminderWindow = !isPaid || remainingMs <= 72 * 3_600_000;
+  if (!expired && !isInReminderWindow) return null;
+  if (dismissed && !expired) return null;
+
+  const title = expired
+    ? isPaid
+      ? english ? "Subscription expired" : "订阅已到期"
+      : english ? "Trial expired" : "试用已结束"
+    : isPaid
+      ? english ? "Subscription ending soon" : "订阅即将到期"
+      : english ? "Trial ending soon" : "试用即将结束";
+  const description = expired
+    ? isPaid
+      ? english
+        ? "Your access period has ended. Subscribe again to continue your courses and practice."
+        : "你的订阅期限已结束。重新订阅即可继续课程和练习。"
+      : english
+        ? "Your 88-hour trial has ended. Subscribe to continue courses and practice. No automatic charge was made."
+        : "你的 88 小时试用已结束。订阅后可继续课程和练习；试用结束不会自动扣费。"
+    : isPaid
+      ? english
+        ? `Your subscription ends in ${remainingHours} hour${remainingHours === 1 ? "" : "s"}.`
+        : `你的订阅将在 ${remainingHours} 小时后到期。`
+      : english
+        ? `Your 88-hour trial ends in ${remainingHours} hour${remainingHours === 1 ? "" : "s"}.`
+        : `你的 88 小时试用将在 ${remainingHours} 小时后结束。`;
+  const Icon = expired ? AlertCircle : isPaid ? Crown : Clock;
+
   return (
-    <Alert 
-      variant={config.variant} 
-      className="mb-4 relative"
+    <Alert
+      variant={expired ? "destructive" : "default"}
+      className="relative mb-4"
       data-testid="alert-subscription-reminder"
     >
-      <IconComponent className="h-4 w-4" />
-      <AlertTitle data-testid="text-reminder-title">{config.title}</AlertTitle>
-      <AlertDescription className="flex flex-col sm:flex-row sm:items-center gap-3 mt-2">
-        <span data-testid="text-reminder-description">{config.description}</span>
+      <Icon className="h-4 w-4" />
+      <AlertTitle data-testid="text-reminder-title">{title}</AlertTitle>
+      <AlertDescription className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <span className="flex-1" data-testid="text-reminder-description">{description}</span>
         <div className="flex items-center gap-2">
-          <Button 
-            size="sm" 
-            onClick={onUpgrade}
-            variant={config.variant === "destructive" ? "default" : "default"}
-            data-testid="button-upgrade-reminder"
-          >
-            {config.buttonText}
+          <Button size="sm" onClick={onUpgrade} data-testid="button-upgrade-reminder">
+            {english ? (isPaid ? "Renew subscription" : "View subscriptions") : (isPaid ? "续订" : "查看订阅")}
           </Button>
-          {config.canDismiss && (
+          {!expired && (
             <Button
               size="icon"
               variant="ghost"
               onClick={() => setDismissed(true)}
-              className="h-6 w-6"
+              aria-label={english ? "Dismiss reminder" : "关闭提醒"}
+              className="h-7 w-7"
               data-testid="button-dismiss-reminder"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>

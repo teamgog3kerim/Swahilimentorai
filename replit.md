@@ -12,6 +12,8 @@ For landing-hero refinements, keep the existing image and signup/pricing/share b
 
 Keep the footer panda in the app's purple theme with a graduation cap and continuous gentle panda/cap animation after scroll reveal. Preserve bilingual greetings and reduced-motion support. Do not show a pause/resume animation button; the user explicitly requested its removal.
 
+New email and Google accounts receive an 88-hour free trial starting at registration. After expiry, learners must obtain a paid subscription to continue courses and practice; keep their progress. Never automatically charge, restart a trial on login or payment submission, or grant paid access before manual payment approval. Preserve already-issued access deadlines and administrator access.
+
 ## System Architecture
 
 ### Frontend

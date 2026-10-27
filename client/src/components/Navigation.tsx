@@ -23,7 +23,7 @@ export function Navigation() {
 
           <div className="flex items-center gap-2 md:gap-4">
             <Badge variant="secondary" className="hidden sm:inline-flex" data-testid="badge-free-trial">
-              {t("7天免费试用")}
+              {t("88小时免费试用")}
             </Badge>
             <LanguageToggle />
             <ThemeToggle />

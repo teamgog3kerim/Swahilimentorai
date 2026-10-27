@@ -11,6 +11,7 @@ import { isOwnerEmail } from "./accountPolicy";
 import { seedLessons } from "./seedLessons";
 import type { User } from "@shared/schema";
 import { learnerStoryInputSchema, learnerStoryUpdateSchema } from "@shared/learnerStories";
+import { hasLearningAccess } from "@shared/subscriptionAccess";
 
 function managedUser(user: User) {
   const { passwordHash, googleId, ...safe } = user;
@@ -89,6 +90,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await seedLessons({ onlyIfEmpty: true });
   await setupAuth(app);
 
+  // Enforce access before returning course content, including direct API requests.
+  // Keep progress reads, account management and payment submission available.
+  app.use(["/api/lessons", "/api/progress", "/api/chat"], isAuthenticated, (req: any, res, next) => {
+    res.set("Cache-Control", "private, no-store");
+    if (req.baseUrl === "/api/progress" && req.method === "GET") return next();
+    if (!hasLearningAccess(req.user)) {
+      return res.status(402).json({
+        code: "SUBSCRIPTION_REQUIRED",
+        message: "Your learning access has ended. Subscribe to continue courses and practice. Your progress is saved.",
+      });
+    }
+    next();
+  });
+
   app.get("/api/learner-stories", async (_req, res) => {
     res.set("Cache-Control", "no-store");
     try {
@@ -143,6 +158,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/capabilities", isAuthenticated, (_req, res) => {
     res.json({ aiTutorAvailable: Boolean(openai) });
+  });
+
+  // Course metadata remains available so expired learners can view saved progress.
+  // Do not include teaching content in this endpoint.
+  app.get("/api/course-catalog", isAuthenticated, async (req, res) => {
+    const language = z.enum(["swahili", "amharic"]).safeParse(req.query.language ?? "swahili");
+    if (!language.success) return res.status(400).json({ message: "Invalid language" });
+    res.set("Cache-Control", "private, no-store");
+    try {
+      const lessons = await storage.getAllLessons(language.data);
+      res.json(lessons.map(({ content, ...metadata }) => metadata));
+    } catch {
+      res.status(500).json({ message: "Unable to load course catalog" });
+    }
   });
 
   app.use(["/api/lessons", "/api/progress", "/api/chat/sessions"], (req: any, res, next) => {
@@ -597,60 +626,10 @@ Follow these rules:
     }
   });
 
-  // POST /api/subscription/create - Create subscription (deprecated - use verify-payment)
+  // Never grant access from an unverified transaction ID.
+  // The supported verify-payment route requires manual administrator approval.
   app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = req.user;
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      const validation = subscriptionCreateSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ message: "Invalid request body", errors: validation.error.errors });
-      }
-
-      const { transactionId } = validation.data;
-
-      // Calculate dates
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + 30); // 30 days from now
-
-      // Create subscription
-      const subscriptionData = {
-        userId: user.id,
-        status: "active",
-        amount: 90,
-        currency: "USDT",
-        paymentMethod: "Binance Pay",
-        startDate,
-        endDate,
-        transactionId,
-      };
-
-      const subscription = await storage.createSubscription(subscriptionData);
-
-      await storage.createNotification({
-        type: 'new_subscription',
-        title: '新订阅激活',
-        message: `${user.username} (${user.email}) 订阅已激活，交易ID: ${transactionId}`,
-        metadata: { 
-          userId: user.id, 
-          email: user.email, 
-          subscriptionId: subscription.id,
-          transactionId 
-        },
-      });
-
-      // Update user premium status
-      await storage.updateUserPremiumStatus(user.id, true, endDate);
-
-      res.json(subscription);
-    } catch (error) {
-      console.error("Error creating subscription:", error);
-      res.status(500).json({ message: "Failed to create subscription" });
-    }
+    res.status(410).json({ message: "Please submit payment through /api/subscription/verify-payment for administrator approval." });
   });
 
   // ==================== ADMIN ROUTES ====================

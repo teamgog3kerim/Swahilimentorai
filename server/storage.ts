@@ -1,6 +1,7 @@
 import { eq, and, desc, sql, count } from "drizzle-orm";
 import { db } from "./db";
 import { normalizeCourseContent } from "../shared/courseContent";
+import { createTrialEndDate } from "../shared/subscriptionAccess";
 import {
   type User,
   type InsertUser,
@@ -168,7 +169,7 @@ export class DbStorage implements IStorage {
         }).where(eq(users.id, existing.id)).returning();
         return linked;
       }
-      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const trialEndsAt = createTrialEndDate();
       const [created] = await tx.insert(users).values({
         ...profile, authProvider: "google", isAdmin: owner,
         isPremium: true, subscriptionEndsAt: owner ? null : trialEndsAt,
@@ -212,8 +213,7 @@ export class DbStorage implements IStorage {
   }
 
   async createUserWithPassword(email: string, username: string, passwordHash: string): Promise<User> {
-    const trialEndsAt = new Date();
-    trialEndsAt.setDate(trialEndsAt.getDate() + 7);
+    const trialEndsAt = createTrialEndDate();
     
     const result = await db.insert(users).values({
       email,

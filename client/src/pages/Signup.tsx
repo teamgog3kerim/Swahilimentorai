@@ -254,7 +254,7 @@ export default function Signup() {
 
           <p className="text-xs text-muted-foreground text-center">
             {t("注册即表示您同意我们的服务条款和隐私政策。")}<br />
-            {t("新用户可享受7天免费试用。")}
+            {t("注册即享88小时免费试用，到期后需付费订阅以继续课程和练习。不会自动扣款。")}
           </p>
         </CardContent>
       </Card>

@@ -30,7 +30,7 @@ export function Pricing() {
             {t("解锁无限学习机会")}
           </p>
           <p className="text-sm text-muted-foreground">
-            {t("7天免费试用 • 无需预付款 • 随时取消")}
+            {t("88小时免费试用 • 无需预付款 • 到期后订阅继续学习")}
           </p>
         </div>
 
@@ -41,7 +41,7 @@ export function Pricing() {
             <CardHeader className="relative">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <Badge variant="secondary">{t("推荐")}</Badge>
-                <Badge variant="outline">{t("7天免费试用")}</Badge>
+                <Badge variant="outline">{t("88小时免费试用")}</Badge>
               </div>
               <CardTitle className="text-xl md:text-2xl">{t("月订阅")}</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">
@@ -81,7 +81,7 @@ export function Pricing() {
                   <Crown className="h-3 w-3 mr-1" />
                   {t("省20 USDT")}
                 </Badge>
-                <Badge variant="outline">{t("7天免费试用")}</Badge>
+                <Badge variant="outline">{t("88小时免费试用")}</Badge>
               </div>
               <CardTitle className="text-xl md:text-2xl">{t("季度订阅")}</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">

@@ -36,6 +36,8 @@ import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { TrackProvider, useTrack } from "@/contexts/TrackContext";
 import { TrackChooser } from "@/components/learning/TrackChooser";
+import { CourseAccessGate } from "@/components/CourseAccessGate";
+import { useCourseAccess } from "@/components/useCourseAccess";
 
 type View = "learn" | "practice" | "progress" | "subscription" | "admin";
 
@@ -45,6 +47,7 @@ function DashboardContent() {
   const { track, setTrack, setPracticeLessonId } = useTrack();
   const [currentView, setCurrentView] = useState<View>("learn");
   const { setOpenMobile } = useSidebar();
+  const hasAccess = useCourseAccess(user);
 
   const { data: adminCheck } = useQuery<{ isAdmin: boolean }>({
     queryKey: ["/api/admin/check"],
@@ -88,11 +91,17 @@ function DashboardContent() {
   const renderView = () => {
     switch (currentView) {
       case "learn":
+        if (!hasAccess) {
+          return <CourseAccessGate onUpgrade={() => setCurrentView("subscription")} />;
+        }
         return <Learn onNavigateToPractice={(lessonId?: string) => {
           setPracticeLessonId(lessonId || null);
           setCurrentView("practice");
         }} />;
       case "practice":
+        if (!hasAccess) {
+          return <CourseAccessGate onUpgrade={() => setCurrentView("subscription")} />;
+        }
         return <Practice onBackToLessons={() => setCurrentView("learn")} />;
       case "progress":
         return <Progress />;
@@ -101,6 +110,9 @@ function DashboardContent() {
       case "admin":
         return <Admin />;
       default:
+        if (!hasAccess) {
+          return <CourseAccessGate onUpgrade={() => setCurrentView("subscription")} />;
+        }
         return <Learn onNavigateToPractice={(lessonId?: string) => {
           setPracticeLessonId(lessonId || null);
           setCurrentView("practice");
@@ -157,11 +169,11 @@ function DashboardContent() {
                   {user?.username || t("用户")}
                 </p>
                 <Badge
-                  variant={user?.isPremium ? "default" : "secondary"}
+                  variant={hasAccess ? "default" : "secondary"}
                   className="text-xs"
-                  data-testid={`badge-${user?.isPremium ? "premium" : "free"}`}
+                  data-testid={`badge-${hasAccess ? "premium" : "free"}`}
                 >
-                  {user?.isPremium ? t("高级会员") : t("免费用户")}
+                  {hasAccess ? t("高级会员") : (language === "en" ? "Access expired" : "学习权限已到期")}
                 </Badge>
               </div>
             </div>
@@ -230,7 +242,11 @@ function DashboardContent() {
               />
             )}
           </div>
-          {track ? <Fragment key={track}>{renderView()}</Fragment> : <TrackChooser onChoose={setTrack} />}
+          {track || currentView === "subscription" || currentView === "admin" ? (
+            <Fragment key={track}>{renderView()}</Fragment>
+          ) : (
+            <TrackChooser onChoose={setTrack} />
+          )}
         </main>
       </div>
     </div>

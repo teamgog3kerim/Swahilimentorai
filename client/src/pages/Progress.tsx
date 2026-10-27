@@ -18,7 +18,7 @@ export default function ProgressPage() {
   });
 
   const { data: allLessons, isLoading: lessonsLoading, isError: lessonsError, refetch: refetchLessons } = useQuery<Lesson[]>({
-    queryKey: [`/api/lessons?language=${track || "swahili"}`],
+    queryKey: [`/api/course-catalog?language=${track || "swahili"}`],
     enabled: !!track,
   });
 

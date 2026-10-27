@@ -113,7 +113,9 @@ export default function SubscriptionPage() {
   
   // Calculate remaining days
   const now = new Date();
-  const isExpired = subscriptionEndsAt !== null && subscriptionEndsAt < now;
+  const isExpired = subscriptionEndsAt !== null && subscriptionEndsAt <= now;
+  const hoursRemaining = subscriptionEndsAt ? Math.max(0, Math.ceil((subscriptionEndsAt.getTime() - now.getTime()) / 3_600_000)) : 0;
+  const isTrial = !subscription && subscriptionEndsAt !== null;
   const daysRemaining = subscriptionEndsAt 
     ? differenceInDays(subscriptionEndsAt, now)
     : null;
@@ -123,7 +125,7 @@ export default function SubscriptionPage() {
   
   // Show subscribe buttons if: no paid subscription OR only on free trial
   // Free trial users have isPremium=true but no subscription record
-  const hasActivePaidSubscription = subscription && subscription.status === 'active';
+  const hasActivePaidSubscription = subscription && subscription.status === 'active' && new Date(subscription.endDate) > now;
   const showSubscribeButtons = !hasActivePaidSubscription;
 
   return (
@@ -138,11 +140,11 @@ export default function SubscriptionPage() {
         {isExpired && (
           <Alert variant="destructive" data-testid="alert-expired">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{t("订阅已过期")}</AlertTitle>
+            <AlertTitle>{isTrial ? (language === "en" ? "Free trial ended" : "免费试用已结束") : t("订阅已过期")}</AlertTitle>
             <AlertDescription>
               {language === "en"
-                ? <>Your subscription expired on {subscriptionEndDate}. Renew to keep using Premium features.</>
-                : <>你的订阅已于 {subscriptionEndDate} 过期。请续费以继续使用高级功能。</>}
+                ? <>Your learning access ended on {subscriptionEndDate}. Choose a paid plan to continue courses and practice. No automatic charge was made.</>
+                : <>你的学习权限已于 {subscriptionEndDate} 到期。选择付费方案即可继续课程和练习。不会自动扣费。</>}
             </AlertDescription>
           </Alert>
         )}
@@ -150,11 +152,11 @@ export default function SubscriptionPage() {
         {isExpiringSoon && !isExpired && (
           <Alert data-testid="alert-expiring-soon">
             <Clock className="h-4 w-4" />
-            <AlertTitle>{t("订阅即将到期")}</AlertTitle>
+            <AlertTitle>{isTrial ? t("88小时免费试用") : t("订阅即将到期")}</AlertTitle>
             <AlertDescription>
               {language === "en"
-                ? <>Your subscription expires in {daysRemaining} days ({subscriptionEndDate}). Renew early to avoid an interruption.</>
-                : <>你的订阅将在 {daysRemaining} 天后到期（{subscriptionEndDate}）。请提前续费以避免服务中断。</>}
+                ? <>Your learning access expires in {hoursRemaining} hours. Subscribe to keep learning afterward. No automatic charges.</>
+                : <>你的学习权限将在 {hoursRemaining} 小时后到期。到期后需订阅以继续学习。不会自动扣费。</>}
             </AlertDescription>
           </Alert>
         )}
@@ -166,10 +168,10 @@ export default function SubscriptionPage() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-primary" />
-                    {t("当前订阅")}
+                    {isTrial ? t("88小时免费试用") : t("当前订阅")}
                   </CardTitle>
                   <CardDescription className="mt-1">
-                  {isExpired ? t("已过期") : isExpiringSoon ? `${t("还有")} ${daysRemaining} ${t("天到期")}` : t("你是高级会员")}
+                  {isExpired ? t("已过期") : (language === "en" ? `${hoursRemaining} hours remaining` : `还剩 ${hoursRemaining} 小时`)}
                   </CardDescription>
                 </div>
                 <Badge variant={isExpired ? "destructive" : isExpiringSoon ? "outline" : "default"}>
@@ -188,9 +190,9 @@ export default function SubscriptionPage() {
                   <span className="font-medium">{subscriptionEndDate}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">{t("剩余天数")}</span>
+                  <span className="text-sm text-muted-foreground">{language === "en" ? "Hours remaining" : "剩余小时"}</span>
                   <span className={`font-medium ${isExpired ? "text-destructive" : isExpiringSoon ? "text-yellow-600 dark:text-yellow-500" : ""}`}>
-                    {daysRemaining !== null ? (daysRemaining < 0 ? t("已过期") : `${daysRemaining} ${t("天")}`) : "-"}
+                    {isExpired ? t("已过期") : hoursRemaining}
                   </span>
                 </div>
                 {subscription && (
@@ -236,7 +238,7 @@ export default function SubscriptionPage() {
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
                 <Badge variant="secondary">{t("推荐")}</Badge>
-                {showSubscribeButtons && <Badge variant="outline">{t("7天免费试用")}</Badge>}
+                {showSubscribeButtons && <Badge variant="outline">{t("付费后继续学习")}</Badge>}
               </div>
               <CardTitle className="text-2xl">{t("月订阅")}</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">
@@ -291,7 +293,7 @@ export default function SubscriptionPage() {
             <CardHeader>
               <div className="flex items-center justify-between mb-2">
                 <Badge className="bg-green-600 hover:bg-green-700">{t("超值优惠")}</Badge>
-                {showSubscribeButtons && <Badge variant="outline">{t("7天免费试用")}</Badge>}
+                {showSubscribeButtons && <Badge variant="outline">{t("付费后继续学习")}</Badge>}
               </div>
               <CardTitle className="text-2xl">{t("季度订阅")}</CardTitle>
               <div className="flex items-baseline gap-2 mt-4">
