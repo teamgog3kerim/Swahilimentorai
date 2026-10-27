@@ -56,3 +56,6 @@ APP_OWNER_EMAIL = "teamgog3@gmail.com"
 
 [userenv.development]
 GOOGLE_CALLBACK_URL = "https://15526b3e-3811-4355-973d-309a56f0784d-00-1gkt2hqs9ng5q.reed.replit.dev/api/auth/google/callback"
+
+[userenv.production]
+GOOGLE_CALLBACK_URL = "https://swahilimentorai-1.replit.app/api/auth/google/callback"

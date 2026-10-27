@@ -18,12 +18,15 @@ The backend uses Express.js (Node.js, TypeScript) with a RESTful API. Authentica
 ### Google sign-in and application owner
 - Configure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` through Secrets. Set `GOOGLE_CALLBACK_URL` to the exact HTTPS URL ending in `/api/auth/google/callback`, and register it in the Google Cloud web OAuth client. Development has its own callback; configure the published app's callback separately in Production.
 - Missing Google configuration must not stop email/password or other app features. Google sign-in is visibly disabled until configured.
+- Google rejects OAuth inside preview iframes with a generic 403. Embedded login, signup, and account-link buttons must open the app's OAuth start route in a new top-level tab, with `noopener,noreferrer`. Standalone visits can sign in in the same tab. Users continue in that tab after signing in.
 - `APP_OWNER_EMAIL` reserves the owner account. Its full administrator access is established only after a verified Gmail sign-in. Local password registration/login must not grant access to the reserved owner address.
 - Preserve existing accounts and their learning data. Ordinary existing accounts require password sign-in followed by “Connect Google account” in the dashboard before Google can be linked. This prevents silent linking to unverified, self-registered email identities.
 - A pre-existing local owner account is recovered through verified Google ownership, removing its old password and sessions to prevent a previously claimed email from retaining admin access.
 - Admin user controls allow name, role, and membership changes, plus permanent deletion with explicit email confirmation. Server-side checks protect the owner and prevent self-deletion/self-demotion. Do not return password hashes or Google subject IDs from management APIs.
 
 Authentication checks: `node --import tsx --test server/tests/accountPolicy.test.ts`. Development database integration checks: `RUN_DB_TESTS=1 node --import tsx --test server/tests/googleAccounts.test.ts` (temporary test accounts are removed afterwards).
+
+OAuth navigation regression: `RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/googleSignInBrowser.test.ts`. It verifies embedded login/signup reach Google's sign-in form in a separate tab and standalone login stays in-tab, without entering Google credentials.
 
 ### Curriculum and browser verification
 - Startup initializes the supplied 90-lesson curriculum only when the lesson table is empty. Initialization is serialized and never replaces existing lessons or learner progress.

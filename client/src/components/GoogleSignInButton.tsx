@@ -5,6 +5,7 @@ import { useLocale } from "@/lib/i18n";
 export function GoogleSignInButton({ connect = false }: { connect?: boolean }) {
   const { language } = useLocale();
   const en = language === "en";
+  const embedded = window.self !== window.top;
   const { data, isLoading, isError } = useQuery<{ google: boolean }>({
     queryKey: ["/api/auth/providers"],
     retry: false,
@@ -24,12 +25,26 @@ export function GoogleSignInButton({ connect = false }: { connect?: boolean }) {
       <Button
         type="button" variant="outline" className="w-full gap-2"
         disabled={isLoading || !data?.google}
-        onClick={() => window.location.assign("/api/auth/google")}
+        onClick={() => {
+          // Google's authorization page rejects iframe navigation with a 403.
+          // Start the flow in a full browser tab, including the initial session
+          // cookie, rather than opening Google's URL inside the preview frame.
+          if (embedded) {
+            window.open("/api/auth/google", "_blank", "noopener,noreferrer");
+          } else {
+            window.location.assign("/api/auth/google");
+          }
+        }}
         data-testid="button-google-signin"
       >
         <span aria-hidden="true" className="font-bold text-blue-600">G</span>
         {connect ? (en ? "Connect Google account" : "关联 Google 账户") : (en ? "Continue with Google" : "使用 Google 继续")}
       </Button>
+      {embedded && data?.google && <p className="text-xs text-center text-muted-foreground">
+        {en
+          ? "Google sign-in opens in a new browser tab. Continue there after signing in."
+          : "Google 登录将在新的浏览器标签页中打开，登录后请在该标签页继续使用。"}
+      </p>}
       {!data?.google && !isLoading && <p className="text-xs text-muted-foreground">
         {isError
           ? (en ? "Unable to check Google sign-in availability." : "无法检查 Google 登录状态。")

@@ -1,2 +1,3 @@
 - [Optional AI configuration](optional-ai.md) — missing AI credentials must not stop non-AI features from starting.
 - [Offline cache privacy](offline-cache-privacy.md) — never cache personalized API responses; cache policy changes must purge previous service-worker caches.
+- [Google embedded sign-in](google-embedded-auth.md) — Google returns a generic 403 inside preview iframes; start OAuth in a full browser tab.
