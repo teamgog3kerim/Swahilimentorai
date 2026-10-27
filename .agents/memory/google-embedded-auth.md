@@ -8,3 +8,9 @@ When the app is embedded, open the app's Google sign-in start route in a separat
 **Why:** Google's page returned the exact generic “403…you do not have access to this page” inside the preview iframe, while the same authorization request reached the email sign-in form in a top-level tab. This is not an app admin permission failure.
 
 **How to apply:** Preserve PKCE/state/nonce and verified-account checks. Test both embedded login/signup and standalone navigation. Tell embedded users to continue in the new tab after sign-in. The published callback must use the actual deployment domain and be registered in Google Cloud separately from the development callback.
+
+Keep preview OAuth callbacks on the preview origin rather than substituting the published callback to avoid Google's allowlist errors.
+
+**Why:** OAuth state and PKCE are held in the session cookie on the origin where sign-in starts. A callback on another origin cannot safely complete that session. Google's `redirect_uri_mismatch` is distinct from the iframe 403 and requires an exact authorized callback entry on the Google OAuth client.
+
+**How to apply:** Verify the callback actually emitted by the running app, then have the OAuth client owner authorize that exact URI without removing the working published callback. Do not replace secrets or weaken account checks as a workaround.
