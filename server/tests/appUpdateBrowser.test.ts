@@ -39,6 +39,8 @@ test("Offline-worker installation and changes never show a browser popup or disc
     await page.goto(`https://${process.env.REPLIT_DEV_DOMAIN}/login`);
     await page.waitForFunction(() => navigator.serviceWorker.controller && (window as any).__updateTestRegistration);
     const email = page.locator('input[name="email"]');
+    await expect(email).toHaveAttribute("autocomplete", "username");
+    await expect(page.getByTestId("input-password")).toHaveAttribute("autocomplete", "current-password");
     await email.fill("draft-not-submitted@example.com");
     await triggerUpdate();
     await expect(email).toHaveValue("draft-not-submitted@example.com");

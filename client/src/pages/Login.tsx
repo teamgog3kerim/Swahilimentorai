@@ -106,6 +106,7 @@ export default function Login() {
                           placeholder="your@email.com"
                           className="pl-10"
                           data-testid="input-email"
+                          autoComplete="username"
                           {...field}
                         />
                       </div>
@@ -128,6 +129,7 @@ export default function Login() {
                           placeholder="••••••••"
                           className="pl-10"
                           data-testid="input-password"
+                          autoComplete="current-password"
                           {...field}
                         />
                         <button

@@ -36,6 +36,10 @@ test("Chinese-first account, learning progress, and admin browser journey", {
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await page.goto(`${base}/signup`);
+    await expect(page.getByTestId("input-name")).toHaveAttribute("autocomplete", "name");
+    await expect(page.getByTestId("input-email")).toHaveAttribute("autocomplete", "username");
+    await expect(page.getByTestId("input-password")).toHaveAttribute("autocomplete", "new-password");
+    await expect(page.getByTestId("input-confirm-password")).toHaveAttribute("autocomplete", "new-password");
     await page.locator('input[name="name"]').fill("Browser QA Learner");
     await page.locator('input[name="email"]').fill(email);
     await page.locator('input[name="password"]').fill(password);

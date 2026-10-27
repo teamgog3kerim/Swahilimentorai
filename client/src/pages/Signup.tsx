@@ -110,6 +110,7 @@ export default function Signup() {
                           placeholder={t("您的姓名")}
                           className="pl-10"
                           data-testid="input-name"
+                          autoComplete="name"
                           {...field}
                         />
                       </div>
@@ -133,6 +134,7 @@ export default function Signup() {
                           placeholder="your@email.com"
                           className="pl-10"
                           data-testid="input-email"
+                          autoComplete="username"
                           {...field}
                         />
                       </div>
@@ -155,6 +157,7 @@ export default function Signup() {
                           placeholder="••••••••"
                           className="pl-10"
                           data-testid="input-password"
+                          autoComplete="new-password"
                           {...field}
                         />
                         <button
@@ -189,6 +192,7 @@ export default function Signup() {
                           placeholder="••••••••"
                           className="pl-10"
                           data-testid="input-confirm-password"
+                          autoComplete="new-password"
                           {...field}
                         />
                         <button
