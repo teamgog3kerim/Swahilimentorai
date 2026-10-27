@@ -269,7 +269,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between mb-2">
-                        <CardTitle className="text-xl flex-1">{language === "en" ? lesson.title : (track === "amharic" ? lesson.titleChinese : lesson.titleSwahili)}</CardTitle>
+                        <CardTitle className="text-xl flex-1">{language === "en" ? lesson.title : lesson.titleChinese}</CardTitle>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {isCompleted && (
                             <CheckCircle2 className="w-5 h-5 text-green-600" data-testid="icon-completed" />
@@ -293,7 +293,7 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
                           </Button>
                         </div>
                       </div>
-                      <CardDescription className="text-base">{language === "en" ? (track === "amharic" ? lesson.title : lesson.titleSwahili) : lesson.titleChinese}</CardDescription>
+                      <CardDescription className="text-base" lang={track === "amharic" ? "am" : "sw"}>{lesson.titleSwahili}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -328,8 +328,8 @@ export default function Learn({ onNavigateToPractice }: LearnProps) {
       <Dialog open={!!selectedLesson} onOpenChange={() => setSelectedLesson(null)}>
         <DialogContent ref={lessonDialogRef} className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="dialog-lesson-detail">
           <DialogHeader>
-            <DialogTitle className="text-2xl">{language === "en" ? selectedLesson?.title : (track === "amharic" ? selectedLesson?.titleChinese : selectedLesson?.titleSwahili)}</DialogTitle>
-            <DialogDescription className="text-lg" lang={language === "en" ? (track === "amharic" ? "am" : "sw") : "en"}>{language === "en" ? selectedLesson?.titleSwahili : selectedLesson?.title}</DialogDescription>
+            <DialogTitle className="text-2xl">{language === "en" ? selectedLesson?.title : selectedLesson?.titleChinese}</DialogTitle>
+            <DialogDescription className="text-lg" lang={track === "amharic" ? "am" : "sw"}>{selectedLesson?.titleSwahili}</DialogDescription>
           </DialogHeader>
 
           {selectedLesson && lessons && (() => {

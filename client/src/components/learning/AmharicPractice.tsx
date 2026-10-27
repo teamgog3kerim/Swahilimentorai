@@ -9,9 +9,11 @@ import { useTrack } from "@/contexts/TrackContext";
 import type { Lesson } from "@shared/schema";
 import { PronunciationButton } from "./PronunciationButton";
 import { LessonContentView } from "./LessonContentView";
+import { ReadingAid, ChineseReadingNotice } from "./ReadingAid";
+import { normalizeCourseContent } from "@shared/courseContent";
 
 type Quiz = { question?: { english?: string; chinese?: string }; options?: string[]; answer?: number; explanation?: { english?: string; chinese?: string } };
-type DialogueLine = { speaker: string; term?: string; swahili?: string; transliteration?: string; english?: string; chinese?: string };
+type DialogueLine = { speaker: string; term?: string; swahili?: string; transliteration?: string; pronunciationChinese?: string; english?: string; chinese?: string };
 const text = (en: string | undefined, zh: string | undefined, locale: string) => locale === "en" ? en || zh || "" : zh || en || "";
 const amharicCategories = ["all", "letters", "words", "numbers", "conversations"];
 const swahiliCategories = ["all", "words", "numbers", "conversations"];
@@ -62,7 +64,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
   const categoryLessons = useMemo(() => (lessons || []).filter((item) => matchesCategory(item, category, isAmharic)), [lessons, category, isAmharic]);
   const lesson = categoryLessons.find((item) => item.id === lessonId) || categoryLessons[0];
   const lessonPosition = lesson ? categoryLessons.findIndex((item) => item.id === lesson.id) : -1;
-  const content = lesson?.content as any;
+  const content = lesson ? normalizeCourseContent(lesson.content as Record<string, any>, target, lesson.title) : undefined;
   const makeVocabularyChecks = (vocabulary: any[]): Quiz[] => vocabulary
     .filter((item) => (item?.term || item?.swahili) && (item?.english || item?.chinese))
     .map((item, questionIndex, candidates) => {
@@ -186,6 +188,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
         {categoryLessons.length === 0 && <Card><CardContent className="p-6 text-muted-foreground">{english ? "No lessons in this category." : "该类别暂时没有课程。"}</CardContent></Card>}
         {lesson && <section className="space-y-5">
           {lines.length > 0 && <Card className="rounded-3xl"><CardContent className="p-5 md:p-7">
+            <ChineseReadingNotice target={target} />
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div><p className="text-xs font-semibold uppercase tracking-widest text-primary">{english ? "Scripted role-play" : "情境角色对话"}</p>
                 <h2 className="mt-2 text-xl font-semibold">{english ? lesson.title : lesson.titleChinese}</h2></div>
@@ -196,14 +199,14 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
               {roleNames.map((name, index) => <button key={name} onClick={() => selectRole(index)} aria-pressed={selectedRole === index}
                 data-testid={`practice-role-${index === 0 ? "A" : "B"}`}
                 className={`rounded-xl border px-4 py-2 text-sm ${selectedRole === index ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>
-                {english ? `Role ${index === 0 ? "A" : "B"}` : `角色 ${index === 0 ? "A" : "B"}`}
+                {english ? `Role ${index === 0 ? "A" : "B"}` : `角色${index === 0 ? "甲" : "乙"}`}
               </button>)}
             </div>
             {turn && <div className="mt-5 rounded-2xl bg-muted/60 p-5" aria-live="polite">
               <p className="text-xs font-semibold text-muted-foreground">{learnerTurn ? (english ? "YOUR TURN" : "轮到你") : (english ? "PARTNER SAYS" : "对方说")}</p>
               {!learnerTurn || turnRevealed ? <>
                 <p className="mt-2 text-2xl font-medium">{turn.term || turn.swahili}</p>
-                {turn.transliteration && <p className="mt-1 text-sm text-primary">{turn.transliteration}</p>}
+                <ReadingAid native={turn.term || turn.swahili || ""} latin={turn.transliteration} chinese={turn.pronunciationChinese} target={target} />
                 <PronunciationButton text={turn.term || turn.swahili || ""} targetLanguage={target} />
               </> : <p className="mt-3 text-muted-foreground">{english ? "Try saying the next line before revealing it." : "先试着说出下一句，再查看示范。"}</p>}
               {translationRevealed && <p className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">{text(turn.english, turn.chinese, language)}</p>}
@@ -236,7 +239,7 @@ export function AmharicPractice({ initialLessonId }: { initialLessonId?: string 
               onClick={() => { setSelectedAnswer(index); setChecked(false); setAnswerRevealed(false); }} disabled={checked || answerRevealed}
               aria-pressed={selectedAnswer === index}
               className={`rounded-xl border p-4 text-left transition-colors ${checked && selectedAnswer === index ? (correct ? "border-emerald-600 bg-emerald-50 text-emerald-950" : "border-rose-500 bg-rose-50 text-rose-950") : "border-border hover:border-primary/50"}`}>
-              <span className="mr-3 font-mono text-xs text-muted-foreground">{String.fromCharCode(65 + index)}</span>{option}
+              <span className="mr-3 font-mono text-xs text-muted-foreground">{english ? String.fromCharCode(65 + index) : ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛"][index] || String(index + 1)}</span>{option}
             </button>)}</div>
             {checked && selectedAnswer !== null && <div className={`mt-4 rounded-xl p-4 text-sm ${correct ? "bg-emerald-50 text-emerald-950" : "bg-amber-50 text-amber-950"}`} role="status">
               <strong>{correct ? (english ? "That’s right." : "回答正确。") : (english ? "Not quite." : "再看一看。")}</strong> {text(quiz.explanation?.english, quiz.explanation?.chinese, language)}

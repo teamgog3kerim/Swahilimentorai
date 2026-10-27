@@ -50,6 +50,11 @@ test("Bilingual Amharic letters, flashcards, numbers, role-play and saved indepe
     await page.getByTestId("letter-1").click();
     await expect(page.getByTestId("letter-1")).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByTestId("letter-1")).toContainText("ሁ");
+    for (const guide of await dialog.getByTestId("pronunciation-guide").allTextContents()) {
+      assert.equal(new RegExp("\\p{Script=Latin}", "u").test(guide), false, guide);
+    }
+    await expect(dialog).toContainText("中文近似音仅供辅助记忆");
+    await expect(dialog).not.toContainText("Fidel foundations");
     await page.getByTestId("button-toggle-lesson-completion").click();
     await expect(page.getByTestId("button-toggle-lesson-completion")).toHaveText("标记为未完成");
     const wrong = (letters.content.quizzes[0].answer + 1) % letters.content.quizzes[0].options.length;
@@ -84,6 +89,7 @@ test("Bilingual Amharic letters, flashcards, numbers, role-play and saved indepe
     await expect(page.getByTestId("select-practice-lesson")).toHaveValue(conversation.id);
     await page.getByTestId("practice-role-A").click();
     await page.getByTestId("button-reveal-turn").click();
+    await expect(page.getByTestId("pronunciation-guide")).toHaveAttribute("data-reading-language", "zh");
     await page.getByRole("button", { name: "查看翻译", exact: true }).click();
     await page.getByTestId("button-next-turn").click();
     await page.getByTestId("practice-role-B").click();
@@ -94,6 +100,28 @@ test("Bilingual Amharic letters, flashcards, numbers, role-play and saved indepe
     await expect(page.getByTestId("select-practice-lesson")).toHaveValue(conversation.id);
     await expect(page.getByTestId("button-reveal-turn")).toHaveText("Reveal this turn");
     await page.screenshot({ path: "/tmp/amharic-roleplay.png", animations: "disabled" });
+
+    const market = lessons.find((item: any) => item.content?.vocabulary?.some((word: any) => word.term === "ገበያ"));
+    assert.ok(market);
+    await page.getByTestId("select-practice-lesson").selectOption(market.id);
+    const marketIndex = market.content.vocabulary.findIndex((word: any) => word.term === "ገበያ");
+    for (let index = 0; index < marketIndex; index++) {
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+    }
+    await expect(page.getByTestId("pronunciation-guide")).toContainText("gäbäya");
+    await page.getByTestId("button-language").click();
+    await expect(page.getByTestId("pronunciation-guide")).toContainText("格·伯·亚");
+    await expect(page.getByTestId("pronunciation-guide")).not.toContainText("gäbäya");
+    await expect(page.getByText("ገበያ", { exact: true }).first()).toBeVisible();
+    await page.getByTestId("button-reveal-meaning").click();
+    await expect(page.getByText("市场", { exact: true })).toBeVisible();
+    await page.setViewportSize({ width: 402, height: 874 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
+    await page.getByTestId("pronunciation-guide").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: "/tmp/amharic-chinese-market.png", animations: "disabled" });
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.getByTestId("button-language").click();
+    await expect(page.getByTestId("pronunciation-guide")).toContainText("gäbäya");
 
     await page.getByTestId("button-nav-progress").click();
     await expect(page.getByTestId("page-progress")).toContainText(`1 / ${lessons.length}`);
@@ -120,6 +148,11 @@ test("Bilingual Amharic letters, flashcards, numbers, role-play and saved indepe
     await page.setViewportSize({ width: 402, height: 874 });
     await page.getByTestId(`card-lesson-${letters.id}`).click();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
+    assert.ok(await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth + 2));
+    await page.getByTestId("button-close-lesson").click();
+    await page.getByTestId("button-language").click();
+    await page.getByTestId(`card-lesson-${letters.id}`).click();
+    await expect(dialog.getByTestId("pronunciation-guide").first()).toHaveAttribute("data-reading-language", "zh");
     assert.ok(await dialog.evaluate((node) => node.scrollWidth <= node.clientWidth + 2));
     await page.screenshot({ path: "/tmp/amharic-mobile.png", animations: "disabled" });
     assert.deepEqual(errors, []);

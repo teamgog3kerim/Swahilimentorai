@@ -1,3 +1,5 @@
+import { normalizeAmharicPronunciation } from "./amharicPronunciation";
+
 // Adapt the imported grammar format without replacing lesson IDs or learner data.
 const grammarRules: Array<{ prefix: string; english?: string; chinese: string; examplesChinese: string[] }> = [
   { prefix: "Present tense formed", chinese: "现在时结构：主语前缀 + na + 动词词根。例如 Ni-na-kula（我正在吃）。",
@@ -24,6 +26,7 @@ const grammarRules: Array<{ prefix: string; english?: string; chinese: string; e
 ];
 
 export function normalizeCourseContent(content: Record<string, any>, language: string, title?: string): Record<string, any> {
+  if (language === "amharic") return normalizeAmharicPronunciation(content);
   // The imported lesson was labelled 1–20 but supplied only 1–10.
   if (language === "swahili" && title === "Numbers 1-20" && content?.vocabulary?.length === 10
     && content.vocabulary[0]?.english?.toLowerCase() === "one" && content.vocabulary[9]?.english?.toLowerCase() === "ten") {

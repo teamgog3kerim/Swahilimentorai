@@ -4,6 +4,7 @@ import { useLocale } from "@/lib/i18n";
 import { useTrack } from "@/contexts/TrackContext";
 import { PronunciationButton } from "./PronunciationButton";
 import { normalizeCourseContent } from "@shared/courseContent";
+import { ReadingAid, ChineseReadingNotice } from "./ReadingAid";
 
 interface VocabItem {
   term?: string;
@@ -12,6 +13,7 @@ interface VocabItem {
   english?: string;
   transliteration?: string;
   pronunciation?: string;
+  pronunciationChinese?: string;
 }
 interface DialogueLine {
   speaker: string;
@@ -20,10 +22,11 @@ interface DialogueLine {
   chinese: string;
   english?: string;
   transliteration?: string;
+  pronunciationChinese?: string;
 }
 interface LessonContent {
   grammar?: { rule: string; ruleChinese?: string; examples?: string[]; examplesChinese?: string[] };
-  letters?: { character: string; transliteration: string }[];
+  letters?: { character: string; transliteration: string; pronunciationChinese?: string }[];
   vocabulary?: VocabItem[];
   phrases?: { swahili: string; chinese: string; english?: string }[];
   dialogues?: { lines: DialogueLine[] }[];
@@ -57,6 +60,7 @@ export function LessonContentView({ content, t, lessonTitle }: { content: Record
   const extraLetters = completeFamilies ? [] : lessonContent.letters || [];
 
   return <div className="space-y-6 mt-4">
+    {!lessonContent.notes?.chinese?.startsWith("中文近似音") && <ChineseReadingNotice target={track || "swahili"} />}
     {(lessonContent.introduction || lessonContent.notes) && <div className="rounded-xl border bg-primary/5 p-4">
       <p>{display(lessonContent.introduction?.english, lessonContent.introduction?.chinese)}</p>
       {lessonContent.notes && <p className="mt-2 text-sm text-muted-foreground">{display(lessonContent.notes.english, lessonContent.notes.chinese)}</p>}
@@ -69,7 +73,7 @@ export function LessonContentView({ content, t, lessonTitle }: { content: Record
           {baseLetters.map((letter, idx) => <button key={`${letter.character}-${idx}`} onClick={() => setActiveLetter(idx)}
             data-testid={`letter-${idx}`} aria-pressed={activeLetter === idx}
             className={`rounded-lg border p-1 sm:p-2 text-center ${activeLetter === idx ? "border-primary bg-primary/10" : "bg-card hover:bg-muted"}`}>
-            <span className="block text-xl">{letter.character}</span><span className="text-[10px] text-muted-foreground">{letter.transliteration}</span>
+            <span className="block text-xl">{letter.character}</span><ReadingAid compact native={letter.character} latin={letter.transliteration} chinese={letter.pronunciationChinese} target="amharic" />
           </button>)}
         </div>
       </div>}
@@ -81,14 +85,14 @@ export function LessonContentView({ content, t, lessonTitle }: { content: Record
             return <button key={`${letter.character}-${actualIndex}`} onClick={() => setActiveLetter(actualIndex)}
               data-testid={`letter-${actualIndex}`} aria-pressed={activeLetter === actualIndex}
               className={`rounded-lg border p-1 sm:p-2 text-center ${activeLetter === actualIndex ? "border-primary bg-primary/10" : "bg-card hover:bg-muted"}`}>
-              <span className="block text-xl">{letter.character}</span><span className="text-[10px] text-muted-foreground">{letter.transliteration}</span>
+              <span className="block text-xl">{letter.character}</span><ReadingAid compact native={letter.character} latin={letter.transliteration} chinese={letter.pronunciationChinese} target="amharic" />
             </button>;
           })}
         </div>
       </div>}
       {lessonContent.letters[activeLetter] && <div className="mt-3 rounded-xl bg-muted/60 p-4" aria-live="polite">
         <span className="text-5xl">{lessonContent.letters[activeLetter].character}</span>
-        <span className="ml-4 text-lg font-medium">{lessonContent.letters[activeLetter].transliteration}</span>
+        <ReadingAid native={lessonContent.letters[activeLetter].character} latin={lessonContent.letters[activeLetter].transliteration} chinese={lessonContent.letters[activeLetter].pronunciationChinese} target="amharic" />
         <PronunciationButton text={lessonContent.letters[activeLetter].character} targetLanguage={track || "amharic"} />
         <div className="mt-3 flex flex-wrap gap-2">
           <Button size="sm" variant="outline" disabled={activeLetter === 0}
@@ -102,11 +106,11 @@ export function LessonContentView({ content, t, lessonTitle }: { content: Record
     </section>}
 
     {!!vocab.length && <section>
-      <div className="mb-3 flex items-center justify-between"><h3 className="text-lg font-semibold">{t("词汇 (Vocabulary)")}</h3><span className="text-xs text-muted-foreground">{vocabIndex + 1} / {vocab.length}</span></div>
+      <div className="mb-3 flex items-center justify-between"><h3 className="text-lg font-semibold">{language === "en" ? "Vocabulary" : "词汇"}</h3><span className="text-xs text-muted-foreground">{vocabIndex + 1} / {vocab.length}</span></div>
       <div className="flex min-h-40 flex-col justify-between rounded-2xl bg-muted/60 p-5">
         <div>
           <p className="text-2xl font-semibold">{vocab[vocabIndex]?.term || vocab[vocabIndex]?.swahili}</p>
-          {(vocab[vocabIndex]?.transliteration || vocab[vocabIndex]?.pronunciation) && <p className="mt-1 text-sm text-primary">{vocab[vocabIndex].transliteration || vocab[vocabIndex].pronunciation}</p>}
+          <ReadingAid native={vocab[vocabIndex]?.term || vocab[vocabIndex]?.swahili || ""} latin={vocab[vocabIndex]?.transliteration || vocab[vocabIndex]?.pronunciation} chinese={vocab[vocabIndex]?.pronunciationChinese} target={track || "swahili"} />
           <PronunciationButton text={vocab[vocabIndex]?.term || vocab[vocabIndex]?.swahili || ""} targetLanguage={track || "swahili"} />
         </div>
         {meaningVisible && <p className="mt-4 text-muted-foreground" aria-live="polite">{display(vocab[vocabIndex]?.english, vocab[vocabIndex]?.chinese)}</p>}
@@ -121,7 +125,7 @@ export function LessonContentView({ content, t, lessonTitle }: { content: Record
     </section>}
 
     {!!lessonContent.phrases?.length && <section>
-      <h3 className="mb-3 text-lg font-semibold">{t("常用短语 (Phrases)")}</h3>
+      <h3 className="mb-3 text-lg font-semibold">{language === "en" ? "Phrases" : "常用短语"}</h3>
       <div className="space-y-2">{lessonContent.phrases.map((item, idx) => <div key={idx} className="rounded-md bg-muted p-3">
         <p className="text-lg font-medium">{item.swahili}</p><p className="text-muted-foreground">{display(item.english, item.chinese)}</p>
       </div>)}</div>
@@ -138,11 +142,11 @@ export function LessonContentView({ content, t, lessonTitle }: { content: Record
     </section>}
 
     {!!lessonContent.dialogues?.length && <section>
-      <h3 className="mb-3 text-lg font-semibold">{t("对话 (Dialogues)")}</h3>
+      <h3 className="mb-3 text-lg font-semibold">{language === "en" ? "Dialogues" : "对话"}</h3>
       <div className="space-y-4">{lessonContent.dialogues.map((dialogue, idx) => <div key={idx} className="space-y-2">
         {dialogue.lines.map((line, lineIdx) => <div key={lineIdx} className="rounded-md bg-muted p-3">
-          <p className="mb-1 text-sm font-semibold text-primary">{line.speaker}:</p><p className="font-medium">{line.term || line.swahili}</p>
-          {line.transliteration && <p className="text-sm text-primary">{line.transliteration}</p>}
+          <p className="mb-1 text-sm font-semibold text-primary">{language === "zh" && line.speaker === "A" ? "说话人甲" : language === "zh" && line.speaker === "B" ? "说话人乙" : line.speaker}:</p><p className="font-medium">{line.term || line.swahili}</p>
+          <ReadingAid native={line.term || line.swahili} latin={line.transliteration} chinese={line.pronunciationChinese} target={track || "swahili"} />
           <p className="text-sm text-muted-foreground">{display(line.english, line.chinese)}</p>
         </div>)}
       </div>)}</div>

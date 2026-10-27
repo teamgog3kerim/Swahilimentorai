@@ -42,7 +42,7 @@ export function PronunciationButton({ text, targetLanguage }: {
     {(!voice || failed) && <p className="text-xs text-muted-foreground" role="status">
       {failed
         ? (language === "en" ? "Pronunciation playback failed on this device." : "此设备未能播放发音。")
-        : (language === "en" ? "Pronunciation audio is unavailable on this device. Use the transliteration as a reading aid." : "此设备暂无对应语言的发音语音。请参考转写辅助阅读。")}
+        : (language === "en" ? "Pronunciation audio is unavailable on this device. Use the transliteration as a reading aid." : "此设备暂无对应语言的发音语音。请参考中文释义、近似音及原文辅助阅读。")}
     </p>}
   </div>;
 }

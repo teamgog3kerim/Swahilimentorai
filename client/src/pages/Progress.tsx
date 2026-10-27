@@ -146,8 +146,8 @@ export default function ProgressPage() {
                       data-testid={`recent-lesson-${idx}`}
                     >
                       <div className="flex-1">
-                        <p className="font-medium">{language === "en" ? item.lesson?.title : track === "amharic" ? item.lesson?.title : item.lesson?.titleSwahili}</p>
-                        <p className="text-sm text-muted-foreground" lang={language === "en" ? (track === "amharic" ? "am" : "sw") : "zh-CN"}>{language === "en" ? item.lesson?.titleSwahili : item.lesson?.titleChinese}</p>
+                        <p className="font-medium">{language === "en" ? item.lesson?.title : item.lesson?.titleChinese}</p>
+                        <p className="text-sm text-muted-foreground" lang={track === "amharic" ? "am" : "sw"}>{item.lesson?.titleSwahili}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge variant={item.progress.completed ? "default" : "secondary"}>
