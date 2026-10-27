@@ -26,13 +26,10 @@ test("Footer is responsive and its panda welcomes scrolling users in both interf
     await expect(panda).toHaveAttribute("data-visible", "true");
     await expect(page.getByTestId("panda-cap")).toBeVisible();
     assert.equal(await panda.locator("svg").evaluate(node => getComputedStyle(node).animationIterationCount), "infinite");
-    const motionButton = page.getByTestId("button-panda-motion");
-    await expect(motionButton).toHaveAttribute("aria-pressed", "false");
-    await motionButton.click();
-    await expect(motionButton).toHaveAttribute("aria-pressed", "true");
-    assert.equal(await panda.locator("svg").evaluate(node => getComputedStyle(node).animationPlayState), "paused");
-    await motionButton.click();
-    await expect(motionButton).toHaveAttribute("aria-pressed", "false");
+    await expect(panda.getByRole("button")).toHaveCount(0);
+    for (const selector of [".panda-welcome__cap", ".panda-welcome__tassel"]) {
+      assert.equal(await panda.locator(selector).evaluate(node => getComputedStyle(node).animationIterationCount), "infinite");
+    }
     await expect(greeting).toBeVisible();
     assert.match(await greeting.innerText(), /欢迎/);
     await expect(footer).toContainText("Afri Panda");

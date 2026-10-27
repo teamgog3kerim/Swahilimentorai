@@ -453,8 +453,6 @@ const translations: Record<string, string> = JSON.parse(String.raw`{
   ,"切换界面语言为中文": "Switch interface language to Chinese"
   ,"Switch language to English": "Switch language to English"
    ,"你好，欢迎来到 Afri Panda！": "Hello, welcome to Afri Panda!"
-   ,"暂停熊猫动画": "Pause panda animation"
-   ,"恢复熊猫动画": "Resume panda animation"
 }`);
 
 interface LocaleContextValue {

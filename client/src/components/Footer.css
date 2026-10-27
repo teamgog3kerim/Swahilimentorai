@@ -174,12 +174,6 @@
   animation: tassel-sway 1.8s ease-in-out 650ms infinite;
 }
 
-.panda-welcome__art.is-paused.is-visible .panda-welcome__panda,
-.panda-welcome__art.is-paused.is-visible .panda-welcome__cap,
-.panda-welcome__art.is-paused.is-visible .panda-welcome__tassel {
-  animation-play-state: paused;
-}
-
 .panda-welcome__greeting {
   max-width: 260px;
   margin: 0;
@@ -194,29 +188,6 @@
 
 .panda-welcome__greeting.is-visible {
   animation: greeting-arrive 500ms ease-out 180ms both;
-}
-
-.panda-welcome__motion-toggle {
-  border: 1px solid hsl(var(--primary) / .25);
-  border-radius: 999px;
-  padding: .42rem .72rem;
-  color: hsl(var(--primary));
-  background: hsl(var(--primary) / .06);
-  font: inherit;
-  font-size: .72rem;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: background-color 180ms ease, border-color 180ms ease;
-}
-
-.panda-welcome__motion-toggle:hover {
-  border-color: hsl(var(--primary) / .5);
-  background: hsl(var(--primary) / .12);
-}
-
-.panda-welcome__motion-toggle:focus-visible {
-  outline: 2px solid hsl(var(--primary));
-  outline-offset: 3px;
 }
 
 .afri-footer__bottom {
@@ -322,7 +293,4 @@
     transform: none;
   }
 
-  .panda-welcome__motion-toggle {
-    transition: none;
-  }
 }

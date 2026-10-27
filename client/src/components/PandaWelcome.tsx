@@ -5,7 +5,6 @@ export function PandaWelcome() {
   const { t } = useLocale();
   const welcomeRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     const element = welcomeRef.current;
@@ -36,7 +35,7 @@ export function PandaWelcome() {
       data-testid="panda-welcome"
       data-visible={visible ? "true" : "false"}
     >
-      <div className={`panda-welcome__art${visible ? " is-visible" : ""}${paused ? " is-paused" : ""}`} aria-hidden="true">
+      <div className={`panda-welcome__art${visible ? " is-visible" : ""}`} aria-hidden="true">
         <svg className="panda-welcome__panda" viewBox="0 0 136 122" fill="none">
           <ellipse cx="68" cy="98" rx="46" ry="8" fill="currentColor" opacity=".12" />
           <path d="M30 28c-8-15-2-25 7-25 11 0 17 12 16 25M106 28c8-15 2-25-7-25-11 0-17 12-16 25" fill="var(--panda-ink)" />
@@ -64,15 +63,6 @@ export function PandaWelcome() {
       <p className={`panda-welcome__greeting${visible ? " is-visible" : ""}`} data-testid="panda-greeting" data-visible={visible ? "true" : "false"} aria-live="polite">
         {t("你好，欢迎来到 Afri Panda！")}
       </p>
-      <button
-        type="button"
-        className="panda-welcome__motion-toggle"
-        data-testid="button-panda-motion"
-        aria-pressed={paused}
-        onClick={() => setPaused((current) => !current)}
-      >
-        {paused ? t("恢复熊猫动画") : t("暂停熊猫动画")}
-      </button>
     </div>
   );
 }

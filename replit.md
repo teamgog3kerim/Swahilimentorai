@@ -10,7 +10,7 @@ For Chinese users, pronunciation aids must use Chinese characters rather than La
 Learner stories must represent Amharic learners as well as Swahili learners. Do not present illustrative stories as verified customer testimonials.
 For landing-hero refinements, keep the existing image and signup/pricing/share buttons unchanged. Use compact, balanced spacing and clearly present Amharic and Swahili as two major African languages offered by the academy.
 
-Keep the footer panda in the app's purple theme with a graduation cap and continuous gentle panda/cap animation after scroll reveal. Preserve bilingual greetings, pause/resume controls, and reduced-motion support.
+Keep the footer panda in the app's purple theme with a graduation cap and continuous gentle panda/cap animation after scroll reveal. Preserve bilingual greetings and reduced-motion support. Do not show a pause/resume animation button; the user explicitly requested its removal.
 
 ## System Architecture
 
