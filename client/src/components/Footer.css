@@ -121,13 +121,14 @@
 }
 
 .panda-welcome {
-  min-height: 146px;
+  min-height: 158px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
   gap: clamp(.75rem, 3vw, 2rem);
   padding: .35rem 1rem 1.1rem;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .panda-welcome__art {
@@ -147,12 +148,36 @@
   overflow: visible;
 }
 
+.panda-welcome__cap {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.panda-welcome__tassel {
+  transform-box: fill-box;
+  transform-origin: 0 0;
+}
+
 .panda-welcome__art.is-visible {
   animation: panda-arrive 650ms cubic-bezier(.2, .8, .25, 1) both;
 }
 
 .panda-welcome__art.is-visible .panda-welcome__panda {
-  animation: panda-greet 2.8s ease-in-out 650ms;
+  animation: panda-breathe 3.6s ease-in-out 650ms infinite;
+}
+
+.panda-welcome__art.is-visible .panda-welcome__cap {
+  animation: cap-bob 3.6s ease-in-out 650ms infinite;
+}
+
+.panda-welcome__art.is-visible .panda-welcome__tassel {
+  animation: tassel-sway 1.8s ease-in-out 650ms infinite;
+}
+
+.panda-welcome__art.is-paused.is-visible .panda-welcome__panda,
+.panda-welcome__art.is-paused.is-visible .panda-welcome__cap,
+.panda-welcome__art.is-paused.is-visible .panda-welcome__tassel {
+  animation-play-state: paused;
 }
 
 .panda-welcome__greeting {
@@ -169,6 +194,29 @@
 
 .panda-welcome__greeting.is-visible {
   animation: greeting-arrive 500ms ease-out 180ms both;
+}
+
+.panda-welcome__motion-toggle {
+  border: 1px solid hsl(var(--primary) / .25);
+  border-radius: 999px;
+  padding: .42rem .72rem;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / .06);
+  font: inherit;
+  font-size: .72rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+
+.panda-welcome__motion-toggle:hover {
+  border-color: hsl(var(--primary) / .5);
+  background: hsl(var(--primary) / .12);
+}
+
+.panda-welcome__motion-toggle:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 3px;
 }
 
 .afri-footer__bottom {
@@ -206,12 +254,19 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes panda-greet {
-  0%, 100% { transform: rotate(0deg); }
-  14% { transform: rotate(-3deg); }
-  28% { transform: rotate(3deg); }
-  42% { transform: rotate(-2deg); }
-  56% { transform: rotate(0deg); }
+@keyframes panda-breathe {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2px) rotate(.6deg); }
+}
+
+@keyframes cap-bob {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(-2deg) translateY(-1px); }
+}
+
+@keyframes tassel-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(8deg); }
 }
 
 @keyframes greeting-arrive {
@@ -255,6 +310,8 @@
 
   .panda-welcome__art.is-visible,
   .panda-welcome__art.is-visible .panda-welcome__panda,
+  .panda-welcome__art.is-visible .panda-welcome__cap,
+  .panda-welcome__art.is-visible .panda-welcome__tassel,
   .panda-welcome__greeting.is-visible {
     animation: none;
   }
@@ -263,5 +320,9 @@
   .panda-welcome__greeting.is-visible {
     opacity: 1;
     transform: none;
+  }
+
+  .panda-welcome__motion-toggle {
+    transition: none;
   }
 }
