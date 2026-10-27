@@ -1,0 +1,263 @@
+.afri-footer {
+  --footer-ink: #233c36;
+  --footer-muted: #60766e;
+  --footer-line: #d7e2d7;
+  --footer-surface: #f3f6ec;
+  color: var(--footer-ink);
+  background:
+    radial-gradient(ellipse at 88% 100%, rgba(221, 232, 201, .48), transparent 38%),
+    var(--footer-surface);
+  border-top: 1px solid var(--footer-line);
+}
+
+.afri-footer__inner {
+  width: min(100% - 2.5rem, 1160px);
+  margin-inline: auto;
+  padding-block: clamp(2.75rem, 6vw, 5rem) 1.5rem;
+}
+
+.afri-footer__main {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.55fr) repeat(2, minmax(140px, .7fr));
+  gap: clamp(2rem, 6vw, 5rem);
+  padding-bottom: 2.5rem;
+}
+
+.afri-footer__brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+}
+
+.afri-footer__brand-mark {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: #fff9ee;
+  background: var(--footer-ink);
+  transform: rotate(-4deg);
+}
+
+.afri-footer__brand-mark svg {
+  width: 25px;
+  height: 25px;
+}
+
+.afri-footer__brand-name {
+  margin: 0;
+  font-weight: 750;
+  font-size: 1.15rem;
+  letter-spacing: -.035em;
+}
+
+.afri-footer__slogan {
+  margin: .12rem 0 0;
+  color: var(--footer-muted);
+  font-size: .73rem;
+  letter-spacing: .015em;
+}
+
+.afri-footer__description {
+  max-width: 360px;
+  margin: 1.25rem 0 0;
+  color: var(--footer-muted);
+  font-size: .9rem;
+  line-height: 1.75;
+}
+
+.afri-footer__link-group h2 {
+  margin: .2rem 0 1rem;
+  font-size: .78rem;
+  font-weight: 750;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.afri-footer__link-group ul {
+  display: grid;
+  gap: .72rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.afri-footer__link-group a {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  color: var(--footer-muted);
+  font-size: .9rem;
+  text-decoration: none;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.afri-footer__link-group a svg {
+  width: 13px;
+  height: 13px;
+  opacity: 0;
+  transform: translate(-3px, 3px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.afri-footer__link-group a:hover,
+.afri-footer__link-group a:focus-visible {
+  color: var(--footer-ink);
+  transform: translateX(2px);
+}
+
+.afri-footer__link-group a:hover svg,
+.afri-footer__link-group a:focus-visible svg {
+  opacity: .75;
+  transform: translate(0, 0);
+}
+
+.afri-footer__link-group a:focus-visible {
+  outline: 2px solid #d99461;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.panda-welcome {
+  min-height: 146px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(.75rem, 3vw, 2rem);
+  padding: .35rem 1rem 1.1rem;
+  overflow: hidden;
+}
+
+.panda-welcome__art {
+  width: clamp(112px, 18vw, 148px);
+  flex: 0 0 auto;
+  color: var(--footer-ink);
+  transform: translateY(12px);
+  opacity: .58;
+}
+
+.panda-welcome__panda {
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.panda-welcome__art.is-visible {
+  animation: panda-arrive 650ms cubic-bezier(.2, .8, .25, 1) both;
+}
+
+.panda-welcome__art.is-visible .panda-welcome__panda {
+  animation: panda-greet 2.8s ease-in-out 650ms;
+}
+
+.panda-welcome__greeting {
+  max-width: 260px;
+  margin: 0;
+  color: var(--footer-ink);
+  font-family: Georgia, "Noto Serif SC", serif;
+  font-size: clamp(1.15rem, 2.5vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.panda-welcome__greeting.is-visible {
+  animation: greeting-arrive 500ms ease-out 180ms both;
+}
+
+.afri-footer__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--footer-line);
+  padding-top: 1.15rem;
+}
+
+.afri-footer__payment {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  color: var(--footer-muted);
+  font-size: .78rem;
+}
+
+.afri-footer__payment svg {
+  width: 16px;
+  height: 16px;
+  color: #b87942;
+}
+
+.afri-footer__copyright {
+  margin: 0;
+  color: var(--footer-muted);
+  font-size: .78rem;
+  text-align: right;
+}
+
+@keyframes panda-arrive {
+  from { opacity: .45; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes panda-greet {
+  0%, 100% { transform: rotate(0deg); }
+  14% { transform: rotate(-3deg); }
+  28% { transform: rotate(3deg); }
+  42% { transform: rotate(-2deg); }
+  56% { transform: rotate(0deg); }
+}
+
+@keyframes greeting-arrive {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+  .afri-footer__main {
+    grid-template-columns: minmax(0, 1fr) minmax(130px, .7fr);
+    gap: 2rem 1.5rem;
+  }
+
+  .afri-footer__brand {
+    grid-column: 1 / -1;
+  }
+
+  .afri-footer__description {
+    max-width: 500px;
+  }
+
+  .panda-welcome {
+    min-height: 130px;
+    padding-inline: .25rem;
+  }
+
+  .afri-footer__bottom {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .afri-footer__copyright {
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .afri-footer__link-group a,
+  .afri-footer__link-group a svg {
+    transition: none;
+  }
+
+  .panda-welcome__art.is-visible,
+  .panda-welcome__art.is-visible .panda-welcome__panda,
+  .panda-welcome__greeting.is-visible {
+    animation: none;
+  }
+
+  .panda-welcome__art.is-visible,
+  .panda-welcome__greeting.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
