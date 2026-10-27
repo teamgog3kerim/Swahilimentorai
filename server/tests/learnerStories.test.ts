@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcrypt";
-import { learnerStoryInputSchema, type LearnerStoryInput } from "../../shared/learnerStories";
+import { learnerStoryInputSchema, learnerStoryUpdateSchema, type LearnerStoryInput } from "../../shared/learnerStories";
 
 const sample: LearnerStoryInput = {
   learningLanguage: "amharic",
@@ -31,6 +31,9 @@ test("Stories require bilingual content, a supported track and permission before
     { ...sample, isVerified: true },
   ]) assert.equal(learnerStoryInputSchema.safeParse(invalid).success, false);
   assert.equal(learnerStoryInputSchema.safeParse({ ...sample, consentGranted: true, approved: true, published: true }).success, true);
+  assert.equal(learnerStoryUpdateSchema.safeParse(sample).success, false);
+  assert.equal(learnerStoryUpdateSchema.safeParse({ ...sample, updatedAt: "invalid" }).success, false);
+  assert.equal(learnerStoryUpdateSchema.safeParse({ ...sample, updatedAt: new Date().toISOString() }).success, true);
 });
 
 test("Story APIs enforce admin access, publication gates, persistence and public privacy", {
@@ -45,7 +48,7 @@ test("Story APIs enforce admin access, publication gates, persistence and public
   try {
     const password = randomUUID();
     const cookies: string[] = [];
-    for (const isAdmin of [true, false]) {
+    for (const isAdmin of [true, false, true]) {
       const user = await storage.createUserWithPassword(`story-test-${randomUUID()}@example.invalid`, "Test only", await bcrypt.hash(password, 10));
       userIds.push(user.id);
       if (isAdmin) await storage.updateManagedUser(user.id, { username: user.username, isAdmin: true, isPremium: false, subscriptionEndsAt: null });
@@ -59,8 +62,16 @@ test("Story APIs enforce admin access, publication gates, persistence and public
       cookies.push(cookie);
     }
     adminHeaders = { cookie: cookies[0], "content-type": "application/json" };
-    const request = (path: string, method = "GET", body?: unknown, headers = adminHeaders) =>
-      fetch(`${base}${path}`, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const versions = new Map<string, string>();
+    const request = async (path: string, method = "GET", body?: unknown, headers = adminHeaders) => {
+      const payload = method === "PATCH" && body ? { updatedAt: versions.get(path), ...body as object } : body;
+      const response = await fetch(`${base}${path}`, { method, headers, ...(payload ? { body: JSON.stringify(payload) } : {}) });
+      if (response.ok && (method === "POST" || method === "PATCH")) {
+        const saved = await response.clone().json();
+        versions.set(`/api/admin/learner-stories/${saved.id}`, saved.updatedAt);
+      }
+      return response;
+    };
     const adminPath = "/api/admin/learner-stories";
     for (const [headers, status] of [[{}, 401], [{ cookie: cookies[1], "content-type": "application/json" }, 403]] as const) {
       for (const [path, method, body] of [
@@ -86,6 +97,10 @@ test("Story APIs enforce admin access, publication gates, persistence and public
       const story = await created.json();
       storyIds.push(story.id);
       const path = `${adminPath}/${story.id}`;
+      assert.equal(typeof story.updatedAt, "string");
+      for (const updatedAt of [undefined, "not-a-date"]) {
+        assert.equal((await request(path, "PATCH", { ...input, updatedAt })).status, 400);
+      }
       assert.ok(!(await publicList()).some(s => s.id === story.id));
       assert.equal((await request(path, "PATCH", { ...input, approved: true, published: true })).status, 400);
       const approved = { ...input, consentGranted: true, approved: true };
@@ -131,7 +146,31 @@ test("Story APIs enforce admin access, publication gates, persistence and public
       assert.equal((await request(path, "PATCH", { ...edited, published: false })).status, 200);
       assert.ok(!(await publicList()).some(s => s.id === story.id));
       assert.equal((await request(path, "PATCH", edited)).status, 200);
+      const staleVersion = versions.get(path);
       assert.equal((await request(path, "PATCH", { ...input, consentGranted: false, approved: false, published: false })).status, 200);
+      const withdrawn = (await (await request(adminPath)).json()).find((s: { id: string }) => s.id === story.id);
+      assert.notEqual(withdrawn.updatedAt, staleVersion);
+      // A second administrator still has the previously published version open.
+      // Neither stale approval, publication nor content replacement may undo withdrawal.
+      for (const stale of [
+        { ...edited, approved: true, published: false },
+        { ...edited, approved: true, published: true },
+        { ...edited, quoteEn: "Outdated administrator draft", approved: false, published: false },
+      ]) {
+        const response = await request(path, "PATCH", { ...stale, updatedAt: staleVersion },
+          { cookie: cookies[2], "content-type": "application/json" });
+        assert.equal(response.status, 409);
+        assert.equal((await response.json()).code, "STORY_CONFLICT");
+        const unchanged = (await (await request(adminPath)).json()).find((s: { id: string }) => s.id === story.id);
+        assert.deepEqual(unchanged, withdrawn);
+        assert.ok(!(await publicList()).some(s => s.id === story.id));
+      }
+      // The row lock and version check must also reject one of two simultaneous saves.
+      const concurrent = await Promise.all([
+        request(path, "PATCH", { ...input, updatedAt: withdrawn.updatedAt }),
+        request(path, "PATCH", { ...input, updatedAt: withdrawn.updatedAt }),
+      ]);
+      assert.deepEqual(concurrent.map(response => response.status).sort(), [200, 409]);
       assert.ok(!(await publicList()).some(s => s.id === story.id));
       const adminList = await request(adminPath);
       assert.match(adminList.headers.get("cache-control") || "", /private, no-store/);

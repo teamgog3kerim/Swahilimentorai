@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const learnerStoryInputSchema = z.object({
+const learnerStoryFieldsSchema = z.object({
   learningLanguage: z.enum(["amharic", "swahili"]),
   displayNameZh: z.string().trim().min(1).max(100),
   displayNameEn: z.string().trim().min(1).max(100),
@@ -13,17 +13,24 @@ export const learnerStoryInputSchema = z.object({
   consentGranted: z.boolean(),
   approved: z.boolean(),
   published: z.boolean(),
-}).strict().superRefine((story, ctx) => {
+}).strict();
+
+function validatePublication(story: z.infer<typeof learnerStoryFieldsSchema>, ctx: z.RefinementCtx) {
   if (story.approved && (!story.consentGranted || !story.consentRecord)) {
     ctx.addIssue({ code: "custom", path: ["approved"], message: "Approval requires recorded permission for both translations and public attribution." });
   }
   if (story.published && !story.approved) {
     ctx.addIssue({ code: "custom", path: ["published"], message: "Only approved stories can be published." });
   }
-});
+}
+
+export const learnerStoryInputSchema = learnerStoryFieldsSchema.superRefine(validatePublication);
+export const learnerStoryUpdateSchema = learnerStoryFieldsSchema.extend({
+  updatedAt: z.string().datetime(),
+}).superRefine(validatePublication);
 
 export type LearnerStoryInput = z.infer<typeof learnerStoryInputSchema>;
 export type PublicLearnerStory = Pick<LearnerStoryInput,
   "learningLanguage" | "displayNameZh" | "displayNameEn" | "quoteZh" | "quoteEn" | "contextZh" | "contextEn"
 > & { id: string };
-export type AdminLearnerStory = LearnerStoryInput & { id: string };
+export type AdminLearnerStory = LearnerStoryInput & { id: string; updatedAt: string };

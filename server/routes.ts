@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, LearnerStoryConflictError } from "./storage";
 import { setupAuth, isAuthenticated } from "./auth";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import crypto from "crypto";
 import { isOwnerEmail } from "./accountPolicy";
 import { seedLessons } from "./seedLessons";
 import type { User } from "@shared/schema";
-import { learnerStoryInputSchema } from "@shared/learnerStories";
+import { learnerStoryInputSchema, learnerStoryUpdateSchema } from "@shared/learnerStories";
 
 function managedUser(user: User) {
   const { passwordHash, googleId, ...safe } = user;
@@ -114,13 +114,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   for (const method of ["post", "patch"] as const) {
     app[method](method === "post" ? "/api/admin/learner-stories" : "/api/admin/learner-stories/:id",
       isAuthenticated, isAdmin, async (req, res) => {
-        const parsed = learnerStoryInputSchema.safeParse(req.body);
+        const parsed = (method === "patch" ? learnerStoryUpdateSchema : learnerStoryInputSchema).safeParse(req.body);
         if (!parsed.success) return res.status(400).json({ message: "Invalid story or publication permission", errors: parsed.error.flatten() });
         try {
-          const story = await storage.saveLearnerStory(parsed.data, method === "patch" ? req.params.id : undefined);
+          const { updatedAt, ...input } = parsed.data as typeof parsed.data & { updatedAt?: string };
+          const story = await storage.saveLearnerStory(input, method === "patch" ? req.params.id : undefined, updatedAt);
           if (!story) return res.status(404).json({ message: "Story not found" });
           res.status(method === "post" ? 201 : 200).json(story);
         } catch (error) {
+          if (error instanceof LearnerStoryConflictError) {
+            return res.status(409).json({ code: "STORY_CONFLICT", message: error.message });
+          }
           // Database errors may contain SQL parameters with private consent/contact data.
           console.error("Unable to save learner story");
           res.status(500).json({ message: "Unable to save learner story" });

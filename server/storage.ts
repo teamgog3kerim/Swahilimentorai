@@ -32,6 +32,12 @@ import { isOwnerEmail, mayLinkGoogleAccount } from "./accountPolicy";
 import { learnerStories } from "@shared/schema";
 import type { LearnerStoryInput } from "@shared/learnerStories";
 
+export class LearnerStoryConflictError extends Error {
+  constructor() {
+    super("This story was changed by another administrator. Reload the latest version before saving.");
+  }
+}
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -104,7 +110,7 @@ export class DbStorage implements IStorage {
     )).orderBy(desc(learnerStories.createdAt), learnerStories.id);
   }
 
-  async saveLearnerStory(input: LearnerStoryInput, id?: string) {
+  async saveLearnerStory(input: LearnerStoryInput, id?: string, expectedUpdatedAt?: string) {
     const values = { ...input, updatedAt: new Date() };
     if (!id) {
       const [story] = await db.insert(learnerStories).values(values).returning();
@@ -116,10 +122,15 @@ export class DbStorage implements IStorage {
       const [current] = await tx.select().from(learnerStories)
         .where(eq(learnerStories.id, id)).for("update");
       if (!current) return undefined;
+      if (current.updatedAt.toISOString() !== expectedUpdatedAt) {
+        throw new LearnerStoryConflictError();
+      }
       const changed = (Object.keys(input) as (keyof LearnerStoryInput)[])
         .some(key => key !== "approved" && key !== "published" && current[key] !== input[key]);
       const [story] = await tx.update(learnerStories).set({
         ...values,
+        // Advance even for same-millisecond saves or a backwards-moving clock.
+        updatedAt: new Date(Math.max(Date.now(), current.updatedAt.getTime() + 1)),
         ...(changed ? { approved: false, published: false } : {}),
       }).where(eq(learnerStories.id, id)).returning();
       return story;

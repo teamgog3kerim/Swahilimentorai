@@ -101,6 +101,31 @@ test("Admin can publish bilingual permissioned stories, edit, withdraw permissio
       await expect(publicPage.locator("body")).not.toContainText(fields["consent-record"]);
     }
     await row.getByRole("button", { name: "Edit", exact: true }).click();
+    // Another administrator withdraws permission while this form has an older version.
+    await page.locator("#quote-en").fill("Unsaved concurrent draft");
+    const currentStories = await (await context.request.get(`${base}/api/admin/learner-stories`)).json();
+    const currentStory = currentStories.find((s: { id: string }) => s.id === record.id);
+    const { id: _id, createdAt: _createdAt, ...withdrawal } = currentStory;
+    const withdrawalResponse = await context.request.patch(`${base}/api/admin/learner-stories/${record.id}`, {
+      data: { ...withdrawal, consentGranted: false, approved: false, published: false },
+    });
+    assert.equal(withdrawalResponse.status(), 200);
+    await page.getByRole("button", { name: "Save story", exact: true }).click();
+    await expect(page.getByText("Another administrator changed this story", { exact: true })).toBeVisible();
+    await expect(page.locator("#quote-en")).toHaveValue("Unsaved concurrent draft");
+    await page.getByRole("button", { name: "Reload list (keep edits)", exact: true }).click();
+    await expect(row).toContainText("No consent");
+    await expect(page.locator("#quote-en")).toHaveValue("Unsaved concurrent draft");
+    await page.getByTestId("button-language").click();
+    await expect(page.getByText("故事已被其他管理员修改", { exact: true })).toBeVisible();
+    await page.getByTestId("button-language").click();
+    page.once("dialog", dialog => dialog.dismiss());
+    await row.getByRole("button", { name: "Edit", exact: true }).click();
+    await expect(page.locator("#quote-en")).toHaveValue("Unsaved concurrent draft");
+    page.once("dialog", dialog => dialog.accept());
+    await row.getByRole("button", { name: "Edit", exact: true }).click();
+    await expect(page.locator("#quote-en")).toHaveValue("Edited test story.");
+    await expect(consent).not.toBeChecked();
     await consent.uncheck();
     await expect(approved).not.toBeChecked();
     await expect(published).not.toBeChecked();

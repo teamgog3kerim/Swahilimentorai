@@ -33,7 +33,8 @@ export function LearnerStoriesAdmin() {
   const en = language === "en";
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<LearnerStoryInput>(emptyStory);
-  const [persistedForm, setPersistedForm] = useState<LearnerStoryInput | null>(null);
+  const [persistedForm, setPersistedForm] = useState<AdminLearnerStory | null>(null);
+  const [conflict, setConflict] = useState(false);
   const [formError, setFormError] = useState("");
   const [saved, setSaved] = useState(false);
   const label = (zh: string, english: string) => en ? english : zh;
@@ -49,6 +50,7 @@ export function LearnerStoriesAdmin() {
     setEditingId(null);
     setForm(emptyStory());
     setPersistedForm(null);
+    setConflict(false);
     setFormError("");
     setSaved(false);
   };
@@ -63,7 +65,8 @@ export function LearnerStoriesAdmin() {
       if (form.published && !form.approved) {
         throw new Error(label("只有已批准的故事才能发布。", "Only approved stories can be published."));
       }
-      const response = await apiRequest(editingId ? "PATCH" : "POST", editingId ? `/api/admin/learner-stories/${editingId}` : "/api/admin/learner-stories", form);
+      const response = await apiRequest(editingId ? "PATCH" : "POST", editingId ? `/api/admin/learner-stories/${editingId}` : "/api/admin/learner-stories",
+        editingId ? { ...form, updatedAt: persistedForm?.updatedAt } : form);
       return response.json();
     },
     onSuccess: () => {
@@ -74,9 +77,15 @@ export function LearnerStoriesAdmin() {
       setEditingId(null);
       setForm(emptyStory());
       setPersistedForm(null);
+      setConflict(false);
     },
     onError: (error: Error) => {
       setSaved(false);
+      if (error.message.startsWith("409:")) {
+        setConflict(true);
+        setFormError("");
+        return;
+      }
       setFormError(error.message || label("保存失败，请重试。", "Couldn't save this story. Try again."));
     },
   });
@@ -109,6 +118,11 @@ export function LearnerStoriesAdmin() {
     setFormError("");
   };
   const startEdit = (story: AdminLearnerStory) => {
+    if (conflict && !window.confirm(label(
+      "载入所选故事的最新版本将替换未保存的修改。请先复制需要保留的内容。是否继续？",
+      "Loading the selected story will replace your unsaved edits. Copy anything you want to keep first. Continue?",
+    ))) return;
+    setConflict(false);
     setEditingId(story.id);
     setPersistedForm(story);
     setForm({
@@ -222,9 +236,17 @@ export function LearnerStoriesAdmin() {
               </label>
             </section>
 
+            {conflict && <Alert variant="destructive" role="alert">
+              <CircleAlert className="h-4 w-4" />
+              <AlertTitle>{label("故事已被其他管理员修改", "Another administrator changed this story")}</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>{label("您的未保存修改已保留，尚未覆盖最新版本。请刷新下方列表，比较最新授权与发布状态，复制需要保留的内容，再点击“编辑”载入最新版本并重新审核。", "Your unsaved edits are preserved and have not overwritten the latest version. Refresh the list below, compare the latest permission and publishing status, copy any edits you want to keep, then choose Edit to load the latest version and review it again.")}</p>
+                <Button type="button" variant="outline" disabled={storiesQuery.isFetching} onClick={() => storiesQuery.refetch()}>{label("刷新列表（保留修改）", "Reload list (keep edits)")}</Button>
+              </AlertDescription>
+            </Alert>}
             {formError && <Alert variant="destructive"><CircleAlert className="h-4 w-4" /><AlertTitle>{label("无法保存", "Could not save")}</AlertTitle><AlertDescription>{formError}</AlertDescription></Alert>}
             <div className="flex flex-wrap items-center gap-2">
-              <Button type="submit" disabled={saveMutation.isPending}>{saveMutation.isPending ? label("保存中…", "Saving…") : label("保存故事", "Save story")}</Button>
+              <Button type="submit" disabled={saveMutation.isPending || conflict}>{saveMutation.isPending ? label("保存中…", "Saving…") : label("保存故事", "Save story")}</Button>
               {editingId && <Button type="button" variant="outline" onClick={resetForm}>{label("取消编辑", "Cancel edit")}</Button>}
             </div>
           </form>
