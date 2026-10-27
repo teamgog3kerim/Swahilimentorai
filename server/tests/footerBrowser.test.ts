@@ -48,6 +48,11 @@ test("Footer is responsive and its panda welcomes scrolling users in both interf
     await panda.scrollIntoViewIfNeeded();
     await page.screenshot({ path: "/tmp/afri-panda-footer-en-mobile.png", animations: "disabled" });
     await page.emulateMedia({ reducedMotion: "reduce" });
+    const lightSurface = await footer.evaluate(node => getComputedStyle(node).backgroundColor);
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    assert.notEqual(await footer.evaluate(node => getComputedStyle(node).backgroundColor), lightSurface, "Footer follows the app's dark theme");
+    await page.screenshot({ path: "/tmp/afri-panda-footer-dark-mobile.png", animations: "disabled" });
+    await page.evaluate(() => document.documentElement.classList.remove("dark"));
     assert.equal(await panda.evaluate(node =>
       [node, ...node.querySelectorAll("*")].some(element => {
         const style = getComputedStyle(element);
