@@ -13,7 +13,17 @@ Chinese is the primary/default interface. English is optional and should only be
 The frontend is built with React 18+ (TypeScript, Vite), utilizing Radix UI primitives and shadcn/ui components with Tailwind CSS for styling. Wouter handles client-side routing, distinguishing between a marketing landing page and the authenticated user dashboard. State management is powered by TanStack Query for server state and a custom `useAuth` hook for authentication. The design system emphasizes mobile-first responsiveness, featuring Inter and Noto Sans SC fonts, a custom theme with light/dark modes, and consistent spacing and color systems. Key pages include Learn, Practice, Progress, and Subscription.
 
 ### Backend
-The backend uses Express.js (Node.js, TypeScript) with a RESTful API. Authentication is managed via email/password using Passport.js Local strategy with bcrypt password hashing, with session management via `express-session` and a PostgreSQL store. AI integration leverages Replit's AI Integrations service for OpenAI's GPT-5 model for conversational tutoring. Data interactions are handled through Drizzle ORM with a type-safe schema, abstracted by a `DbStorage` class.
+The backend uses Express.js (Node.js, TypeScript) with a RESTful API. Authentication supports existing email/password accounts via Passport.js Local and verified Gmail accounts via Google OpenID Connect. Sessions use `express-session` and a PostgreSQL store. AI integration leverages Replit's AI Integrations service for OpenAI's GPT-5 model for conversational tutoring. Data interactions use Drizzle ORM.
+
+### Google sign-in and application owner
+- Configure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` through Secrets. Set `GOOGLE_CALLBACK_URL` to the exact HTTPS URL ending in `/api/auth/google/callback`, and register it in the Google Cloud web OAuth client. Development has its own callback; configure the published app's callback separately in Production.
+- Missing Google configuration must not stop email/password or other app features. Google sign-in is visibly disabled until configured.
+- `APP_OWNER_EMAIL` reserves the owner account. Its full administrator access is established only after a verified Gmail sign-in. Local password registration/login must not grant access to the reserved owner address.
+- Preserve existing accounts and their learning data. Ordinary existing accounts require password sign-in followed by “Connect Google account” in the dashboard before Google can be linked. This prevents silent linking to unverified, self-registered email identities.
+- A pre-existing local owner account is recovered through verified Google ownership, removing its old password and sessions to prevent a previously claimed email from retaining admin access.
+- Admin user controls allow name, role, and membership changes, plus permanent deletion with explicit email confirmation. Server-side checks protect the owner and prevent self-deletion/self-demotion. Do not return password hashes or Google subject IDs from management APIs.
+
+Authentication checks: `node --import tsx --test server/tests/accountPolicy.test.ts`. Development database integration checks: `RUN_DB_TESTS=1 node --import tsx --test server/tests/googleAccounts.test.ts` (temporary test accounts are removed afterwards).
 
 ### Data Storage
 PostgreSQL, hosted on Neon serverless, serves as the primary database. Key tables include `users`, `lessons`, `user_progress`, `chat_sessions`, `chat_messages`, and `subscriptions`. Lesson content is stored as JSONB, encompassing vocabulary, phrases, dialogues, and grammar across a 9-month, 90-lesson curriculum divided into Beginner, Intermediate, and Advanced levels. Drizzle Kit manages schema migrations.

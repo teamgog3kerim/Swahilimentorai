@@ -14,6 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useLocale } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 type LoginFormData = { email: string; password: string; rememberMe: boolean };
 
@@ -55,7 +56,8 @@ export default function Login() {
     } catch (error: any) {
       toast({
         title: t("登录失败"),
-        description: error.message || t("请检查您的邮箱和密码"),
+        description: error.message?.includes("请使用 Google 登录管理员账户")
+          ? t("请使用 Google 登录管理员账户") : error.message || t("请检查您的邮箱和密码"),
         variant: "destructive",
       });
     } finally {
@@ -84,6 +86,7 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <GoogleSignInButton />
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

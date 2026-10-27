@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, type ReactNode }
 export type Language = "zh" | "en";
 
 const translations: Record<string, string> = JSON.parse(String.raw`{
+  "请使用 Google 登录管理员账户": "Use Google to sign in to the administrator account.",
   "斯瓦希里语": "Swahili",
   "斯瓦希里语学习": "Learn Swahili",
   "7天免费试用": "7-day free trial",

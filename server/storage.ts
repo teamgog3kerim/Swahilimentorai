@@ -26,6 +26,8 @@ import {
   visits,
   adminNotifications,
 } from "@shared/schema";
+import { sessions } from "@shared/schema";
+import { isOwnerEmail, mayLinkGoogleAccount } from "./accountPolicy";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -76,13 +78,67 @@ export interface IStorage {
 }
 
 export class DbStorage implements IStorage {
+  async signInWithGoogle(
+    profile: { googleId: string; email: string; username: string; profileImageUrl: string | null },
+    currentUserId?: string,
+  ): Promise<User> {
+    return db.transaction(async (tx) => {
+      if (currentUserId) {
+        const [current] = await tx.select().from(users).where(eq(users.id, currentUserId)).limit(1);
+        if (!current || current.email.toLowerCase() !== profile.email) throw new Error("email_mismatch");
+      }
+      const [byGoogleId] = await tx.select().from(users).where(eq(users.googleId, profile.googleId)).limit(1);
+      if (byGoogleId) return byGoogleId;
+      const [existing] = await tx.select().from(users)
+        .where(sql`lower(${users.email}) = ${profile.email}`).limit(1);
+      const owner = isOwnerEmail(profile.email);
+      if (existing) {
+        if (!mayLinkGoogleAccount(existing, profile.googleId, currentUserId)) throw new Error("link_required");
+        if (owner) {
+          await tx.delete(sessions).where(sql`${sessions.sess}->'passport'->>'user' = ${existing.id}`);
+        }
+        const [linked] = await tx.update(users).set({
+          googleId: profile.googleId,
+          profileImageUrl: profile.profileImageUrl,
+          ...(owner ? { isAdmin: true, passwordHash: null, authProvider: "google", isPremium: true, subscriptionEndsAt: null } : {}),
+        }).where(eq(users.id, existing.id)).returning();
+        return linked;
+      }
+      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const [created] = await tx.insert(users).values({
+        ...profile, authProvider: "google", isAdmin: owner,
+        isPremium: true, subscriptionEndsAt: owner ? null : trialEndsAt,
+      }).returning();
+      return created;
+    });
+  }
+
+  async updateManagedUser(id: string, values: {
+    username: string; isAdmin: boolean; isPremium: boolean; subscriptionEndsAt: Date | null;
+  }) {
+    const [updated] = await db.update(users).set(values).where(eq(users.id, id)).returning();
+    return updated;
+  }
+
+  async deleteManagedUser(id: string) {
+    await db.transaction(async (tx) => {
+      const userSessions = tx.select({ id: chatSessions.id }).from(chatSessions).where(eq(chatSessions.userId, id));
+      await tx.delete(chatMessages).where(sql`${chatMessages.sessionId} in (${userSessions})`);
+      await tx.delete(chatSessions).where(eq(chatSessions.userId, id));
+      await tx.delete(userProgress).where(eq(userProgress.userId, id));
+      await tx.delete(subscriptions).where(eq(subscriptions.userId, id));
+      await tx.update(visits).set({ userId: null }).where(eq(visits.userId, id));
+      await tx.delete(sessions).where(sql`${sessions.sess}->'passport'->>'user' = ${id}`);
+      await tx.delete(users).where(eq(users.id, id));
+    });
+  }
   async getUser(id: string): Promise<User | undefined> {
     const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
     return result[0];
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const result = await db.select().from(users).where(sql`lower(${users.email}) = ${email.toLowerCase()}`).limit(1);
     return result[0];
   }
 

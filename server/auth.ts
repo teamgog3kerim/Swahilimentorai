@@ -6,6 +6,8 @@ import connectPg from "connect-pg-simple";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { signupSchema, loginSchema } from "@shared/schema";
+import { registerGoogleAuth } from "./googleAuth";
+import { isOwnerEmail, normalizedEmail } from "./accountPolicy";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
@@ -23,6 +25,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
+      sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
     },
@@ -34,13 +37,17 @@ export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
+  registerGoogleAuth(app);
 
   passport.use(
     new LocalStrategy(
       { usernameField: "email", passwordField: "password" },
       async (email, password, done) => {
         try {
-          const user = await storage.getUserByEmail(email);
+          if (isOwnerEmail(email)) {
+            return done(null, false, { message: "请使用 Google 登录管理员账户" });
+          }
+          const user = await storage.getUserByEmail(normalizedEmail(email));
           if (!user) {
             return done(null, false, { message: "用户不存在" });
           }
@@ -83,6 +90,9 @@ export async function setupAuth(app: Express) {
       }
 
       const { email, password, name } = validation.data;
+      if (isOwnerEmail(email)) {
+        return res.status(400).json({ message: "请使用 Google 登录管理员账户" });
+      }
 
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -90,7 +100,7 @@ export async function setupAuth(app: Express) {
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
-      const user = await storage.createUserWithPassword(email, name, passwordHash);
+      const user = await storage.createUserWithPassword(normalizedEmail(email), name, passwordHash);
 
       await storage.createNotification({
         type: 'new_user',
@@ -174,6 +184,8 @@ export async function setupAuth(app: Express) {
       subscriptionEndsAt: user.subscriptionEndsAt,
       practiceCount: user.practiceCount,
       profileImageUrl: user.profileImageUrl,
+      googleConnected: Boolean(user.googleId),
+      authProvider: user.authProvider,
     });
   });
 }

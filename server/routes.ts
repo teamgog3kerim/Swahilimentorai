@@ -7,6 +7,13 @@ import { z } from "zod";
 import { insertUserProgressSchema, insertChatSessionSchema, insertChatMessageSchema, insertSubscriptionSchema } from "@shared/schema";
 import { UAParser } from "ua-parser-js";
 import crypto from "crypto";
+import { isOwnerEmail } from "./accountPolicy";
+import type { User } from "@shared/schema";
+
+function managedUser(user: User) {
+  const { passwordHash, googleId, ...safe } = user;
+  return { ...safe, googleConnected: Boolean(googleId), isOwner: isOwnerEmail(user.email) };
+}
 
 const countryNames: Record<string, string> = {
   'CN': 'China', 'US': 'United States', 'GB': 'United Kingdom', 'DE': 'Germany',
@@ -573,10 +580,51 @@ Follow these rules:
   app.get('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const users = await storage.getAllUsers();
-      res.json(users);
+      res.json(users.map(managedUser));
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.patch('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    const parsed = z.object({
+      username: z.string().trim().min(2).max(100),
+      isAdmin: z.boolean(),
+      isPremium: z.boolean(),
+      subscriptionEndsAt: z.string().datetime().nullable(),
+    }).strict().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid user details" });
+    try {
+      const target = await storage.getUser(req.params.id);
+      if (!target) return res.status(404).json({ message: "User not found" });
+      if ((isOwnerEmail(target.email) || target.id === req.user.id) && !parsed.data.isAdmin) {
+        return res.status(403).json({ message: "Cannot remove the owner's or your own administrator access" });
+      }
+      if (isOwnerEmail(target.email) && (!parsed.data.isPremium || parsed.data.subscriptionEndsAt !== null)) {
+        return res.status(403).json({ message: "The owner must retain unlimited access" });
+      }
+      const updated = await storage.updateManagedUser(target.id, {
+        ...parsed.data,
+        subscriptionEndsAt: parsed.data.subscriptionEndsAt ? new Date(parsed.data.subscriptionEndsAt) : null,
+      });
+      res.json(managedUser(updated));
+    } catch {
+      res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const target = await storage.getUser(req.params.id);
+      if (!target) return res.status(404).json({ message: "User not found" });
+      if (target.id === req.user.id || isOwnerEmail(target.email)) {
+        return res.status(403).json({ message: "Cannot delete yourself or the application owner" });
+      }
+      await storage.deleteManagedUser(target.id);
+      res.sendStatus(204);
+    } catch {
+      res.status(500).json({ message: "Failed to delete user" });
     }
   });
 
@@ -584,7 +632,7 @@ Follow these rules:
   app.get('/api/admin/subscriptions', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const subscriptions = await storage.getAllSubscriptions();
-      res.json(subscriptions);
+      res.json(subscriptions.map((entry) => ({ ...entry, user: managedUser(entry.user) })));
     } catch (error) {
       console.error("Error fetching subscriptions:", error);
       res.status(500).json({ message: "Failed to fetch subscriptions" });
@@ -595,7 +643,7 @@ Follow these rules:
   app.get('/api/admin/pending', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const pending = await storage.getPendingSubscriptions();
-      res.json(pending);
+      res.json(pending.map((entry) => ({ ...entry, user: managedUser(entry.user) })));
     } catch (error) {
       console.error("Error fetching pending subscriptions:", error);
       res.status(500).json({ message: "Failed to fetch pending subscriptions" });

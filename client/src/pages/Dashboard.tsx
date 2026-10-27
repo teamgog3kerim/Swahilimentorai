@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu, Shield, Bell } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { SubscriptionReminder } from "@/components/SubscriptionReminder";
 import type { UserProgress, Lesson } from "@shared/schema";
 import {
@@ -37,7 +38,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 type View = "learn" | "practice" | "progress" | "subscription" | "admin";
 
 function DashboardContent() {
-  const { user } = useAuth() as { user: User | null };
+  const { user } = useAuth() as { user: (User & { googleConnected: boolean }) | null };
   const { language, t } = useLocale();
   const [currentView, setCurrentView] = useState<View>("learn");
   const { setOpenMobile } = useSidebar();
@@ -177,6 +178,7 @@ function DashboardContent() {
         </SidebarContent>
 
         <SidebarFooter>
+          {!user?.googleConnected && <GoogleSignInButton connect />}
           <Button
             variant="ghost"
             className="w-full justify-start"

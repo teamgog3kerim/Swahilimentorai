@@ -42,6 +42,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLocale } from "@/lib/i18n";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, Subscription } from "@shared/schema";
+import { UserManagementDialog, type ManagedUser } from "@/components/UserManagementDialog";
 import { 
   BarChart, 
   Bar, 
@@ -103,6 +104,7 @@ export default function AdminPage() {
   const { language, t } = useLocale();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [managedUser, setManagedUser] = useState<ManagedUser | null>(null);
   const [notificationOpen, setNotificationOpen] = useState(false);
 
   const { data: isAdminCheck } = useQuery<{ isAdmin: boolean }>({
@@ -120,7 +122,7 @@ export default function AdminPage() {
     enabled: isAdminCheck?.isAdmin === true,
   });
 
-  const { data: allUsers = [], isLoading: usersLoading, refetch: refetchUsers } = useQuery<User[]>({
+  const { data: allUsers = [], isLoading: usersLoading, refetch: refetchUsers } = useQuery<ManagedUser[]>({
     queryKey: ["/api/admin/users"],
     enabled: isAdminCheck?.isAdmin === true,
   });
@@ -726,6 +728,7 @@ export default function AdminPage() {
                         <TableHead>{t("练习次数")}</TableHead>
                         <TableHead>{t("到期时间")}</TableHead>
                         <TableHead>{t("注册时间")}</TableHead>
+                        <TableHead>{language === "en" ? "Manage" : "管理"}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -758,6 +761,11 @@ export default function AdminPage() {
                               ) : "-"}
                             </TableCell>
                             <TableCell>{formatDate(u.createdAt)}</TableCell>
+                             <TableCell>
+                               <Button size="sm" variant="outline" onClick={() => setManagedUser(u)}>
+                                 {language === "en" ? "Manage" : "管理"}
+                               </Button>
+                             </TableCell>
                           </TableRow>
                         );
                       })}
@@ -767,6 +775,7 @@ export default function AdminPage() {
               )}
             </CardContent>
           </Card>
+          {managedUser && <UserManagementDialog key={managedUser.id} user={managedUser} currentUserId={user?.id} onClose={() => setManagedUser(null)} />}
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
