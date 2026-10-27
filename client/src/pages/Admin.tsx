@@ -43,6 +43,7 @@ import { useLocale } from "@/lib/i18n";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, Subscription } from "@shared/schema";
 import { UserManagementDialog, type ManagedUser } from "@/components/UserManagementDialog";
+import { LearnerStoriesAdmin } from "@/components/LearnerStoriesAdmin";
 import { 
   BarChart, 
   Bar, 
@@ -501,7 +502,7 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 lg:grid-cols-5">
           <TabsTrigger value="pending" data-testid="tab-pending">
             {t("待验证")} ({pendingSubscriptions.length})
           </TabsTrigger>
@@ -514,6 +515,11 @@ export default function AdminPage() {
           <TabsTrigger value="analytics" data-testid="tab-analytics">
             {t("访问统计")}
           </TabsTrigger>
+          {isAdminCheck?.isAdmin === true && (
+            <TabsTrigger value="learner-stories" data-testid="tab-learner-stories">
+              {language === "en" ? "Learner stories" : "学习者故事"}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="pending" className="space-y-4">
@@ -1000,6 +1006,12 @@ export default function AdminPage() {
             </Card>
           </div>
         </TabsContent>
+
+        {isAdminCheck?.isAdmin === true && (
+          <TabsContent value="learner-stories" className="space-y-4">
+            <LearnerStoriesAdmin />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

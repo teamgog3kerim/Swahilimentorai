@@ -28,6 +28,24 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const learnerStories = pgTable("learner_stories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  learningLanguage: text("learning_language").notNull(),
+  displayNameZh: text("display_name_zh").notNull(),
+  displayNameEn: text("display_name_en").notNull(),
+  quoteZh: text("quote_zh").notNull(),
+  quoteEn: text("quote_en").notNull(),
+  contextZh: text("context_zh").notNull().default(""),
+  contextEn: text("context_en").notNull().default(""),
+  privateContact: text("private_contact").notNull().default(""),
+  consentRecord: text("consent_record").notNull().default(""),
+  consentGranted: boolean("consent_granted").notNull().default(false),
+  approved: boolean("approved").notNull().default(false),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const lessons = pgTable("lessons", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   language: text("language").notNull().default("swahili"),

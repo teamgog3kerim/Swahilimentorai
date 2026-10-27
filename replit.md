@@ -58,6 +58,10 @@ The platform offers monthly (90 USDT) and quarterly (250 USDT) premium subscript
 ### Admin Panel
 An admin panel provides management capabilities for users with `isAdmin=true`. It includes a statistics dashboard, tabs for pending payments, active subscriptions, user management, and visit analytics. Admin API routes (`/api/admin/*`) are protected and facilitate actions like approving or rejecting subscriptions, and managing user data.
 
+The **Learner stories** tab supports Chinese and English public attribution, quotes and context for either Amharic or Swahili. Administrators must verify the account and record permission covering both translations and public attribution before approving and publishing. Private contact details and consent records are admin-only, excluded from public responses, response-body logs and offline caches. Content or permission changes invalidate approval/publication on the server: save the edited version privately, then reopen it to explicitly reapprove and republish. Withdrawing permission requires saving the change to remove the story publicly. No genuine stories are seeded: the landing page retains clearly labeled illustrative examples until a permissioned story is published.
+
+Story checks: `RUN_HTTP_TESTS=1 node --import tsx --test server/tests/learnerStories.test.ts` covers permission gates, authorization and privacy; `RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/learnerStoriesPublishingBrowser.test.ts` covers signed-in editing, publication, bilingual public rendering, withdrawal and deletion. The existing `server/tests/learnerStoriesBrowser.test.ts` checks the illustrative fallback and assumes no stories are published.
+
 ### Analytics System
 The platform includes a comprehensive analytics system to track visitor data:
 - **Visits Table**: Stores sessionId (required), userId, country (code/name), browser, OS, device type, and IP hash

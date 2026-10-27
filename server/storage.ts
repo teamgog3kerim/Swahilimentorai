@@ -29,6 +29,8 @@ import {
 } from "@shared/schema";
 import { sessions } from "@shared/schema";
 import { isOwnerEmail, mayLinkGoogleAccount } from "./accountPolicy";
+import { learnerStories } from "@shared/schema";
+import type { LearnerStoryInput } from "@shared/learnerStories";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -79,6 +81,56 @@ export interface IStorage {
 }
 
 export class DbStorage implements IStorage {
+  async getAdminLearnerStories() {
+    return db.select().from(learnerStories).orderBy(desc(learnerStories.createdAt), learnerStories.id);
+  }
+
+  async getPublicLearnerStories() {
+    // Explicit allowlist: never serialize contact information or consent records publicly.
+    return db.select({
+      id: learnerStories.id,
+      learningLanguage: learnerStories.learningLanguage,
+      displayNameZh: learnerStories.displayNameZh,
+      displayNameEn: learnerStories.displayNameEn,
+      quoteZh: learnerStories.quoteZh,
+      quoteEn: learnerStories.quoteEn,
+      contextZh: learnerStories.contextZh,
+      contextEn: learnerStories.contextEn,
+    }).from(learnerStories).where(and(
+      eq(learnerStories.approved, true),
+      eq(learnerStories.published, true),
+      eq(learnerStories.consentGranted, true),
+      sql`length(trim(${learnerStories.consentRecord})) > 0`,
+    )).orderBy(desc(learnerStories.createdAt), learnerStories.id);
+  }
+
+  async saveLearnerStory(input: LearnerStoryInput, id?: string) {
+    const values = { ...input, updatedAt: new Date() };
+    if (!id) {
+      const [story] = await db.insert(learnerStories).values(values).returning();
+      return story;
+    }
+    return db.transaction(async (tx) => {
+      // Lock the persisted version: clients cannot carry approval forward while
+      // changing the reviewed content or its permission, including concurrent edits.
+      const [current] = await tx.select().from(learnerStories)
+        .where(eq(learnerStories.id, id)).for("update");
+      if (!current) return undefined;
+      const changed = (Object.keys(input) as (keyof LearnerStoryInput)[])
+        .some(key => key !== "approved" && key !== "published" && current[key] !== input[key]);
+      const [story] = await tx.update(learnerStories).set({
+        ...values,
+        ...(changed ? { approved: false, published: false } : {}),
+      }).where(eq(learnerStories.id, id)).returning();
+      return story;
+    });
+  }
+
+  async deleteLearnerStory(id: string) {
+    const deleted = await db.delete(learnerStories).where(eq(learnerStories.id, id)).returning({ id: learnerStories.id });
+    return deleted.length > 0;
+  }
+
   async signInWithGoogle(
     profile: { googleId: string; email: string; username: string; profileImageUrl: string | null },
     currentUserId?: string,

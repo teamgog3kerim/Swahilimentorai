@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { isOwnerEmail } from "./accountPolicy";
 import { seedLessons } from "./seedLessons";
 import type { User } from "@shared/schema";
+import { learnerStoryInputSchema } from "@shared/learnerStories";
 
 function managedUser(user: User) {
   const { passwordHash, googleId, ...safe } = user;
@@ -87,6 +88,54 @@ const isAdmin = async (req: any, res: any, next: any) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   await seedLessons({ onlyIfEmpty: true });
   await setupAuth(app);
+
+  app.get("/api/learner-stories", async (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    try {
+      res.json(await storage.getPublicLearnerStories());
+    } catch (error) {
+      console.error("Unable to load learner stories", error);
+      res.status(500).json({ message: "Unable to load learner stories" });
+    }
+  });
+
+  app.use("/api/admin/learner-stories", (_req, res, next) => {
+    res.set("Cache-Control", "private, no-store");
+    next();
+  });
+  app.get("/api/admin/learner-stories", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      res.json(await storage.getAdminLearnerStories());
+    } catch (error) {
+      console.error("Unable to load admin stories");
+      res.status(500).json({ message: "Unable to load learner stories" });
+    }
+  });
+  for (const method of ["post", "patch"] as const) {
+    app[method](method === "post" ? "/api/admin/learner-stories" : "/api/admin/learner-stories/:id",
+      isAuthenticated, isAdmin, async (req, res) => {
+        const parsed = learnerStoryInputSchema.safeParse(req.body);
+        if (!parsed.success) return res.status(400).json({ message: "Invalid story or publication permission", errors: parsed.error.flatten() });
+        try {
+          const story = await storage.saveLearnerStory(parsed.data, method === "patch" ? req.params.id : undefined);
+          if (!story) return res.status(404).json({ message: "Story not found" });
+          res.status(method === "post" ? 201 : 200).json(story);
+        } catch (error) {
+          // Database errors may contain SQL parameters with private consent/contact data.
+          console.error("Unable to save learner story");
+          res.status(500).json({ message: "Unable to save learner story" });
+        }
+      });
+  }
+  app.delete("/api/admin/learner-stories/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      if (!await storage.deleteLearnerStory(req.params.id)) return res.status(404).json({ message: "Story not found" });
+      res.status(204).end();
+    } catch (error) {
+      console.error("Unable to delete learner story");
+      res.status(500).json({ message: "Unable to delete learner story" });
+    }
+  });
 
   app.get("/api/capabilities", isAuthenticated, (_req, res) => {
     res.json({ aiTutorAvailable: Boolean(openai) });
