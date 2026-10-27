@@ -75,22 +75,30 @@ export default function Signup() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="absolute top-4 right-4"><LanguageToggle /></div>
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center gap-2">
+        <CardHeader className="space-y-4 pb-5">
+          <div className="flex min-w-0 items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setLocation("/")}
               data-testid="button-back"
+              aria-label={t("返回上一页")}
+              className="shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-2xl" data-testid="text-signup-title">{t("免费注册")}</CardTitle>
+            <CardTitle className="min-w-0 text-[1.65rem] font-bold leading-tight tracking-tight text-foreground sm:text-3xl" data-testid="text-signup-title">
+              {t("创建账户")}
+            </CardTitle>
           </div>
-          <CardDescription>
-            <span className="mb-1 block font-semibold text-foreground">{APP_NAME}</span>
-            <span className="mb-3 block text-xs">{APP_SLOGAN}</span>
-            {t("创建账户，选择您想学的语言")}
+          <CardDescription data-testid="signup-introduction" className="space-y-2 text-sm leading-6">
+            <span className="flex min-w-0 flex-col gap-1">
+              <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{APP_NAME}</span>
+              <span className="text-xs leading-5 text-muted-foreground">{APP_SLOGAN}</span>
+            </span>
+            <span className="block max-w-sm text-sm leading-6 text-foreground/80">
+              {t("学习阿姆哈拉语与斯瓦希里语，按自己的节奏开启语言之旅。")}
+            </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

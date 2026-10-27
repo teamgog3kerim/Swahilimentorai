@@ -5,6 +5,9 @@ export type Language = "zh" | "en";
 
 const translations: Record<string, string> = JSON.parse(String.raw`{
   "Afri Panda": "Afri Panda",
+  "创建账户": "Create your account",
+  "返回上一页": "Go back",
+  "学习阿姆哈拉语与斯瓦希里语，按自己的节奏开启语言之旅。": "Learn Amharic and Swahili at your own pace, one step at a time.",
   "四步开始您的语言学习之旅": "Start your language learning journey in four steps",
   "欢迎加入 Afri Panda！您可以选择阿姆哈拉语或斯瓦希里语。": "Welcome to Afri Panda! Choose Amharic or Swahili to get started.",
   "阿姆哈拉语与斯瓦希里语": "Amharic & Swahili",
