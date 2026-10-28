@@ -1,8 +1,9 @@
 import { Link } from "wouter";
-import { Coins, ArrowUpRight, GraduationCap } from "lucide-react";
+import { Coins, ArrowUpRight } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
 import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 import { PandaWelcome } from "./PandaWelcome";
+import { PandaIcon } from "./PandaIcon";
 import "./Footer.css";
 
 export function Footer() {
@@ -26,7 +27,7 @@ export function Footer() {
           <section className="afri-footer__brand">
             <div className="afri-footer__brand-lockup">
               <span className="afri-footer__brand-mark" aria-hidden="true">
-                <GraduationCap />
+                <PandaIcon />
               </span>
               <div>
                 <p className="afri-footer__brand-name">{APP_NAME}</p>

@@ -16,6 +16,7 @@ import { useLocale } from "@/lib/i18n";
 import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { PandaIcon } from "@/components/PandaIcon";
 
 type LoginFormData = { email: string; password: string; rememberMe: boolean };
 
@@ -83,7 +84,10 @@ export default function Login() {
             <CardTitle className="text-2xl" data-testid="text-login-title">{t("登录")}</CardTitle>
           </div>
           <CardDescription>
-            <span className="mb-1 block font-semibold text-foreground">{APP_NAME}</span>
+            <span className="mb-1 flex items-center gap-2 font-semibold text-foreground">
+              <PandaIcon className="h-9 w-9 shrink-0 text-primary" />
+              <span>{APP_NAME}</span>
+            </span>
             <span className="mb-3 block text-xs">{APP_SLOGAN}</span>
             {t("登录您的语言学习账户")}
           </CardDescription>

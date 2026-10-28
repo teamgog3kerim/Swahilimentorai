@@ -38,6 +38,7 @@ import { TrackProvider, useTrack } from "@/contexts/TrackContext";
 import { TrackChooser } from "@/components/learning/TrackChooser";
 import { CourseAccessGate } from "@/components/CourseAccessGate";
 import { useCourseAccess } from "@/components/useCourseAccess";
+import { PandaIcon } from "@/components/PandaIcon";
 
 type View = "learn" | "practice" | "progress" | "subscription" | "admin";
 
@@ -126,9 +127,12 @@ function DashboardContent() {
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel className="h-auto px-4 py-4">
-              <div className="flex flex-col gap-1">
-                <span className="text-lg font-bold">{APP_NAME}</span>
-                <span className="text-xs leading-relaxed text-muted-foreground">{APP_SLOGAN}</span>
+              <div className="flex items-center gap-3">
+                <PandaIcon className="h-10 w-10 shrink-0 text-primary" />
+                <div className="flex min-w-0 flex-col gap-1">
+                  <span className="text-lg font-bold">{APP_NAME}</span>
+                  <span className="text-xs leading-relaxed text-muted-foreground">{APP_SLOGAN}</span>
+                </div>
               </div>
             </SidebarGroupLabel>
             <Separator />
@@ -199,6 +203,7 @@ function DashboardContent() {
           <SidebarTrigger className="md:hidden" data-testid="button-sidebar-toggle">
             <Menu className="w-5 h-5" />
           </SidebarTrigger>
+            <PandaIcon className="h-8 w-8 shrink-0 text-primary" />
             <span className="font-semibold text-sm sm:text-base min-w-0 flex-1 truncate">{APP_NAME}{track ? ` · ${track === "amharic" ? (language === "en" ? "Amharic" : "阿姆哈拉语") : (language === "en" ? "Swahili" : "斯瓦希里语")}` : ""}</span>
           <div className="shrink-0"><LanguageToggle /></div>
             {track && <Button variant="outline" size="sm" onClick={() => setTrack(track === "amharic" ? "swahili" : "amharic")} data-testid="button-switch-language">

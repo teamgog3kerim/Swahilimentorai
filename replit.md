@@ -103,6 +103,9 @@ A `ShareButton` component enables users to share the platform on WeChat, WhatsAp
 
 ## External Dependencies
 
+### Brand icon
+Use the existing purple graduation panda as the app's brand icon throughout the interface, browser tab, and installed app. Do not restore the earlier standalone graduation-cap brand mark. Preserve the footer panda's continuous up/down animation and localized greeting, with no pause button; respect reduced-motion settings. Functional course-level icons are not brand logos.
+
 -   **Replit AI Integrations**: Proxied access to OpenAI API (GPT-5 model).
 -   **Neon Database**: Serverless PostgreSQL hosting.
 -   **Google Fonts**: Inter and Noto Sans SC font families.

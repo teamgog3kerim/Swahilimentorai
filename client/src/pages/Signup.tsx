@@ -15,6 +15,7 @@ import { useLocale } from "@/lib/i18n";
 import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { PandaIcon } from "@/components/PandaIcon";
 
 type SignupFormData = { name: string; email: string; password: string; confirmPassword: string };
 
@@ -92,9 +93,12 @@ export default function Signup() {
             </CardTitle>
           </div>
           <CardDescription data-testid="signup-introduction" className="space-y-2 text-sm leading-6">
-            <span className="flex min-w-0 flex-col gap-1">
-              <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{APP_NAME}</span>
-              <span className="text-xs leading-5 text-muted-foreground">{APP_SLOGAN}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <PandaIcon className="h-10 w-10 shrink-0 text-primary" />
+              <span className="flex min-w-0 flex-col gap-1">
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{APP_NAME}</span>
+                <span className="text-xs leading-5 text-muted-foreground">{APP_SLOGAN}</span>
+              </span>
             </span>
             <span className="block max-w-sm text-sm leading-6 text-foreground/80">
               {t("学习阿姆哈拉语与斯瓦希里语，按自己的节奏开启语言之旅。")}
