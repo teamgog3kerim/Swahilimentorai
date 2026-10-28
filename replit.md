@@ -67,6 +67,8 @@ See `docs/polar-integration-readiness.md` before connecting Polar. The admin-onl
 
 Historical manual payments were sold as fixed 30-day monthly and 90-day quarterly terms, not the new USD calendar-month plans. Approval grants that full legacy term after approval or the latest remaining trial/paid deadline, whichever is later; never reuse a pending record's provisional dates or change its price. Resolve approval/rejection atomically and serialize by learner to prevent duplicate grants and lost renewal time. Keep unlimited grants intact. Regression checks: `RUN_HTTP_TESTS=1 node --import tsx --test server/tests/subscriptionApproval.test.ts`.
 
+Signed-in admin review regression: `npm run test:subscription:browser` requires the running development app and `REPLIT_DEV_DOMAIN` (optional `TEST_CHROMIUM_PATH`). It uses temporary administrators, learners and expired legacy pending fixtures, exercises real login and review buttons, checks delayed requests, success/error messages, refreshed lists and expiry, duplicate reviews, learner access refresh and retired checkout, then removes its fixtures.
+
 ### Admin Panel
 An admin panel provides management capabilities for users with `isAdmin=true`. It includes a statistics dashboard, tabs for pending payments, active subscriptions, user management, and visit analytics. Admin API routes (`/api/admin/*`) are protected and facilitate actions like approving or rejecting subscriptions, and managing user data.
 

@@ -236,9 +236,9 @@ export default function AdminPage() {
       const res = await apiRequest("POST", "/api/admin/subscription/action", data);
       return await res.json();
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: any, variables) => {
       toast({
-        title: data.action === 'approve' ? t("订阅已批准") : t("订阅已拒绝"),
+        title: variables.action === 'approve' ? t("订阅已批准") : t("订阅已拒绝"),
         description: data.message,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/pending"] });

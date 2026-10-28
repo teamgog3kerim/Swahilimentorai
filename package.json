@@ -6,6 +6,7 @@
   "scripts": {
     "check:i18n": "tsx scripts/check-translations.ts && node --import tsx --test server/tests/i18n.test.ts",
     "test:i18n:browser": "RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/i18nBrowser.test.ts server/tests/learnerStoriesBrowser.test.ts server/tests/courseNavigationBrowser.test.ts",
+    "test:subscription:browser": "RUN_BROWSER_TESTS=1 node --import tsx --test server/tests/subscriptionApprovalBrowser.test.ts",
     "prebuild": "npm run check:i18n",
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
