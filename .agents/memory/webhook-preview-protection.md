@@ -10,10 +10,13 @@ can reach the same development URL.
 
 **Why:** Polar deliveries received HTTP 307 from preview protection while direct
 agent requests reached the handler. The actual delivery's redirect destination,
-not a repeated local connectivity test, identified the blocker.
+not a repeated local connectivity test, identified the blocker. Making the
+preview public did not resolve the provider's redirect in this project.
 
 **How to apply:** Inspect the delivery's response Location without retaining
 query parameters. Use documented Development external access tokens for private
 preview API traffic where available. Do not change a public production site's
 privacy to obtain token controls without the user's informed consent. Keep
 provider signature verification enabled and retry the existing event, not payment.
+Do not keep retrying privacy changes if the provider still receives a redirect;
+use an authenticated forwarding mechanism or an isolated published test receiver.
