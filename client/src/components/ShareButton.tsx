@@ -13,7 +13,7 @@ import { SiWechat, SiWhatsapp, SiX, SiTelegram, SiFacebook } from "react-icons/s
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useLocale } from "@/lib/i18n";
-import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
+import { APP_NAME } from "@/lib/brand";
 
 interface LearningProgress {
   completedLessons: number;
@@ -42,33 +42,19 @@ export function ShareButton({ variant = "default", size = "default", className =
     ? Math.round((progress.completedLessons / progress.totalLessons) * 100) 
     : 0;
 
-  const baseMessage = language === "en" ? `${APP_NAME} — ${APP_SLOGAN}
+  const baseMessage = language === "en" ? `${APP_NAME} — Stronger connections start with a conversation.
 
-Learn Amharic or Swahili with me!
+Doing business in Africa? Join me to learn Amharic and Swahili online, with a Chinese or English interface. Build confidence with customers and partners in Ethiopia and East Africa.
 
-- Choose a Chinese or English interface
-- Explore letters, vocabulary and numbers
-- Practise conversations and check your understanding
-- Save your progress separately for each language
+Start your 88-hour free trial, then subscribe to keep learning:
+${appUrl}` : `${APP_NAME} — 一句问候，拉近合作的距离。
 
-Choose your learning path:
-${appUrl}
+在非洲做生意？和我一起用中文或英语界面，在线学习阿姆哈拉语与斯瓦希里语。为在埃塞俄比亚及东非与客户和合作伙伴交流增添信心。
 
-#Amharic #Swahili #LanguageLearning` : `${APP_NAME} — ${APP_SLOGAN}
+先体验88小时免费试用，再订阅继续学习：
+${appUrl}`;
 
-一起来学习阿姆哈拉语或斯瓦希里语！
-
-- 自由选择中文或英语界面
-- 学习字母、词汇和数字
-- 练习情景对话，进行随堂自测
-- 两种语言的学习进度分别保存
-
-选择您的学习路径：
-${appUrl}
-
-#阿姆哈拉语 #斯瓦希里语 #语言学习`;
-
-  const progressMessage = progress ? (language === "en" ? `${APP_NAME} — ${APP_SLOGAN}
+  const progressMessage = progress ? (language === "en" ? `${APP_NAME} — Stronger connections start with a conversation.
 
 My language learning progress
 
@@ -78,12 +64,12 @@ My learning progress:
 - Practice sessions: ${progress.practiceCount}
 ${progress.learningDays ? `- Learning streak: ${progress.learningDays} days` : ""}
 
-Learn Amharic or Swahili with a Chinese or English interface.
+Join me to learn Amharic and Swahili online, with a Chinese or English interface. Build confidence for everyday business communication in Ethiopia and East Africa.
 
-Try it free:
+Start your 88-hour free trial, then subscribe to keep learning:
 ${appUrl}
 
-#Amharic #Swahili #LanguageLearning #MyProgress` : `${APP_NAME} — ${APP_SLOGAN}
+#Amharic #Swahili #LanguageLearning #MyProgress` : `${APP_NAME} — 一句问候，拉近合作的距离。
 
 【分享语言学习成果】
 
@@ -93,9 +79,9 @@ ${appUrl}
 - 练习次数 ${progress.practiceCount} 次
 ${progress.learningDays ? `- 连续学习 ${progress.learningDays} 天` : ""}
 
-用中文或英语界面学习阿姆哈拉语和斯瓦希里语。
+和我一起用中文或英语界面，在线学习阿姆哈拉语与斯瓦希里语，为在埃塞俄比亚及东非的日常商务交流增添信心。
 
-点击链接免费试用：
+先体验88小时免费试用，再订阅继续学习：
 ${appUrl}
 
 #阿姆哈拉语 #斯瓦希里语 #语言学习 #我的学习成果`) : baseMessage;
@@ -185,7 +171,7 @@ ${appUrl}
             {t("邀请好友一起学习")}
           </DialogTitle>
           <DialogDescription>
-            {t("分享给朋友，一起学习斯瓦希里语！")}
+            {t("邀请朋友一起学习阿姆哈拉语与斯瓦希里语，让非洲商务沟通更自信。")}
           </DialogDescription>
         </DialogHeader>
 
@@ -232,7 +218,7 @@ ${appUrl}
               <p className="text-sm font-medium">{t("分享内容预览：")}</p>
             </div>
             <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-              {shareMessage.slice(0, 180)}...
+              {shareMessage}
             </p>
           </div>
 
@@ -275,7 +261,7 @@ ${appUrl}
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
-            {t("邀请好友一起学习，让语言学习更有趣！")}
+            {t("一起学习，让交流更自然，让合作更进一步。")}
           </p>
         </div>
       </DialogContent>

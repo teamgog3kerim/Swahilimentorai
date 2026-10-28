@@ -22,13 +22,13 @@ export function Hero() {
           <div className="flex flex-col gap-5 md:gap-6">
             <div>
               <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-primary sm:text-sm" data-testid="brand-slogan">{APP_SLOGAN}</p>
-              <p className="mb-2 text-sm font-semibold tracking-wide text-primary">{t("探索两种重要的非洲语言")}</p>
+              <p className="mb-2 text-sm font-semibold tracking-wide text-primary">{t("为非洲商务沟通而学")}</p>
               <h1 className="max-w-2xl text-[2rem] font-bold leading-[1.12] tracking-tight text-foreground [text-wrap:balance] sm:text-4xl lg:text-[3.25rem]">
                 {t("学习")}
                 <span className="mt-1.5 block text-primary">{t("阿姆哈拉语与斯瓦希里语")}</span>
               </h1>
               <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-                {t("选择中文或英语界面，按自己的节奏学习，从字母、词汇到日常对话。")}
+                {t("用中文或英语界面在线学习阿姆哈拉语与斯瓦希里语。为在埃塞俄比亚及东非的日常商务沟通建立信心，拉近与客户和合作伙伴的距离。")}
               </p>
             </div>
 
@@ -56,7 +56,7 @@ export function Hero() {
                 <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
                 <span>{t("中文或英语界面")}</span>
               </span>
-              <span className="text-sm text-muted-foreground">{t("引导课程与自测无需连接实时 AI。")}</span>
+              <span className="text-sm text-muted-foreground">{t("一句问候，也能成为合作的开始。")}</span>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">

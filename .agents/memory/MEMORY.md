@@ -7,3 +7,4 @@
 - [Polar API versioning](polar-api-versioning.md) — verify actual SDK exports against current docs; keep API and webhook versions aligned.
 - [Webhook preview protection](webhook-preview-protection.md) — provider redirects to Replshield can occur despite successful agent connectivity checks.
 - [Billing environment boundaries](billing-environments.md) — preview stays sandbox; verify live setup without charging the owner or crediting fabricated orders.
+- [Business communication positioning](product-positioning.md) — hero and invitations target Chinese- and English-speaking learners doing business in Africa.
