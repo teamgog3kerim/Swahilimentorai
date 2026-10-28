@@ -5,3 +5,4 @@
 - [Browser verification](browser-verification.md) — use direct Playwright checks if the specialized testing helper is unavailable; still verify protected screens.
 - [Payment audit privacy](payment-audit-privacy.md) — retained review evidence must not become a way to recover deleted learner identity.
 - [Polar API versioning](polar-api-versioning.md) — verify actual SDK exports against current docs; keep API and webhook versions aligned.
+- [Webhook preview protection](webhook-preview-protection.md) — provider redirects to Replshield can occur despite successful agent connectivity checks.
