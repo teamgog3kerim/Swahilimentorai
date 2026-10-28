@@ -34,7 +34,7 @@ export function UserManagementDialog({ user, currentUserId, onClose }: {
       });
     },
     onSuccess: () => {
-      for (const key of ["/api/admin/users", "/api/auth/user", "/api/admin/subscriptions", "/api/admin/pending"]) {
+      for (const key of ["/api/admin/users", "/api/auth/user", "/api/admin/subscriptions", "/api/admin/pending", "/api/admin/payment-reviews/retained"]) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
       toast({ title: en ? "User records updated" : "用户记录已更新" });

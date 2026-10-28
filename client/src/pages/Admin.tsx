@@ -44,6 +44,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User, Subscription, SubscriptionWithReview } from "@shared/schema";
 import { UserManagementDialog, type ManagedUser } from "@/components/UserManagementDialog";
 import { LearnerStoriesAdmin } from "@/components/LearnerStoriesAdmin";
+import { RetainedPaymentReviews } from "@/components/RetainedPaymentReviews";
 import { 
   BarChart, 
   Bar, 
@@ -711,6 +712,7 @@ export default function AdminPage() {
               )}
             </CardContent>
           </Card>
+          <RetainedPaymentReviews isAdmin={isAdminCheck?.isAdmin === true} />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">

@@ -245,6 +245,74 @@ test("Signed-in legacy review updates lists, expiry and learner access without d
         await learnerPage.context().close();
       });
     }
+    await t.test("Deleting a learner moves reviewed payments into read-only retained history", async () => {
+      const learner = await account(false);
+      const deletedPayments = [];
+      for (const action of ["approve", "reject"] as const) {
+        const payment = await storage.createSubscription({
+          userId: learner.id, status: "pending", planType: "monthly",
+          amount: 90, currency: "USDT", paymentMethod: "Deletion browser regression",
+          transactionId: `deleted-payment-${randomUUID()}`,
+          startDate: new Date("2020-01-01"), endDate: new Date("2020-02-01"),
+        });
+        paymentIds.push(payment.id);
+        deletedPayments.push(payment);
+        await storage.resolvePendingSubscription(payment.id, action, admin.id);
+      }
+      await primary.getByTestId("tab-subscriptions").click();
+      await primary.getByTestId("input-search-subscriptions").fill("");
+      await primary.getByTestId("button-refresh-subscriptions").click();
+      for (const payment of deletedPayments) {
+        await expect(primary.getByTestId(`row-subscription-${payment.id}`)).toBeVisible();
+        await expect(primary.getByTestId(`retained-review-${payment.id}`)).toHaveCount(0);
+      }
+      await primary.getByTestId("tab-users").click();
+      await primary.getByTestId("button-refresh-users").click();
+      await primary.getByTestId(`row-user-${learner.id}`).getByRole("button", { name: "Manage", exact: true }).click();
+      await primary.getByRole("button", { name: "Delete user…", exact: true }).click();
+      await primary.getByRole("textbox", { name: "Email confirmation" }).fill(learner.email);
+      await primary.getByRole("button", { name: "Permanently delete", exact: true }).click();
+      await expect(primary.getByRole("dialog")).toHaveCount(0);
+      await expect(primary.getByTestId(`row-user-${learner.id}`)).toHaveCount(0);
+      await primary.getByTestId("tab-subscriptions").click();
+      for (const [index, payment] of deletedPayments.entries()) {
+        await expect(primary.getByTestId(`row-subscription-${payment.id}`)).toHaveCount(0);
+        const retained = primary.getByTestId(`retained-review-${payment.id}`);
+        await expect(retained).toContainText(index === 0 ? "Approved" : "Rejected");
+        await expect(retained).toContainText(admin.username);
+        await expect(retained).toContainText("Original account or payment deleted");
+        await expect(retained).toContainText("Reviewed at");
+        await expect(retained).not.toContainText(learner.email);
+        await expect(retained.locator("button")).toHaveCount(0);
+      }
+      assert.equal(await storage.getUser(learner.id), undefined);
+      // The same retained snapshots must remain readable after a full page load.
+      await primary.reload();
+      await primary.getByTestId("button-choose-swahili").click();
+      await primary.getByTestId("button-nav-admin").click();
+      await primary.getByTestId("tab-subscriptions").click();
+      for (const payment of deletedPayments) {
+        await expect(primary.getByTestId(`retained-review-${payment.id}`)).toBeVisible();
+      }
+      await primary.getByTestId("button-language").click();
+      await expect(primary.getByTestId("retained-payment-reviews")).toContainText("已删除支付的保留审核记录");
+      await primary.getByTestId("button-language").click();
+      const cachedPrivateUrls = await primary.evaluate(async () => {
+        const urls = [];
+        for (const name of await caches.keys()) {
+          for (const request of await (await caches.open(name)).keys()) {
+            if (new URL(request.url).pathname.startsWith("/api/admin/")) urls.push(request.url);
+          }
+        }
+        return urls;
+      });
+      assert.deepEqual(cachedPrivateUrls, []);
+      await primary.setViewportSize({ width: 390, height: 844 });
+      const panel = primary.getByTestId("retained-payment-reviews");
+      await expect(panel).toBeVisible();
+      assert.equal(await primary.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await primary.setViewportSize({ width: 1440, height: 1000 });
+    });
     assert.deepEqual(errors, []);
   } finally {
     // Close sessions before deleting their accounts; remove audit fixtures first

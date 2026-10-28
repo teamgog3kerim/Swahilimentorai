@@ -608,6 +608,17 @@ Follow these rules:
     }
   });
 
+  // Deleted payments have no subscription/user row; expose only retained audit snapshots.
+  app.get('/api/admin/payment-reviews/retained', isAuthenticated, isAdmin, async (_req, res) => {
+    res.set("Cache-Control", "private, no-store");
+    try {
+      res.json(await storage.getRetainedPaymentReviews());
+    } catch (error) {
+      console.error("Error fetching retained payment reviews:", error);
+      res.status(500).json({ message: "Failed to fetch retained payment reviews" });
+    }
+  });
+
   // GET /api/admin/pending - Get pending subscriptions (admin only)
   app.get('/api/admin/pending', isAuthenticated, isAdmin, async (req: any, res) => {
     try {

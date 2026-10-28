@@ -3,3 +3,4 @@
 - [Google embedded sign-in](google-embedded-auth.md) — Google returns a generic 403 inside preview iframes; start OAuth in a full browser tab.
 - [Locale browser audits](locale-browser-audits.md) — distinguish teaching content and old notifications from untranslated UI; keep tsx browser callbacks self-contained.
 - [Browser verification](browser-verification.md) — use direct Playwright checks if the specialized testing helper is unavailable; still verify protected screens.
+- [Payment audit privacy](payment-audit-privacy.md) — retained review evidence must not become a way to recover deleted learner identity.

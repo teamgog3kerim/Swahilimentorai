@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, count } from "drizzle-orm";
+import { eq, and, desc, sql, count, isNull } from "drizzle-orm";
 import { db } from "./db";
 import { normalizeCourseContent } from "../shared/courseContent";
 import { createTrialEndDate } from "../shared/subscriptionAccess";
@@ -17,6 +17,7 @@ import {
   type Subscription,
   type InsertSubscription,
   type SubscriptionWithReview,
+  type PaymentReview,
   type Visit,
   type InsertVisit,
   type AdminNotification,
@@ -76,6 +77,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getPendingSubscriptions(): Promise<(Subscription & { user: User })[]>;
   getAllSubscriptions(): Promise<(SubscriptionWithReview & { user: User })[]>;
+  getRetainedPaymentReviews(): Promise<PaymentReview[]>;
   resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject", reviewerId: string): Promise<SubscriptionActionResult>;
   getSubscription(id: string): Promise<Subscription | undefined>;
   
@@ -357,6 +359,23 @@ export class DbStorage implements IStorage {
       user: row.users,
       review: row.payment_reviews,
     }));
+  }
+
+  async getRetainedPaymentReviews(): Promise<PaymentReview[]> {
+    // Only orphaned audit snapshots: never reconstruct a deleted learner or payment.
+    return db.select({
+      subscriptionId: paymentReviews.subscriptionId,
+      reviewerId: paymentReviews.reviewerId,
+      reviewerName: paymentReviews.reviewerName,
+      outcome: paymentReviews.outcome,
+      reviewedAt: paymentReviews.reviewedAt,
+      startDate: paymentReviews.startDate,
+      endDate: paymentReviews.endDate,
+      subscriptionEndsAt: paymentReviews.subscriptionEndsAt,
+    }).from(paymentReviews)
+      .leftJoin(subscriptions, eq(paymentReviews.subscriptionId, subscriptions.id))
+      .where(isNull(subscriptions.id))
+      .orderBy(desc(paymentReviews.reviewedAt), paymentReviews.subscriptionId);
   }
 
   async resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject", reviewerId: string): Promise<SubscriptionActionResult> {

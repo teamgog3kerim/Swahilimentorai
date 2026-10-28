@@ -298,6 +298,48 @@ test("Manual review persists full terms atomically and serializes duplicate appr
       assert.equal(learnerLogin.status, 200);
       const learnerCookie = learnerLogin.headers.get("set-cookie")!.split(";")[0];
       assert.equal((await fetch(`${base}/api/admin/subscriptions`, { headers: { cookie: learnerCookie } })).status, 403);
+      assert.equal((await fetch(`${base}/api/admin/payment-reviews/retained`)).status, 401);
+      assert.equal((await fetch(`${base}/api/admin/payment-reviews/retained`, { headers: { cookie: learnerCookie } })).status, 403);
+    });
+
+    await t.test("Deleted learner reviews remain admin-readable without restoring personal or payment data", async () => {
+      const user = await fixture(new Date(Date.now() + DAY));
+      const approved = await pending(user.id);
+      const rejected = await pending(user.id);
+      const unreviewed = await pending(user.id);
+      assert.equal((await act(approved.id)).status, 200);
+      assert.equal((await act(rejected.id, "reject")).status, 200);
+      const events = [...await reviews(approved.id), ...await reviews(rejected.id)];
+      const retained = async () => {
+        const response = await fetch(`${base}/api/admin/payment-reviews/retained`, { headers: { cookie } });
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get("cache-control"), "private, no-store");
+        return response.json() as Promise<any[]>;
+      };
+      assert.equal((await retained()).some(r => [approved.id, rejected.id].includes(r.subscriptionId)), false);
+      const deletion = await fetch(`${base}/api/admin/users/${user.id}`, {
+        method: "DELETE", headers: { cookie },
+      });
+      assert.equal(deletion.status, 204);
+      ids.splice(ids.indexOf(user.id), 1);
+      assert.equal(await storage.getUser(user.id), undefined);
+      for (const payment of [approved, rejected, unreviewed]) {
+        assert.equal(await storage.getSubscription(payment.id), undefined);
+      }
+      const entries = await retained();
+      for (const event of events) {
+        assert.deepEqual(entries.find(r => r.subscriptionId === event.subscriptionId), JSON.parse(JSON.stringify(event)));
+      }
+      assert.equal(entries.some(r => r.subscriptionId === unreviewed.id), false, "Do not fabricate audit evidence");
+      const serialized = JSON.stringify(entries);
+      for (const privateValue of [user.id, user.email, approved.transactionId!, rejected.transactionId!]) {
+        assert.equal(serialized.includes(privateValue), false);
+      }
+      const history = await fetch(`${base}/api/admin/subscriptions`, { headers: { cookie } });
+      assert.equal(history.status, 200);
+      const existing = await history.json();
+      assert.equal(existing.some((r: any) => r.id === approved.id || r.id === rejected.id), false);
+      assert.ok(existing.some((r: any) => r.review), "Existing history still includes reviews");
     });
 
     await t.test("Reviewer snapshots survive renaming and permanent administrator deletion", async () => {
