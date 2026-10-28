@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLocale } from "@/lib/i18n";
 import type { Subscription, User } from "@shared/schema";
 import { SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
+import { polarRedirectUrl } from "@shared/polarUrls";
 
 type PlansResponse = {
   provider: string;
@@ -37,27 +38,12 @@ async function postBillingRequest(path: string, body?: Record<string, string>) {
   return result as { url?: string };
 }
 
-function safeSandboxUrl(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(value);
-    const host = url.hostname.toLowerCase();
-    const allowedHost = host === "sandbox.polar.sh"
-      || host.endsWith(".sandbox.polar.sh")
-      || host === "sandbox-buy.polar.sh";
-    if (url.protocol !== "https:" || !allowedHost || url.username || url.password || url.port) return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
 export default function SubscriptionPage() {
   const { user } = useAuth() as { user: User | null };
   const { language, t } = useLocale();
   const isEnglish = language === "en";
   const queryClient = useQueryClient();
-  const [checkoutError, setCheckoutError] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [portalError, setPortalError] = useState(false);
   const [pollingPayment, setPollingPayment] = useState(false);
   const [pollingExpired, setPollingExpired] = useState(false);
@@ -86,16 +72,16 @@ export default function SubscriptionPage() {
     mutationFn: (planId: "quarterly" | "semiannual") =>
       postBillingRequest("/api/subscription/checkout", { planId, locale: isEnglish ? "en" : "zh" }),
     onSuccess: (result) => {
-      const url = safeSandboxUrl(result.url);
+      const url = polarRedirectUrl(result.url, billing?.environment || "");
       if (url) window.location.assign(url);
-      else setCheckoutError(true);
+      else setCheckoutError("POLAR_INVALID_URL");
     },
-    onError: () => setCheckoutError(true),
+    onError: (error: Error) => setCheckoutError(error.message),
   });
   const portalMutation = useMutation({
     mutationFn: () => postBillingRequest("/api/subscription/portal"),
     onSuccess: (result) => {
-      const url = safeSandboxUrl(result.url);
+      const url = polarRedirectUrl(result.url, billing?.environment || "");
       if (url) window.location.assign(url);
       else setPortalError(true);
     },
@@ -157,7 +143,8 @@ export default function SubscriptionPage() {
     subscriptionEndsAt &&
     subscriptionEndsAt > now
   );
-  const isSandboxReady = billing?.environment === "sandbox" && billing.checkoutEnabled === true;
+  const isSandbox = billing?.environment === "sandbox";
+  const isCheckoutReady = (isSandbox || billing?.environment === "live") && billing?.checkoutEnabled === true;
   const isPlanAvailable = (id: string) => Boolean(billing?.plans?.some((plan) => plan.id === id));
 
   const quarterlyPlan = SUBSCRIPTION_PLANS.find((plan) => plan.id === "quarterly")!;
@@ -216,13 +203,19 @@ export default function SubscriptionPage() {
       </header>
 
       <div className="space-y-6">
-        <Alert className="border-amber-600/30 bg-amber-500/[0.08]" data-testid="notice-sandbox-only">
+        <Alert className="border-primary/30 bg-primary/[0.05]" data-testid={isSandbox ? "notice-sandbox-only" : "notice-live-checkout"}>
           <ShieldCheck className="h-4 w-4" />
-          <AlertTitle>{isEnglish ? "Sandbox only — no real charges" : "仅限沙盒环境，不会产生真实扣款"}</AlertTitle>
+          <AlertTitle>{isSandbox
+            ? isEnglish ? "Sandbox only — no real charges" : "仅限沙盒环境，不会产生真实扣款"
+            : isEnglish ? "Secure USD payments via Polar" : "通过 Polar 安全支付美元"}</AlertTitle>
           <AlertDescription>
-            {isEnglish
-              ? "Checkout uses Polar sandbox only. No live payments are enabled; choosing a plan does not itself grant or extend learning access."
-              : "结账仅使用 Polar 沙盒环境，不支持真实付款。选择方案本身不会授予或延长学习权限。"}
+            {isSandbox
+              ? isEnglish
+                ? "Checkout uses Polar sandbox only. No live payments are enabled; choosing a plan does not itself grant or extend learning access."
+                : "结账仅使用 Polar 沙盒环境，不支持真实付款。选择方案本身不会授予或延长学习权限。"
+              : isEnglish
+                ? "Review your plan in Polar's secure checkout. Payments are in USD; course access is activated automatically after the server verifies payment."
+                : "请在 Polar 安全结账页面核对方案。以美元支付，服务器验证付款后会自动开通课程权限。"}
           </AlertDescription>
         </Alert>
 
@@ -242,7 +235,7 @@ export default function SubscriptionPage() {
             <AlertTitle>
               {confirmedPayment
                 ? isEnglish ? "Payment confirmed by the server" : "服务器已确认付款"
-                : isEnglish ? "Confirming sandbox payment" : "正在确认沙盒付款"}
+                : isEnglish ? "Confirming payment" : "正在确认付款"}
             </AlertTitle>
             <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
               <span>
@@ -283,7 +276,7 @@ export default function SubscriptionPage() {
         {isBillingError && (
           <Alert variant="destructive" data-testid="alert-plans-error">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{isEnglish ? "Could not load sandbox checkout availability" : "无法加载沙盒结账状态"}</AlertTitle>
+            <AlertTitle>{isEnglish ? "Could not load checkout availability" : "无法加载结账状态"}</AlertTitle>
             <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
               <span>{isEnglish ? "Checkout stays disabled until availability is confirmed." : "确认结账状态前，结账功能将保持禁用。"}</span>
               <Button type="button" variant="outline" size="sm" onClick={() => void refetchBilling()}>
@@ -328,8 +321,8 @@ export default function SubscriptionPage() {
             </AlertTitle>
             <AlertDescription>
               {isEnglish
-                ? <>Your learning access ended on {subscriptionEndDate}. {isSandboxReady ? "Sandbox checkout is available; access changes only after server verification." : "Sandbox checkout is not ready; no payment or access change has been made."}</>
-                : <>你的学习权限已于 {subscriptionEndDate} 到期。{isSandboxReady ? "沙盒结账已开放；只有服务器验证后才会更新权限。" : "沙盒结账尚未就绪，不会扣款或更改权限。"}</>}
+                ? <>Your learning access ended on {subscriptionEndDate}. {isCheckoutReady ? "Choose a plan below to continue learning. Access changes after payment verification." : "Checkout is currently unavailable; no payment has been made."}</>
+                : <>你的学习权限已于 {subscriptionEndDate} 到期。{isCheckoutReady ? "请选择下方方案继续学习，付款验证后将更新权限。" : "结账目前不可用，尚未产生付款。"}</>}
             </AlertDescription>
           </Alert>
         )}
@@ -340,8 +333,8 @@ export default function SubscriptionPage() {
             <AlertTitle>{isTrial ? t("88小时免费试用") : t("订阅即将到期")}</AlertTitle>
             <AlertDescription>
               {isEnglish
-                ? <>Your current learning access expires in {hoursRemaining} hours. {isSandboxReady ? "Sandbox checkout is available." : "Sandbox checkout is not ready yet."}</>
-                : <>你当前的学习权限将在 {hoursRemaining} 小时后到期。{isSandboxReady ? "沙盒结账已开放。" : "沙盒结账尚未就绪。"}</>}
+                ? <>Your current learning access expires in {hoursRemaining} hours. {isCheckoutReady ? "Choose a plan below to continue." : "Checkout is currently unavailable."}</>
+                : <>你当前的学习权限将在 {hoursRemaining} 小时后到期。{isCheckoutReady ? "请选择下方方案继续学习。" : "结账目前不可用。"}</>}
             </AlertDescription>
           </Alert>
         )}
@@ -390,8 +383,8 @@ export default function SubscriptionPage() {
                 <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <p className="text-sm text-muted-foreground">
                   {isEnglish
-                    ? "Your existing learning access remains as recorded. Plan checkout will not change or extend it while payment is unavailable."
-                    : "当前学习权限按现有记录保留。付费结账开放前，方案不会更改或延长现有权限。"}
+                    ? "Your remaining learning time is preserved. A verified payment adds the purchased course period to your existing access."
+                    : "现有的剩余学习时间将被保留。付款验证后，新购买的课程时长将叠加至现有权限。"}
                 </p>
               </div>
             </CardContent>
@@ -463,22 +456,28 @@ export default function SubscriptionPage() {
                     type="button"
                     className="w-full"
                     size="lg"
-                    disabled={!isSandboxReady || !isPlanAvailable(plan.id) || checkoutMutation.isPending || isBillingLoading}
+                    disabled={!isCheckoutReady || !isPlanAvailable(plan.id) || checkoutMutation.isPending || isBillingLoading}
                     onClick={() => {
-                      setCheckoutError(false);
+                      setCheckoutError(null);
                       checkoutMutation.mutate(plan.id as "quarterly" | "semiannual");
                     }}
                     data-testid={`button-subscribe-${plan.id}`}
                   >
                     {checkoutMutation.isPending
                       ? isEnglish ? "Opening secure checkout…" : "正在打开安全结账…"
-                      : isSandboxReady && isPlanAvailable(plan.id)
-                        ? isEnglish ? "Continue to sandbox checkout" : "前往沙盒结账"
-                        : isEnglish ? "Sandbox checkout not ready" : "沙盒结账尚未就绪"}
+                      : isCheckoutReady && isPlanAvailable(plan.id)
+                        ? isSandbox
+                          ? isEnglish ? "Continue to sandbox checkout" : "前往沙盒结账"
+                          : isEnglish ? "Pay securely with Polar" : "通过 Polar 安全付款"
+                        : isEnglish ? "Checkout currently unavailable" : "结账目前不可用"}
                   </Button>
                   {checkoutError && (
                     <p role="alert" className="text-sm text-destructive">
-                      {isEnglish ? "Could not start checkout. Please try again." : "无法启动结账，请重试。"}
+                      {checkoutError === "SUBSCRIPTION_ALREADY_EXISTS"
+                        ? isEnglish
+                          ? "You already have a recurring subscription. Use Manage subscription below to avoid being billed twice."
+                          : "你已有自动续费订阅。请使用下方的“管理订阅”，避免重复扣款。"
+                        : isEnglish ? "Could not start checkout. Please try again." : "无法启动结账，请重试。"}
                     </p>
                   )}
                 </CardContent>
@@ -497,13 +496,13 @@ export default function SubscriptionPage() {
         <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
           <Languages className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="text-muted-foreground">
-            {isEnglish
-              ? isSandboxReady
-                ? "Checkout runs in sandbox only. No real charges are possible. Choosing a plan does not change access until payment is verified server-side."
-                : "Sandbox checkout is not ready. No payment is collected, and choosing a plan does not grant or extend access."
-              : isSandboxReady
-                ? "结账仅在沙盒环境进行，不会产生真实扣款。付款经服务器验证前，选择方案不会更改学习权限。"
-                : "沙盒结账尚未就绪，不会收取费用；选择方案不会授予或延长学习权限。"}
+            {isSandbox
+              ? isEnglish
+                ? "Sandbox testing only: no real charges. Access changes only after server verification."
+                : "仅供沙盒测试，不会产生真实扣款。只有服务器验证后才会更新权限。"
+              : isEnglish
+                ? "USD 88 renews every three months until canceled. USD 168 is one payment for six months and does not renew automatically. Access begins after payment verification."
+                : "88美元方案每三个月自动续费，直至取消。168美元方案一次支付可学习六个月，不会自动续费。付款验证后生效。"}
           </p>
         </div>
 

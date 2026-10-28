@@ -525,11 +525,11 @@ Follow these rules:
 
   // Retired cryptocurrency endpoints. Never accept a transaction or grant access.
   app.post('/api/subscription/verify-payment', isAuthenticated, async (req: any, res) => {
-    res.status(410).json({ code: "PAYMENT_METHOD_RETIRED", message: "Cryptocurrency payments are no longer accepted. USD checkout via Polar.sh is not available yet." });
+    res.status(410).json({ code: "PAYMENT_METHOD_RETIRED", message: "Cryptocurrency payments are no longer accepted. Use Polar checkout from the Subscription page." });
   });
 
   app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
-    res.status(410).json({ code: "CHECKOUT_UNAVAILABLE", message: "USD checkout via Polar.sh is not available yet." });
+    res.status(410).json({ code: "LEGACY_CHECKOUT_RETIRED", message: "Use Polar checkout from the Subscription page." });
   });
 
   // ==================== ADMIN ROUTES ====================

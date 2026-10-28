@@ -2,16 +2,20 @@
 
 ## Current status
 
-**Live payments remain disabled.** Development now has sandbox-only hosted
-checkout, a signature-verified webhook receiver, atomic/idempotent access grants,
-full-refund handling, recurring payment renewal handling, and customer portal
-sessions. The API host is pinned to sandbox and production rejects checkout.
-Both sandbox products validate successfully. An existing $168 sandbox paid order
-was replayed through Polar CLI, verified against Polar, and granted six-month
-access. Replaying the same order again left one payment and the same expiry.
-No live payment was made.
+**Live support is implemented and staged for the next publish.** Development
+always uses sandbox; production uses only the separate live credentials and
+requires `POLAR_LIVE_ENABLED=true`. The public app is not updated until republished.
+Both live products passed read-only provider validation: USD 88 every three
+months and USD 168 one time for six months. Both sandbox initial purchases were
+verified with real sandbox provider data. No real-money charge was made.
 
-Administrators can use "Check sandbox connection" on the Subscription screen
+Mock-provider checks cover both environments, raw signatures, account ownership,
+duplicate deliveries, concurrent checkout clicks, renewals and preservation of
+remaining access. Signed-in mobile browser checks cover both plans, portal
+redirects, environment notices, and Chinese/English copy. Provider requests in
+those browser checks are intercepted; they do not create live checkouts.
+
+Administrators can use "Check Polar connection" on the Subscription screen
 to verify both products. Token and product values are never returned. Configuration
 presence is not successful validation. Checkout requires the webhook secret and
 revalidates the exact product terms before creating each provider session.
@@ -21,16 +25,18 @@ secret, Raw format, API version **2026-10**, and events `order.paid`,
 `order.refunded`, `subscription.updated`, `subscription.canceled`,
 `subscription.revoked`, `subscription.past_due`. Non-payment lifecycle events
 are acknowledged without extending access; paid access is not cut short on
-cancellation or a failed renewal. Immediate subscription revocation and partial
-refund entitlement policies still require definition before a live release.
+cancellation or a failed renewal. Partial refunds leave the purchased period
+unchanged; a full refund removes only its entitlement when doing so would not
+overwrite later access changes. Subscription revocation does not erase paid time.
 
-Sandbox returns to `/dashboard?tab=subscription&payment=success&reference=...`.
+Checkout returns to `/dashboard?tab=subscription&payment=success&reference=...`.
 The server generates the reference and only reports payment confirmation for an
 owned matching checkout. Return URLs never grant access. Duplicate order IDs
-cannot extend access twice. Sandbox account bindings cascade away on deletion.
+cannot extend access twice. Provider bindings are environment-tagged and cascade
+away on learner deletion. Existing records default to sandbox, never live.
 
 Local verification:
-`POLAR_ACCESS_TOKEN=local-test-placeholder RUN_POLAR_TESTS=1 node --import tsx --test server/tests/polarSandbox.test.ts`
+`NODE_ENV=development POLAR_ACCESS_TOKEN=local-test-placeholder POLAR_LIVE_ACCESS_TOKEN=local-live-placeholder RUN_POLAR_TESTS=1 node --import tsx --test server/tests/polarSandbox.test.ts server/tests/polarConfig.test.ts server/tests/billingReadiness.test.ts server/tests/polarSandboxRelay.test.mjs`
 uses a mock provider and signed synthetic events, not real Polar transactions.
 It is not a substitute for an actual sandbox checkout/webhook end-to-end test.
 
@@ -63,7 +69,7 @@ The installed stable SDK did not provide the documented 2026-10 versioned import
 The server therefore uses Polar's documented REST API with `Polar-Version:
 2026-10` and the official Standard Webhooks library. Never implement custom HMAC.
 
-## Exact products to connect later
+## Exact product terms
 
 | App plan | USD amount | Polar product | App access |
 | --- | --- | --- | --- |
@@ -78,20 +84,41 @@ one-time benefit must not become lifetime app access.
 
 Set secrets only through workspace Secrets, never source files or chat:
 
-- `POLAR_ACCESS_TOKEN`: least-privilege organization API access.
-- `POLAR_WEBHOOK_SECRET`: signing secret for the configured webhook endpoint.
+- `POLAR_ACCESS_TOKEN`: sandbox-only app API access.
+- `POLAR_WEBHOOK_SECRET`: sandbox dashboard endpoint signing secret.
+- `POLAR_LIVE_ACCESS_TOKEN`: live-only app API access.
+- `POLAR_LIVE_WEBHOOK_SECRET`: live dashboard endpoint signing secret.
+- `POLAR_CLI_ACCESS_TOKEN`: sandbox-only forwarding access, not app checkout access.
 
 Non-secret product settings:
 
 - `POLAR_QUARTERLY_PRODUCT_ID`
 - `POLAR_SEMIANNUAL_PRODUCT_ID`
+- `POLAR_APP_URL`: production-only trusted published origin, obtained from deployment metadata.
+- `POLAR_LIVE_ENABLED`: production-only explicit checkout activation.
 
-Do not mix sandbox product IDs and tokens with live ones. A future implementation
-must explicitly select the environment and validate actual product currency,
-price, interval and organization before enabling checkout. Prices shown here
+Product IDs have separate development and production values. Production never
+falls back to sandbox credentials, and preview never selects live credentials.
+Checkout validates product currency, price, interval and organization. Prices shown here
 are plan prices; confirm Polar's tax settings before advertising final totals.
 
-## Requirements before enabling live payments
+## After republishing
+
+1. Confirm the published `/api/subscription/plans` reports `environment: "live"`
+   and checkout enabled; preview must still report sandbox.
+2. From a normal administrator login, run "Check Polar connection".
+3. Send a non-payment lifecycle test event such as `subscription.updated` from the
+   live webhook dashboard; require HTTP 202. Invalid signatures must return 403.
+   Do not use a fabricated paid-order test to grant access: orders are always
+   fetched from Polar and unknown orders are rejected.
+4. Open each hosted live checkout and inspect the real USD terms without paying.
+   A real-money transaction, refund, or cancellation is not authorized by these
+   checks. The owner declined extra cancellation/refund testing.
+
+Live delivery against the republished build has not yet been observed. The
+already-published previous build still rejects live checkout until republished.
+
+## Implemented payment invariants
 
 1. Create server-owned hosted checkout sessions for a signed-in learner. Map the
    two app plan IDs to trusted products; never accept an amount or external user

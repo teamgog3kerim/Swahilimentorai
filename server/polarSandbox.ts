@@ -6,24 +6,29 @@ import { db } from "./db";
 import { users, subscriptions, polarCheckouts, polarPayments } from "@shared/schema";
 import { SUBSCRIPTION_PLANS, type SubscriptionPlanId } from "@shared/subscriptionPlans";
 import { randomUUID } from "node:crypto";
+import { polarConfig } from "./polarConfig";
+import { polarRedirectUrl } from "@shared/polarUrls";
 
-// This release deliberately cannot talk to Polar's live API, even in production.
-const API = "https://sandbox-api.polar.sh";
+// Legacy filename/exports are retained for existing routes and sandbox tests.
+// All provider access is isolated by the runtime's explicit billing environment.
 const VERSION = "2026-10";
 let validatedAt = 0;
+let validatedFor = "";
 const productId = (plan: SubscriptionPlanId) => process.env[
   plan === "quarterly" ? "POLAR_QUARTERLY_PRODUCT_ID" : "POLAR_SEMIANNUAL_PRODUCT_ID"
 ]?.trim();
 
 export function sandboxStatus() {
-  const configured = process.env.NODE_ENV === "development" &&
-    Boolean(process.env.POLAR_ACCESS_TOKEN && productId("quarterly") && productId("semiannual"));
+  const config = polarConfig();
+  const configured = config.environment !== "disabled" &&
+    Boolean(config.accessToken && config.appOrigin && productId("quarterly") && productId("semiannual"));
   return {
-    environment: "sandbox" as const,
+    environment: config.environment,
     configured,
-    webhookConfigured: Boolean(process.env.POLAR_WEBHOOK_SECRET),
-    validated: validatedAt > Date.now() - 300_000,
-    checkoutEnabled: configured && Boolean(process.env.POLAR_WEBHOOK_SECRET),
+    webhookConfigured: Boolean(config.webhookSecret),
+    validated: validatedAt > Date.now() - 300_000 &&
+      validatedFor === `${config.environment}:${productId("quarterly")}:${productId("semiannual")}`,
+    checkoutEnabled: configured && Boolean(config.webhookSecret) && config.checkoutAllowed,
   };
 }
 
@@ -32,10 +37,12 @@ export class PolarSetupError extends Error {
 }
 
 async function polar(path: string, body?: unknown) {
-  const response = await fetch(`${API}/v1/${path}`, {
+  const config = polarConfig();
+  if (config.environment === "disabled" || !config.accessToken) throw new PolarSetupError("POLAR_NOT_CONFIGURED");
+  const response = await fetch(`${config.api}/v1/${path}`, {
     method: body === undefined ? "GET" : "POST",
     headers: {
-      Authorization: `Bearer ${process.env.POLAR_ACCESS_TOKEN || ""}`,
+      Authorization: `Bearer ${config.accessToken}`,
       "Polar-Version": VERSION,
       "Content-Type": "application/json",
     },
@@ -50,7 +57,7 @@ async function polar(path: string, body?: unknown) {
         typeof part === "string" && /^[a-z_]+$/.test(part)).join(".") : "",
       type: typeof item.type === "string" && /^[a-z_]+$/.test(item.type) ? item.type : "",
     })) : [];
-    console.warn("Polar sandbox request rejected", { status: response.status, validation });
+    console.warn("Polar request rejected", { environment: config.environment, status: response.status, validation });
     throw new PolarSetupError(
       response.status === 401 || response.status === 403 ? "POLAR_TOKEN_REJECTED" : "POLAR_REQUEST_FAILED",
     );
@@ -69,7 +76,7 @@ export function productMatches(plan: SubscriptionPlanId, product: any) {
 }
 
 export async function validateSandboxProducts() {
-  if (!sandboxStatus().configured) throw new PolarSetupError("SANDBOX_NOT_CONFIGURED");
+  if (!sandboxStatus().configured) throw new PolarSetupError("POLAR_NOT_CONFIGURED");
   validatedAt = 0;
   const products = await Promise.all(SUBSCRIPTION_PLANS.map(plan =>
     polar(`products/${encodeURIComponent(productId(plan.id)!)}`)));
@@ -80,6 +87,7 @@ export async function validateSandboxProducts() {
     throw new PolarSetupError("POLAR_PRODUCT_MISMATCH");
   }
   validatedAt = Date.now();
+  validatedFor = `${polarConfig().environment}:${productId("quarterly")}:${productId("semiannual")}`;
 }
 
 export function addCalendarMonths(date: Date, months: number) {
@@ -93,24 +101,20 @@ export function addCalendarMonths(date: Date, months: number) {
 }
 
 function origin() {
-  // Trusted platform development setting, not a request-controlled Host header.
-  if (!process.env.REPLIT_DEV_DOMAIN) throw new PolarSetupError("SANDBOX_ORIGIN_MISSING");
-  return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  // Trusted settings only: never use a request-controlled Host/Origin header.
+  const value = polarConfig().appOrigin;
+  if (!value) throw new PolarSetupError("POLAR_ORIGIN_MISSING");
+  return value;
 }
 
 export function safePolarUrl(value: unknown) {
-  if (typeof value !== "string") throw new PolarSetupError("POLAR_INVALID_URL");
-  const url = new URL(value);
-  if (url.protocol !== "https:" || url.username || url.password ||
-    !["sandbox.polar.sh", "sandbox-buy.polar.sh"].includes(url.hostname)) {
-    throw new PolarSetupError("POLAR_INVALID_URL");
-  }
-  return url.href;
+  const url = polarRedirectUrl(value, polarConfig().environment);
+  if (!url) throw new PolarSetupError("POLAR_INVALID_URL");
+  return url;
 }
 
 // Additive only; never rewrite existing account or payment tables.
 export async function ensurePolarSandboxSchema() {
-  if (process.env.NODE_ENV !== "development") return;
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS polar_checkouts (
       id text PRIMARY KEY, reference text NOT NULL UNIQUE,
@@ -119,6 +123,9 @@ export async function ensurePolarSandboxSchema() {
       created_at timestamp NOT NULL DEFAULT now()
     )
   `);
+  // Existing rows are sandbox history. New live records are explicitly tagged.
+  await db.execute(sql`ALTER TABLE polar_checkouts ADD COLUMN IF NOT EXISTS environment text NOT NULL DEFAULT 'sandbox'`);
+  await db.execute(sql`ALTER TABLE polar_payments ADD COLUMN IF NOT EXISTS environment text NOT NULL DEFAULT 'sandbox'`);
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS polar_payments (
       order_id text PRIMARY KEY, checkout_id text,
@@ -141,6 +148,7 @@ const paidOrderSchema = z.object({
 });
 
 export async function grantPaidOrder(input: unknown) {
+  const environment = polarConfig().environment;
   const parsed = paidOrderSchema.safeParse(input);
   if (!parsed.success) throw new PolarSetupError("INVALID_PAID_ORDER", 400);
   const order = parsed.data;
@@ -155,9 +163,10 @@ export async function grantPaidOrder(input: unknown) {
     const [existing] = await tx.select().from(polarPayments).where(eq(polarPayments.orderId, order.id));
     if (existing) return "duplicate";
     const [checkout] = order.checkout_id ? await tx.select().from(polarCheckouts)
-      .where(eq(polarCheckouts.id, order.checkout_id)) : [];
+      .where(and(eq(polarCheckouts.id, order.checkout_id), eq(polarCheckouts.environment, environment))) : [];
     const [prior] = order.subscription_id ? await tx.select().from(polarPayments)
-      .where(and(eq(polarPayments.subscriptionId, order.subscription_id), eq(polarPayments.userId, user.id)))
+      .where(and(eq(polarPayments.subscriptionId, order.subscription_id), eq(polarPayments.userId, user.id),
+        eq(polarPayments.environment, environment)))
       .limit(1) : [];
     if (!(checkout?.userId === user.id && checkout.planId === plan.id) &&
       !(prior?.customerId === order.customer_id && plan.id === "quarterly")) {
@@ -171,11 +180,12 @@ export async function grantPaidOrder(input: unknown) {
     const end = addCalendarMonths(base, plan.months);
     const [local] = await tx.insert(subscriptions).values({
       userId: user.id, status: "active", planType: plan.id, amount: plan.amount,
-      currency: "USD", paymentMethod: "Polar Sandbox", transactionId: `polar-sandbox:${order.id}`,
+      currency: "USD", paymentMethod: environment === "live" ? "Polar.sh" : "Polar Sandbox",
+      transactionId: `${environment === "live" ? "polar" : "polar-sandbox"}:${order.id}`,
       startDate: base, endDate: end,
     }).returning();
     await tx.insert(polarPayments).values({
-      orderId: order.id, checkoutId: order.checkout_id, userId: user.id, customerId: order.customer_id,
+      orderId: order.id, environment, checkoutId: order.checkout_id, userId: user.id, customerId: order.customer_id,
       subscriptionId: order.subscription_id, localSubscriptionId: local.id,
       baselineEnd: user.subscriptionEndsAt,
     });
@@ -192,7 +202,7 @@ export function registerPolarSandbox(app: Express, authenticated: any, admin: an
     const known = error instanceof PolarSetupError;
     res.status(known ? error.status : 503).json({
       code: known ? error.code : "POLAR_UNAVAILABLE",
-      message: "Sandbox payment setup is not ready. No access change was made.",
+      message: "Payment could not be processed. Please retry or contact support.",
     });
   };
   app.post("/api/admin/billing/validate", authenticated, admin, async (_req, res) => {
@@ -209,24 +219,29 @@ export function registerPolarSandbox(app: Express, authenticated: any, admin: an
     if (!sandboxStatus().checkoutEnabled) return res.status(503).json({ code: "CHECKOUT_UNAVAILABLE" });
     try {
       await validateSandboxProducts();
+      // Serialize checkout creation per learner, including requests from two tabs.
+      const checkoutUrl = await db.transaction(async tx => {
+      await tx.select({ id: users.id }).from(users).where(eq(users.id, req.user.id)).for("update");
       // Avoid accidentally opening two recurring subscriptions for one learner.
-      const [prior] = await db.select().from(polarPayments).where(and(
+      const [prior] = await tx.select().from(polarPayments).where(and(
         eq(polarPayments.userId, req.user.id), sql`${polarPayments.subscriptionId} IS NOT NULL`,
+        eq(polarPayments.environment, polarConfig().environment),
       ))
         .orderBy(desc(polarPayments.createdAt)).limit(1);
       if (prior?.subscriptionId && parsed.data.planId === "quarterly") {
         const current = await polar(`subscriptions/${encodeURIComponent(prior.subscriptionId)}`);
         if (["active", "trialing", "past_due", "unpaid"].includes(current.status)) {
-          return res.status(409).json({ code: "SUBSCRIPTION_ALREADY_EXISTS" });
+          throw new PolarSetupError("SUBSCRIPTION_ALREADY_EXISTS", 409);
         }
       }
       // Reuse an unfinished session rather than creating another recurring checkout.
-      const [unfinished] = await db.select().from(polarCheckouts).where(and(
+      const [unfinished] = await tx.select().from(polarCheckouts).where(and(
         eq(polarCheckouts.userId, req.user.id), eq(polarCheckouts.planId, parsed.data.planId),
+        eq(polarCheckouts.environment, polarConfig().environment),
       )).orderBy(desc(polarCheckouts.createdAt)).limit(1);
       if (unfinished && unfinished.createdAt.getTime() > Date.now() - 30 * 60_000) {
         const existing = await polar(`checkouts/${encodeURIComponent(unfinished.id)}`);
-        if (existing.status === "open") return res.json({ url: safePolarUrl(existing.url) });
+        if (existing.status === "open") return safePolarUrl(existing.url);
       }
       const reference = randomUUID();
       const result = await polar("checkouts/", {
@@ -234,23 +249,29 @@ export function registerPolarSandbox(app: Express, authenticated: any, admin: an
         external_customer_id: req.user.id,
         customer_email: req.user.email,
         allow_discount_codes: false, allow_trial: false, locale: parsed.data.locale,
-        metadata: { app: "afri-panda-sandbox" },
+        metadata: { app: "afri-panda", environment: polarConfig().environment },
         success_url: `${origin()}/dashboard?tab=subscription&payment=success&reference=${reference}`,
         return_url: `${origin()}/dashboard?tab=subscription&payment=canceled`,
       });
       const url = safePolarUrl(result.url);
       const id = z.string().uuid().parse(result.id);
-      await db.insert(polarCheckouts).values({ id, reference, userId: req.user.id, planId: parsed.data.planId });
-      res.json({ url });
+      await tx.insert(polarCheckouts).values({
+        id, reference, userId: req.user.id, planId: parsed.data.planId, environment: polarConfig().environment,
+      });
+      return url;
+      });
+      res.json({ url: checkoutUrl });
     } catch (error) { handleError(res, error); }
   });
   app.get("/api/subscription/payment-status", authenticated, async (req: any, res) => {
     res.set("Cache-Control", "private, no-store");
-    if (process.env.NODE_ENV !== "development") return res.json({ paid: false, hasCustomer: false });
-    const rows = await db.select().from(polarPayments).where(eq(polarPayments.userId, req.user.id));
+    if (polarConfig().environment === "disabled") return res.json({ paid: false, hasCustomer: false });
+    const rows = await db.select().from(polarPayments).where(and(
+      eq(polarPayments.userId, req.user.id), eq(polarPayments.environment, polarConfig().environment)));
     const reference = typeof req.query.reference === "string" ? req.query.reference : undefined;
     const [checkout] = reference ? await db.select().from(polarCheckouts).where(and(
       eq(polarCheckouts.reference, reference), eq(polarCheckouts.userId, req.user.id),
+      eq(polarCheckouts.environment, polarConfig().environment),
     )) : [];
     res.json({
       paid: rows.some(p => !p.refunded && (!reference || p.checkoutId === checkout?.id)),
@@ -261,7 +282,8 @@ export function registerPolarSandbox(app: Express, authenticated: any, admin: an
     res.set("Cache-Control", "private, no-store");
     if (!sandboxStatus().configured) return res.status(503).json({ code: "CHECKOUT_UNAVAILABLE" });
     try {
-      const [payment] = await db.select().from(polarPayments).where(eq(polarPayments.userId, req.user.id)).limit(1);
+      const [payment] = await db.select().from(polarPayments).where(and(
+        eq(polarPayments.userId, req.user.id), eq(polarPayments.environment, polarConfig().environment))).limit(1);
       if (!payment) return res.status(404).json({ code: "NO_POLAR_CUSTOMER" });
       const result = await polar("customer-sessions/", { customer_id: payment.customerId });
       res.json({ url: safePolarUrl(result.customer_portal_url) });
@@ -269,13 +291,14 @@ export function registerPolarSandbox(app: Express, authenticated: any, admin: an
   });
   app.post("/api/webhooks/polar", async (req, res) => {
     res.set("Cache-Control", "no-store");
-    if (!sandboxStatus().configured || !process.env.POLAR_WEBHOOK_SECRET) {
-      return res.status(503).json({ code: "SANDBOX_WEBHOOK_NOT_CONFIGURED" });
+    const secret = polarConfig().webhookSecret;
+    if (!sandboxStatus().configured || !secret) {
+      return res.status(503).json({ code: "POLAR_WEBHOOK_NOT_CONFIGURED" });
     }
     let event: any;
     try {
       if (!Buffer.isBuffer(req.rawBody)) throw new Error("Missing raw payload");
-      event = new Webhook(process.env.POLAR_WEBHOOK_SECRET).verify(req.rawBody.toString("utf8"), {
+      event = new Webhook(secret).verify(req.rawBody.toString("utf8"), {
         "webhook-id": req.header("webhook-id") || "",
         "webhook-timestamp": req.header("webhook-timestamp") || "",
         "webhook-signature": req.header("webhook-signature") || "",
@@ -294,7 +317,8 @@ export function registerPolarSandbox(app: Express, authenticated: any, admin: an
         // Partial refunds do not revoke the entire course pass.
         if (order.refunded_amount > 0 && order.refunded_amount >= order.net_amount) {
           await db.transaction(async tx => {
-            const [payment] = await tx.select().from(polarPayments).where(eq(polarPayments.orderId, id));
+            const [payment] = await tx.select().from(polarPayments).where(and(
+              eq(polarPayments.orderId, id), eq(polarPayments.environment, polarConfig().environment)));
             if (!payment) return;
             const [user] = await tx.select().from(users).where(eq(users.id, payment.userId)).for("update");
             if (!user) return;

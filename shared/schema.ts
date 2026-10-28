@@ -100,9 +100,10 @@ export const subscriptions = pgTable("subscriptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Sandbox bindings are removed with the learner; they are not retained review evidence.
+// Provider bindings are removed with the learner; they are not retained review evidence.
 export const polarCheckouts = pgTable("polar_checkouts", {
   id: text("id").primaryKey(),
+  environment: text("environment").notNull().default("sandbox"),
   reference: text("reference").notNull().unique(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   planId: text("plan_id").notNull(),
@@ -111,6 +112,7 @@ export const polarCheckouts = pgTable("polar_checkouts", {
 });
 export const polarPayments = pgTable("polar_payments", {
   orderId: text("order_id").primaryKey(),
+  environment: text("environment").notNull().default("sandbox"),
   checkoutId: text("checkout_id"),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   subscriptionId: text("subscription_id"),

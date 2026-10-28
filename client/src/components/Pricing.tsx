@@ -152,8 +152,8 @@ export function Pricing({ onSubscribe }: PricingProps) {
           <Languages className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="leading-relaxed text-muted-foreground">
             {isEnglish
-              ? `Sign in to view subscription options. Live USD payments via ${BILLING_PROVIDER} are not available yet. Any available sandbox checkout is for testing only, with no real charges.`
-              : `登录后查看订阅选项。${BILLING_PROVIDER} 的 USD 正式支付尚未开放；可用的沙盒结账仅供测试，不会实际扣款。`}
+              ? `Sign in to view subscription options and checkout availability. Payments use ${BILLING_PROVIDER}'s secure USD checkout; review the billing details before paying.`
+              : `登录后查看订阅方案和结账状态。通过 ${BILLING_PROVIDER} 安全支付美元；付款前请核对账单详情。`}
           </p>
         </div>
 
