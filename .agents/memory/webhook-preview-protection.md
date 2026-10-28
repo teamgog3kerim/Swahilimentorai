@@ -20,3 +20,16 @@ privacy to obtain token controls without the user's informed consent. Keep
 provider signature verification enabled and retry the existing event, not payment.
 Do not keep retrying privacy changes if the provider still receives a redirect;
 use an authenticated forwarding mechanism or an isolated published test receiver.
+
+Polar CLI uses an organization-derived development signing key, not the private
+dashboard endpoint key. Never accept that development key at a public webhook
+endpoint or in production; keep the CLI receiver loopback-only and retain
+authoritative provider-order verification.
+
+**Why:** Treating the CLI key as an additional public signing secret weakens the
+trust boundary. Forwarding is for local sandbox verification, not live delivery.
+
+**How to apply:** Keep both signature checks. The CLI stream forwards new events,
+not historical failed HTTP deliveries. Recover an existing sandbox payment by
+triggering its existing paid order ID, with the app retrieving the real provider
+order; do not ask the user to pay again merely to obtain a webhook.

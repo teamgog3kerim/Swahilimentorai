@@ -6,8 +6,10 @@
 checkout, a signature-verified webhook receiver, atomic/idempotent access grants,
 full-refund handling, recurring payment renewal handling, and customer portal
 sessions. The API host is pinned to sandbox and production rejects checkout.
-The saved token was rejected during the initial sandbox product verification;
-replace it securely before continuing. No real provider checkout was completed.
+Both sandbox products validate successfully. An existing $168 sandbox paid order
+was replayed through Polar CLI, verified against Polar, and granted six-month
+access. Replaying the same order again left one payment and the same expiry.
+No live payment was made.
 
 Administrators can use "Check sandbox connection" on the Subscription screen
 to verify both products. Token and product values are never returned. Configuration
@@ -31,6 +33,31 @@ Local verification:
 `POLAR_ACCESS_TOKEN=local-test-placeholder RUN_POLAR_TESTS=1 node --import tsx --test server/tests/polarSandbox.test.ts`
 uses a mock provider and signed synthetic events, not real Polar transactions.
 It is not a substitute for an actual sandbox checkout/webhook end-to-end test.
+
+### Sandbox forwarding through private preview
+
+Keep the `Start application` workflow running, then run the
+`Polar sandbox forwarding` console workflow (`npm run polar:sandbox:forward`).
+Its separate `POLAR_CLI_ACCESS_TOKEN` needs only `organizations:read` and
+`webhooks:read`. Do not replace the checkout token with this limited token.
+
+The forwarder binds an ephemeral loopback-only port, consumes Polar CLI's raw
+signing key internally, verifies each CLI signature, and re-signs the unchanged
+body in memory with the existing app webhook key. The public handler still
+checks its signature and fetches authoritative sandbox order state. Neither key,
+provider payload, nor customer details are printed or written to a file.
+
+This bypasses preview ingress, not authentication. Private preview can stay on.
+Old dashboard delivery attempts may still show 307 because CLI receives events
+through a separate stream; it does not repair those historical HTTP deliveries.
+The CLI stream needs an explicit event replay for old paid orders, not another
+purchase. Use the existing paid order ID in an `order.paid` trigger; the app
+retrieves the actual order from Polar before granting access.
+
+This is temporary development infrastructure, not production delivery. It stops
+when the workspace stops. Restart forwarding after rotating either token or the
+webhook key. Live activation still needs a published webhook endpoint and live
+configuration verified separately.
 
 The installed stable SDK did not provide the documented 2026-10 versioned import.
 The server therefore uses Polar's documented REST API with `Polar-Version:
