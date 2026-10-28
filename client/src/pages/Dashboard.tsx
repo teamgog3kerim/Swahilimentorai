@@ -39,6 +39,8 @@ import { TrackChooser } from "@/components/learning/TrackChooser";
 import { CourseAccessGate } from "@/components/CourseAccessGate";
 import { useCourseAccess } from "@/components/useCourseAccess";
 import { PandaIcon } from "@/components/PandaIcon";
+import { clearSubscriptionIntent, hasSubscriptionIntent } from "@/lib/subscriptionIntent";
+import { useEffect } from "react";
 
 type View = "learn" | "practice" | "progress" | "subscription" | "admin";
 
@@ -47,8 +49,10 @@ function DashboardContent() {
   const { language, t } = useLocale();
   const { track, setTrack, setPracticeLessonId } = useTrack();
   const [currentView, setCurrentView] = useState<View>(() =>
-    new URLSearchParams(window.location.search).get("tab") === "subscription" ? "subscription" : "learn"
+    new URLSearchParams(window.location.search).get("tab") === "subscription" || hasSubscriptionIntent()
+      ? "subscription" : "learn"
   );
+  useEffect(() => { clearSubscriptionIntent(); }, []);
   const { setOpenMobile } = useSidebar();
   const hasAccess = useCourseAccess(user);
 

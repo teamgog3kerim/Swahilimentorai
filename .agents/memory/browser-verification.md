@@ -25,3 +25,13 @@ Scope browser init scripts that touch storage to the app's origin.
 **Why:** Playwright also runs context init scripts in opaque documents such as `about:blank`, where reading `localStorage` raises a security error unrelated to the app.
 
 **How to apply:** Pass the expected origin into `addInitScript` and return before accessing storage when `location.origin` differs. Keep real application errors visible rather than filtering these errors out of assertions.
+
+For external checkout navigation, assert the response status and destination
+instead of reading the response body after navigation. Dismiss the development
+preview banner before testing top-of-screen controls on mobile.
+
+**Why:** Chrome can discard a fetch response body when the page leaves the app;
+the preview banner can also intercept taps that would reach the app in production.
+
+**How to apply:** Keep real sandbox redirects in checkout checks, and distinguish
+browser-harness failures from application failures before changing app behavior.

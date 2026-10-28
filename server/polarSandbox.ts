@@ -42,10 +42,19 @@ async function polar(path: string, body?: unknown) {
     body: body === undefined ? undefined : JSON.stringify(body),
     signal: AbortSignal.timeout(6000),
   });
-  // Never log provider bodies: they can contain credentials, checkout URLs or PII.
-  if (!response.ok) throw new PolarSetupError(
-    response.status === 401 || response.status === 403 ? "POLAR_TOKEN_REJECTED" : "POLAR_REQUEST_FAILED",
-  );
+  // Never log provider bodies or submitted values. Only retain safe error categories.
+  if (!response.ok) {
+    const failure = await response.json().catch(() => null);
+    const validation = Array.isArray(failure?.detail) ? failure.detail.map((item: any) => ({
+      field: Array.isArray(item.loc) ? item.loc.filter((part: unknown) =>
+        typeof part === "string" && /^[a-z_]+$/.test(part)).join(".") : "",
+      type: typeof item.type === "string" && /^[a-z_]+$/.test(item.type) ? item.type : "",
+    })) : [];
+    console.warn("Polar sandbox request rejected", { status: response.status, validation });
+    throw new PolarSetupError(
+      response.status === 401 || response.status === 403 ? "POLAR_TOKEN_REJECTED" : "POLAR_REQUEST_FAILED",
+    );
+  }
   return response.json();
 }
 

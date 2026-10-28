@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Crown, Clock3, Languages } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
-import { BILLING_PROVIDER, CHECKOUT_ENABLED, SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
+import { BILLING_PROVIDER, SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
+import { rememberSubscriptionIntent } from "@/lib/subscriptionIntent";
 
 type PricingProps = {
   onSubscribe?: () => void;
@@ -16,6 +17,11 @@ export function Pricing({ onSubscribe }: PricingProps) {
   const semiannualPlan = SUBSCRIPTION_PLANS.find((plan) => plan.id === "semiannual")!;
   const sixMonthQuarterlyTotal = quarterlyPlan.amount * 2;
   const savings = sixMonthQuarterlyTotal - semiannualPlan.amount;
+
+  const handleSubscription = () => {
+    rememberSubscriptionIntent();
+    window.location.assign("/login");
+  };
 
   const handleTrialSignup = () => {
     if (onSubscribe) {
@@ -127,11 +133,11 @@ export function Pricing({ onSubscribe }: PricingProps) {
                 <Button
                   size="lg"
                   className="w-full"
-                  disabled={!CHECKOUT_ENABLED}
+                  onClick={handleSubscription}
                   data-testid={testId}
                   aria-describedby="pricing-checkout-notice"
                 >
-                  {isEnglish ? "Paid checkout coming soon" : "付费结账即将开放"}
+                  {isEnglish ? "View subscription options" : "查看订阅选项"}
                 </Button>
               </CardContent>
             </Card>
@@ -146,8 +152,8 @@ export function Pricing({ onSubscribe }: PricingProps) {
           <Languages className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="leading-relaxed text-muted-foreground">
             {isEnglish
-              ? `USD checkout via ${BILLING_PROVIDER} is coming soon and is not available yet. Paid access cannot be purchased or activated here.`
-              : `USD 结账将通过 ${BILLING_PROVIDER} 提供，目前尚未开放。现在无法购买或激活付费权限。`}
+              ? `Sign in to view subscription options. Live USD payments via ${BILLING_PROVIDER} are not available yet. Any available sandbox checkout is for testing only, with no real charges.`
+              : `登录后查看订阅选项。${BILLING_PROVIDER} 的 USD 正式支付尚未开放；可用的沙盒结账仅供测试，不会实际扣款。`}
           </p>
         </div>
 
