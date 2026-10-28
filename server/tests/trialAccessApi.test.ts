@@ -51,6 +51,20 @@ test("88-hour signup, expiry paywall, retired payments and preserved legacy acce
     assert.deepEqual(plans.plans, SUBSCRIPTION_PLANS);
     assert.equal(plans.provider, "Polar.sh");
     assert.equal(plans.checkoutEnabled, false);
+    assert.equal((await learner.get("/api/admin/billing/readiness")).status(), 403);
+    const readiness = await admin.get("/api/admin/billing/readiness");
+    assert.equal(readiness.status(), 200);
+    assert.match(readiness.headers()["cache-control"], /no-store/);
+    assert.equal((await readiness.json()).checkoutEnabled, false);
+    for (const planId of ["quarterly", "semiannual"]) {
+      const checkout = await learner.post("/api/subscription/checkout", { data: { planId } });
+      assert.equal(checkout.status(), 503);
+      assert.equal((await checkout.json()).code, "CHECKOUT_UNAVAILABLE");
+    }
+    for (const data of [{ planId: "monthly" }, { planId: "quarterly", amount: 1 },
+      { planId: "semiannual", userId: ids[1] }, { planId: "quarterly", successUrl: "https://example.com" }]) {
+      assert.equal((await learner.post("/api/subscription/checkout", { data })).status(), 400);
+    }
     const progress = await (await learner.get("/api/progress?language=amharic")).json();
     assert.ok(progress.some((entry: { lessonId: string; completed: boolean }) => entry.lessonId === lessonId && entry.completed));
     const catalog = await (await learner.get("/api/course-catalog?language=amharic")).json();

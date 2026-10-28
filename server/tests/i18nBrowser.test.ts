@@ -52,7 +52,7 @@ test("principal public and learner flows stay bilingual without Chinese fallback
     for (const english of [false, true]) {
       await page.goto(base);
       if (english) await page.getByTestId("button-language").click();
-      await expect(page.getByTestId("testimonial-3")).toBeVisible();
+      await expect(page.getByTestId("learner-stories")).toBeVisible();
       await check(english, "Landing, pricing, footer and learner stories");
       await page.getByTestId("button-share").first().click();
       await expect(page.getByTestId("dialog-share")).toBeVisible();
@@ -126,7 +126,7 @@ test("principal public and learner flows stay bilingual without Chinese fallback
       await expect(page.getByTestId("dialog-payment")).toHaveCount(0);
       await expect(page.getByText(english
         ? /USD checkout via Polar.sh is coming soon/
-        : /USD 结账将通过 Polar.sh 提供/)).toBeVisible();
+        : /USD 结账将通过 Polar.sh 提供/).first()).toBeVisible();
     }
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");

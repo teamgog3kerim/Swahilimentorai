@@ -13,6 +13,7 @@ import type { User } from "@shared/schema";
 import { learnerStoryInputSchema, learnerStoryUpdateSchema } from "@shared/learnerStories";
 import { hasLearningAccess } from "@shared/subscriptionAccess";
 import { BILLING_PROVIDER, CHECKOUT_ENABLED, SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
+import { billingReadiness } from "./billingReadiness";
 
 function managedUser(user: User) {
   const { passwordHash, googleId, ...safe } = user;
@@ -512,6 +513,25 @@ Follow these rules:
   // Public catalog; no purchase can activate access until Polar is connected.
   app.get('/api/subscription/plans', (_req, res) => {
     res.json({ provider: BILLING_PROVIDER, checkoutEnabled: CHECKOUT_ENABLED, plans: SUBSCRIPTION_PLANS });
+  });
+
+  app.get('/api/admin/billing/readiness', isAuthenticated, isAdmin, (_req, res) => {
+    res.set("Cache-Control", "private, no-store");
+    res.json(billingReadiness(process.env));
+  });
+
+  // A stable, authenticated contract for the future checkout implementation.
+  // Never accept totals, product IDs, user IDs or success URLs from a browser.
+  app.post('/api/subscription/checkout', isAuthenticated, (req, res) => {
+    res.set("Cache-Control", "private, no-store");
+    const selection = z.object({ planId: z.enum(["quarterly", "semiannual"]) }).strict().safeParse(req.body);
+    if (!selection.success) {
+      return res.status(400).json({ code: "INVALID_PLAN", message: "Choose quarterly or semiannual without additional payment fields." });
+    }
+    res.status(503).json({
+      code: "CHECKOUT_UNAVAILABLE",
+      message: "Polar.sh checkout is not connected yet. No payment was collected and your access has not changed.",
+    });
   });
 
   // Retired cryptocurrency endpoints. Never accept a transaction or grant access.

@@ -4,6 +4,7 @@ import { differenceInDays } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import BillingReadiness from "@/components/BillingReadiness";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
@@ -101,6 +102,8 @@ export default function SubscriptionPage() {
       </header>
 
       <div className="space-y-6">
+        {user?.isAdmin && <BillingReadiness />}
+
         {isSubscriptionLoading && (
           <Card aria-label={isEnglish ? "Loading subscription" : "正在加载订阅"}>
             <CardContent className="space-y-3 p-6">
