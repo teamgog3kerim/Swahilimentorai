@@ -163,7 +163,7 @@
 }
 
 .panda-welcome__art.is-visible .panda-welcome__panda {
-  animation: panda-breathe 3.6s ease-in-out 650ms infinite;
+  animation: panda-float 2.8s ease-in-out 650ms infinite;
 }
 
 .panda-welcome__art.is-visible .panda-welcome__cap {
@@ -225,9 +225,9 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes panda-breathe {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-2px) rotate(.6deg); }
+@keyframes panda-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
 @keyframes cap-bob {
