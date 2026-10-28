@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 npm install
+# Required audit storage must be ready even if interactive schema push is unavailable.
+npx tsx scripts/migrate-payment-reviews.ts
 # drizzle-kit push reads from stdin for interactive prompts; in post-merge stdin
 # is closed (/dev/null), which causes it to exit 1 even with --force. We also
 # guard against indefinite hangs with a 90s timeout. Schema changes should be

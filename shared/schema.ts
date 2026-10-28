@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, boolean, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, boolean, jsonb, index, check } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -99,6 +99,24 @@ export const subscriptions = pgTable("subscriptions", {
   transactionId: text("transaction_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// Deliberately no user/payment foreign keys: permanent account deletion must not
+// erase completed review evidence. Names are snapshots; no credentials are stored.
+export const paymentReviews = pgTable("payment_reviews", {
+  subscriptionId: varchar("subscription_id").primaryKey(),
+  reviewerId: varchar("reviewer_id").notNull(),
+  reviewerName: text("reviewer_name").notNull(),
+  outcome: text("outcome").$type<"approved" | "rejected">().notNull(),
+  reviewedAt: timestamp("reviewed_at").notNull().defaultNow(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  subscriptionEndsAt: timestamp("subscription_ends_at"),
+}, (table) => [
+  check("payment_reviews_outcome_check", sql`${table.outcome} IN ('approved', 'rejected')`),
+]);
+
+export type PaymentReview = typeof paymentReviews.$inferSelect;
+export type SubscriptionWithReview = Subscription & { review: PaymentReview | null };
 
 export const visits = pgTable("visits", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

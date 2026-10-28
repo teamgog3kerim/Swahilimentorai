@@ -41,7 +41,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocale } from "@/lib/i18n";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { User, Subscription } from "@shared/schema";
+import type { User, Subscription, SubscriptionWithReview } from "@shared/schema";
 import { UserManagementDialog, type ManagedUser } from "@/components/UserManagementDialog";
 import { LearnerStoriesAdmin } from "@/components/LearnerStoriesAdmin";
 import { 
@@ -118,7 +118,7 @@ export default function AdminPage() {
     enabled: isAdminCheck?.isAdmin === true,
   });
 
-  const { data: allSubscriptions = [], isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery<SubscriptionWithUser[]>({
+  const { data: allSubscriptions = [], isLoading: subscriptionsLoading, refetch: refetchSubscriptions } = useQuery<(SubscriptionWithReview & { user: User })[]>({
     queryKey: ["/api/admin/subscriptions"],
     enabled: isAdminCheck?.isAdmin === true,
   });
@@ -667,6 +667,7 @@ export default function AdminPage() {
                         <TableHead>{t("状态")}</TableHead>
                         <TableHead>{t("交易ID")}</TableHead>
                         <TableHead>{t("到期时间")}</TableHead>
+                        <TableHead>{t("审核记录")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -683,6 +684,25 @@ export default function AdminPage() {
                             </code>
                           </TableCell>
                           <TableCell>{formatDate(sub.endDate)}</TableCell>
+                          <TableCell className="min-w-[240px]" data-testid={`payment-review-${sub.id}`}>
+                            {sub.review ? (
+                              <div className="space-y-1 text-sm">
+                                <div className="font-medium">
+                                  {sub.review.outcome === "approved" ? t("已批准") : t("已拒绝")}
+                                  {" · "}{sub.review.reviewerName}
+                                </div>
+                                <div className="text-muted-foreground">{t("审核时间")}: {formatDate(sub.review.reviewedAt)}</div>
+                                <div>{t("记录的订阅开始时间")}: {formatDate(sub.review.startDate)}</div>
+                                <div>{t("记录的订阅结束时间")}: {formatDate(sub.review.endDate)}</div>
+                                <div>{t("审核后的访问截止时间")}: {sub.review.subscriptionEndsAt ? formatDate(sub.review.subscriptionEndsAt) : t("未设置截止时间")}</div>
+                                {sub.review.outcome === "rejected" && <div className="text-muted-foreground">{t("拒绝未授予访问权限，订阅日期保持不变。")}</div>}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {sub.status === "pending" ? t("等待验证") : t("历史支付未记录审核详情")}
+                              </span>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

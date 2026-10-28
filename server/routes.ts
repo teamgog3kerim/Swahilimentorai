@@ -609,7 +609,7 @@ Follow these rules:
 
       const { subscriptionId, action } = validation.data;
 
-      const result = await storage.resolvePendingSubscription(subscriptionId, action);
+      const result = await storage.resolvePendingSubscription(subscriptionId, action, req.user.id);
       if (result.outcome === "not_found") {
         return res.status(404).json({ message: "Subscription not found" });
       }

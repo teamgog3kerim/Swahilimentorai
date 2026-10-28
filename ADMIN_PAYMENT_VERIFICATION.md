@@ -62,6 +62,26 @@ Approval calculates the full legacy term (monthly: 30 days; quarterly: 90 days) 
 
 Do not use the old direct-SQL activation procedure: copying a pending record's provisional deadline into learner access bypasses these protections.
 
+### Review history
+
+New approvals and rejections also save an audit event in that same transaction.
+The admin panel's subscriptions tab shows the reviewing administrator's name at
+the time of review, the outcome, timestamp, recorded subscription dates, and the
+resulting access deadline. A rejected payment keeps its previous dates and grants
+no access. Historical payments without an event are explicitly labeled; no
+reviewer or timestamp is inferred.
+
+There is at most one event per payment. Retrying a review never replaces its
+original event. Audit-write or transaction failures roll back payment and access
+changes together. Events retain the administrator ID and name snapshot after an
+account is renamed or permanently deleted; they contain no email, password hash,
+or Google identity. Audit entries are not exposed to learners or public APIs.
+
+Before starting an updated server, run
+`npx tsx scripts/migrate-payment-reviews.ts` against the development database.
+The post-merge setup runs this additive, idempotent migration automatically; it
+does not rewrite subscriptions, prices, or historical records.
+
 ### Step 4: Verify Activation
 
 Check that the user now has premium access:

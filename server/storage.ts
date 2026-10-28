@@ -16,6 +16,7 @@ import {
   type InsertChatMessage,
   type Subscription,
   type InsertSubscription,
+  type SubscriptionWithReview,
   type Visit,
   type InsertVisit,
   type AdminNotification,
@@ -26,6 +27,7 @@ import {
   chatSessions,
   chatMessages,
   subscriptions,
+  paymentReviews,
   visits,
   adminNotifications,
 } from "@shared/schema";
@@ -73,8 +75,8 @@ export interface IStorage {
   
   getAllUsers(): Promise<User[]>;
   getPendingSubscriptions(): Promise<(Subscription & { user: User })[]>;
-  getAllSubscriptions(): Promise<(Subscription & { user: User })[]>;
-  resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject"): Promise<SubscriptionActionResult>;
+  getAllSubscriptions(): Promise<(SubscriptionWithReview & { user: User })[]>;
+  resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject", reviewerId: string): Promise<SubscriptionActionResult>;
   getSubscription(id: string): Promise<Subscription | undefined>;
   
   createVisit(visit: InsertVisit): Promise<Visit>;
@@ -343,20 +345,25 @@ export class DbStorage implements IStorage {
     }));
   }
 
-  async getAllSubscriptions(): Promise<(Subscription & { user: User })[]> {
+  async getAllSubscriptions(): Promise<(SubscriptionWithReview & { user: User })[]> {
     const results = await db.select()
       .from(subscriptions)
       .innerJoin(users, eq(subscriptions.userId, users.id))
+      .leftJoin(paymentReviews, eq(subscriptions.id, paymentReviews.subscriptionId))
       .orderBy(desc(subscriptions.createdAt));
     
     return results.map(row => ({
       ...row.subscriptions,
       user: row.users,
+      review: row.payment_reviews,
     }));
   }
 
-  async resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject"): Promise<SubscriptionActionResult> {
+  async resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject", reviewerId: string): Promise<SubscriptionActionResult> {
     return db.transaction(async (tx) => {
+      const [reviewer] = await tx.select({ id: users.id, username: users.username }).from(users)
+        .where(and(eq(users.id, reviewerId), eq(users.isAdmin, true)));
+      if (!reviewer) throw new Error("An administrator is required to review payments");
       const [candidate] = await tx.select().from(subscriptions).where(eq(subscriptions.id, subscriptionId));
       if (!candidate) return { outcome: "not_found" };
 
@@ -371,21 +378,37 @@ export class DbStorage implements IStorage {
         return { outcome: "already_processed", status: subscription.status };
       }
 
+      const reviewedAt = new Date();
+      const recordReview = async (resolved: Subscription, subscriptionEndsAt: Date | null) => {
+        await tx.insert(paymentReviews).values({
+          subscriptionId: resolved.id,
+          reviewerId: reviewer.id,
+          reviewerName: reviewer.username,
+          outcome: action === "approve" ? "approved" : "rejected",
+          reviewedAt,
+          startDate: resolved.startDate,
+          endDate: resolved.endDate,
+          subscriptionEndsAt,
+        });
+      };
+
       if (action === "reject") {
         const [rejected] = await tx.update(subscriptions).set({ status: "rejected" })
           .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.status, "pending"))).returning();
+        await recordReview(rejected, user.subscriptionEndsAt);
         return { outcome: "processed", subscription: rejected };
       }
 
       const [active] = await tx.select().from(subscriptions)
         .where(and(eq(subscriptions.userId, user.id), eq(subscriptions.status, "active")))
         .orderBy(desc(subscriptions.endDate)).limit(1);
-      const dates = subscriptionDatesAtApproval(subscription.planType, user, active?.endDate ?? null, new Date());
+      const dates = subscriptionDatesAtApproval(subscription.planType, user, active?.endDate ?? null, reviewedAt);
       const [approved] = await tx.update(subscriptions)
         .set({ status: "active", startDate: dates.startDate, endDate: dates.endDate })
         .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.status, "pending"))).returning();
       await tx.update(users).set({ isPremium: true, subscriptionEndsAt: dates.subscriptionEndsAt })
         .where(eq(users.id, user.id));
+      await recordReview(approved, dates.subscriptionEndsAt);
       return { outcome: "processed", subscription: approved };
     });
   }
