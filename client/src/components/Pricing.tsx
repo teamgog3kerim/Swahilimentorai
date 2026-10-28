@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Crown, Clock3, Languages } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
-import { BILLING_PROVIDER, SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
+import { SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
 import { rememberSubscriptionIntent } from "@/lib/subscriptionIntent";
 
 type PricingProps = {
@@ -152,8 +152,8 @@ export function Pricing({ onSubscribe }: PricingProps) {
           <Languages className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="leading-relaxed text-muted-foreground">
             {isEnglish
-              ? `Sign in to view subscription options and checkout availability. Payments use ${BILLING_PROVIDER}'s secure USD checkout; review the billing details before paying.`
-              : `登录后查看订阅方案和结账状态。通过 ${BILLING_PROVIDER} 安全支付美元；付款前请核对账单详情。`}
+              ? "Sign in to view subscription options and checkout availability. Pay and subscribe securely in USD; review the billing details before paying."
+              : "登录后查看订阅方案和结账状态。以美元安全付款并订阅；付款前请核对账单详情。"}
           </p>
         </div>
 

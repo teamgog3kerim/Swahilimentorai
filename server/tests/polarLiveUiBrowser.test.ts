@@ -67,7 +67,7 @@ test("Signed-in Chinese and English checkout screens support isolated live and s
         await expect(page.getByTestId("button-validate-polar")).toBeVisible();
         if (mode === "live") {
           await expect(page.getByTestId("button-subscribe-quarterly")).toHaveText(
-            locale === "en" ? "Pay securely with Polar" : "通过 Polar 安全付款");
+            locale === "en" ? "Pay and subscribe" : "付款并订阅");
           assert.equal(await page.getByTestId("notice-sandbox-only").count(), 0);
         }
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false,

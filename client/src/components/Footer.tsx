@@ -72,7 +72,7 @@ export function Footer() {
         <div className="afri-footer__bottom">
           <div className="afri-footer__payment">
             <Coins aria-hidden="true" />
-            <span>{language === "en" ? "Secure USD checkout via Polar.sh" : "通过 Polar.sh 安全支付美元"}</span>
+            <span>{language === "en" ? "Pay and subscribe" : "付款并订阅"}</span>
           </div>
           <p className="afri-footer__copyright">
             © {new Date().getFullYear()} {APP_NAME}. {t("保留所有权利。")}

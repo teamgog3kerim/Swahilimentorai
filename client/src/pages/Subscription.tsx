@@ -207,15 +207,15 @@ export default function SubscriptionPage() {
           <ShieldCheck className="h-4 w-4" />
           <AlertTitle>{isSandbox
             ? isEnglish ? "Sandbox only — no real charges" : "仅限沙盒环境，不会产生真实扣款"
-            : isEnglish ? "Secure USD payments via Polar" : "通过 Polar 安全支付美元"}</AlertTitle>
+            : isEnglish ? "Pay and subscribe" : "付款并订阅"}</AlertTitle>
           <AlertDescription>
             {isSandbox
               ? isEnglish
-                ? "Checkout uses Polar sandbox only. No live payments are enabled; choosing a plan does not itself grant or extend learning access."
-                : "结账仅使用 Polar 沙盒环境，不支持真实付款。选择方案本身不会授予或延长学习权限。"
+                ? "Checkout uses a test environment only. No real payments are enabled; choosing a plan does not itself grant or extend learning access."
+                : "结账仅使用测试环境，不支持真实付款。选择方案本身不会授予或延长学习权限。"
               : isEnglish
-                ? "Review your plan in Polar's secure checkout. Payments are in USD; course access is activated automatically after the server verifies payment."
-                : "请在 Polar 安全结账页面核对方案。以美元支付，服务器验证付款后会自动开通课程权限。"}
+                ? "Review your plan at secure checkout. Payments are in USD; course access is activated automatically after the server verifies payment."
+                : "请在安全结账页面核对方案。以美元支付，服务器验证付款后会自动开通课程权限。"}
           </AlertDescription>
         </Alert>
 
@@ -468,7 +468,7 @@ export default function SubscriptionPage() {
                       : isCheckoutReady && isPlanAvailable(plan.id)
                         ? isSandbox
                           ? isEnglish ? "Continue to sandbox checkout" : "前往沙盒结账"
-                          : isEnglish ? "Pay securely with Polar" : "通过 Polar 安全付款"
+                          : isEnglish ? "Pay and subscribe" : "付款并订阅"
                         : isEnglish ? "Checkout currently unavailable" : "结账目前不可用"}
                   </Button>
                   {checkoutError && (
