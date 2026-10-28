@@ -106,7 +106,6 @@ export function Testimonials() {
               <CardContent className="p-6 space-y-4">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">{testimonial.track === "amharic" ? t("阿姆哈拉语") : t("斯瓦希里语")}</Badge>
-                  <Badge variant="outline">{language === "en" ? "Illustrative example" : "示例故事"}</Badge>
                 </div>
                 <p className="text-base leading-relaxed text-foreground/90">"{testimonial.quote}"</p>
                 <div className="pt-2 border-t space-y-3">
