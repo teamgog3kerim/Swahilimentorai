@@ -2,6 +2,7 @@ import { eq, and, desc, sql, count } from "drizzle-orm";
 import { db } from "./db";
 import { normalizeCourseContent } from "../shared/courseContent";
 import { createTrialEndDate } from "../shared/subscriptionAccess";
+import { subscriptionDatesAtApproval } from "./subscriptionApproval";
 import {
   type User,
   type InsertUser,
@@ -39,6 +40,11 @@ export class LearnerStoryConflictError extends Error {
   }
 }
 
+export type SubscriptionActionResult =
+  | { outcome: "not_found" }
+  | { outcome: "already_processed"; status: string }
+  | { outcome: "processed"; subscription: Subscription };
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -68,7 +74,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getPendingSubscriptions(): Promise<(Subscription & { user: User })[]>;
   getAllSubscriptions(): Promise<(Subscription & { user: User })[]>;
-  updateSubscriptionStatus(subscriptionId: string, status: string): Promise<Subscription>;
+  resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject"): Promise<SubscriptionActionResult>;
   getSubscription(id: string): Promise<Subscription | undefined>;
   
   createVisit(visit: InsertVisit): Promise<Visit>;
@@ -349,12 +355,39 @@ export class DbStorage implements IStorage {
     }));
   }
 
-  async updateSubscriptionStatus(subscriptionId: string, status: string): Promise<Subscription> {
-    const result = await db.update(subscriptions)
-      .set({ status })
-      .where(eq(subscriptions.id, subscriptionId))
-      .returning();
-    return result[0];
+  async resolvePendingSubscription(subscriptionId: string, action: "approve" | "reject"): Promise<SubscriptionActionResult> {
+    return db.transaction(async (tx) => {
+      const [candidate] = await tx.select().from(subscriptions).where(eq(subscriptions.id, subscriptionId));
+      if (!candidate) return { outcome: "not_found" };
+
+      // Lock the learner first: different pending payments must also serialize so
+      // each renewal sees the entitlement granted by the previous approval.
+      const [user] = await tx.select().from(users).where(eq(users.id, candidate.userId)).for("update");
+      if (!user) return { outcome: "not_found" };
+      const [subscription] = await tx.select().from(subscriptions)
+        .where(eq(subscriptions.id, subscriptionId)).for("update");
+      if (!subscription) return { outcome: "not_found" };
+      if (subscription.status !== "pending") {
+        return { outcome: "already_processed", status: subscription.status };
+      }
+
+      if (action === "reject") {
+        const [rejected] = await tx.update(subscriptions).set({ status: "rejected" })
+          .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.status, "pending"))).returning();
+        return { outcome: "processed", subscription: rejected };
+      }
+
+      const [active] = await tx.select().from(subscriptions)
+        .where(and(eq(subscriptions.userId, user.id), eq(subscriptions.status, "active")))
+        .orderBy(desc(subscriptions.endDate)).limit(1);
+      const dates = subscriptionDatesAtApproval(subscription.planType, user, active?.endDate ?? null, new Date());
+      const [approved] = await tx.update(subscriptions)
+        .set({ status: "active", startDate: dates.startDate, endDate: dates.endDate })
+        .where(and(eq(subscriptions.id, subscriptionId), eq(subscriptions.status, "pending"))).returning();
+      await tx.update(users).set({ isPremium: true, subscriptionEndsAt: dates.subscriptionEndsAt })
+        .where(eq(users.id, user.id));
+      return { outcome: "processed", subscription: approved };
+    });
   }
 
   async getSubscription(id: string): Promise<Subscription | undefined> {

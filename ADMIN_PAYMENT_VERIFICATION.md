@@ -2,6 +2,8 @@
 
 ## Overview
 
+**Legacy payments only:** New cryptocurrency submissions are retired and USD checkout is not yet available. Do not send new payments using these historical instructions. Use the admin panel to resolve earlier pending payments; do not activate them with direct SQL.
+
 The Binance Pay payment system uses **manual verification** to ensure payment security. When a user submits a payment, the subscription is created with "pending" status and requires admin approval before activating premium access.
 
 ## Payment Wallet Details
@@ -54,31 +56,11 @@ ORDER BY s."createdAt" DESC;
 
 ### Step 3: Activate Subscription
 
-Once verified, run these SQL commands (replace `<subscription_id>` and `<user_id>` with actual values):
+Once verified, open the admin panel's pending payments tab and approve the payment. It calls `POST /api/admin/subscription/action` with `{ "subscriptionId": "<subscription_id>", "action": "approve" }` using an authenticated administrator session.
 
-```sql
--- Begin transaction
-BEGIN;
+Approval calculates the full legacy term (monthly: 30 days; quarterly: 90 days) from the later of approval time and the learner's remaining valid trial/paid deadline. Submission-time dates are provisional and are replaced at approval, even if they have already expired. Unlimited access remains unlimited. Subscription dates, status and learner access are saved together in one transaction. Duplicate or concurrent reviews cannot approve the same payment twice, and separate renewals for the same learner preserve each other's time.
 
--- Update subscription status to active
-UPDATE subscriptions 
-SET status = 'active'
-WHERE id = '<subscription_id>';
-
--- Update user premium status
-UPDATE users 
-SET 
-  "isPremium" = true,
-  "subscriptionEndsAt" = (
-    SELECT "endDate" 
-    FROM subscriptions 
-    WHERE id = '<subscription_id>'
-  )
-WHERE id = '<user_id>';
-
--- Commit transaction
-COMMIT;
-```
+Do not use the old direct-SQL activation procedure: copying a pending record's provisional deadline into learner access bypasses these protections.
 
 ### Step 4: Verify Activation
 
@@ -96,16 +78,7 @@ WHERE id = '<user_id>';
 
 ## Rejecting Fraudulent Payments
 
-If a payment is fraudulent or cannot be verified:
-
-```sql
--- Update subscription status to rejected
-UPDATE subscriptions 
-SET status = 'rejected'
-WHERE id = '<subscription_id>';
-```
-
-The user will need to contact support or submit a new payment.
+If a payment is fraudulent or cannot be verified, reject it in the admin panel. This calls the same action endpoint with `"action": "reject"`. Rejection is terminal and leaves existing trial/paid access unchanged. Contact the learner to resolve the payment; do not request a new cryptocurrency submission.
 
 ## Security Features
 

@@ -609,26 +609,23 @@ Follow these rules:
 
       const { subscriptionId, action } = validation.data;
 
-      const subscription = await storage.getSubscription(subscriptionId);
-      if (!subscription) {
+      const result = await storage.resolvePendingSubscription(subscriptionId, action);
+      if (result.outcome === "not_found") {
         return res.status(404).json({ message: "Subscription not found" });
       }
 
-      if (subscription.status !== 'pending') {
-        return res.status(400).json({ message: `Subscription is already ${subscription.status}` });
+      if (result.outcome === "already_processed") {
+        return res.status(400).json({ message: `Subscription is already ${result.status}` });
       }
 
       if (action === 'approve') {
-        await storage.updateSubscriptionStatus(subscriptionId, 'active');
-        await storage.updateUserPremiumStatus(subscription.userId, true, subscription.endDate);
         res.json({ 
           success: true, 
           message: "Subscription approved and user premium status activated",
           subscriptionId,
-          endDate: subscription.endDate
+          endDate: result.subscription.endDate
         });
       } else {
-        await storage.updateSubscriptionStatus(subscriptionId, 'rejected');
         res.json({ 
           success: true, 
           message: "Subscription rejected",
