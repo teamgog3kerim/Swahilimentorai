@@ -125,8 +125,8 @@ test("principal public and learner flows stay bilingual without Chinese fallback
       await expect(page.getByTestId("button-subscribe-semiannual")).toBeDisabled();
       await expect(page.getByTestId("dialog-payment")).toHaveCount(0);
       await expect(page.getByText(english
-        ? /USD checkout via Polar.sh is coming soon/
-        : /USD 结账将通过 Polar.sh 提供/).first()).toBeVisible();
+        ? /Sandbox checkout is not ready/
+        : /沙盒结账尚未就绪/).first()).toBeVisible();
     }
     await page.reload();
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");

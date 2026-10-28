@@ -31,7 +31,8 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse && !path.startsWith("/api/admin/learner-stories")) {
+      if (capturedJsonResponse && !path.startsWith("/api/admin/learner-stories") &&
+        !path.startsWith("/api/subscription/checkout") && !path.startsWith("/api/subscription/portal")) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 

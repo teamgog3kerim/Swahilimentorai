@@ -1,35 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, CircleDashed, RefreshCw, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocale } from "@/lib/i18n";
 
-type BillingCheckId =
-  | "access_token"
-  | "webhook_secret"
-  | "quarterly_product"
-  | "six_month_product"
-  | "checkout_implementation"
-  | "verified_webhooks"
-  | "sandbox_payment_test";
-
 type BillingReadinessResponse = {
-  provider: "Polar.sh";
-  checkoutEnabled: false;
-  status: "not_connected";
-  checks: { id: BillingCheckId; complete: boolean }[];
-  products: unknown[];
-};
-
-const checkCopy: Record<BillingCheckId, { en: string; zh: string; setting: boolean }> = {
-  access_token: { en: "Access token", zh: "访问令牌", setting: true },
-  webhook_secret: { en: "Webhook secret", zh: "Webhook 密钥", setting: true },
-  quarterly_product: { en: "Quarterly product setting", zh: "季度产品设置", setting: true },
-  six_month_product: { en: "Six-month product setting", zh: "半年产品设置", setting: true },
-  checkout_implementation: { en: "Checkout implementation", zh: "结账功能实现", setting: false },
-  verified_webhooks: { en: "Verified webhook handling", zh: "Webhook 处理验证", setting: false },
-  sandbox_payment_test: { en: "Sandbox payment test", zh: "沙盒支付测试", setting: false },
+  provider: string;
+  plans: Array<{ id: string }>;
+  checkoutEnabled: boolean;
+  environment: string;
+  configured: boolean;
+  webhookConfigured: boolean;
+  validated: boolean;
 };
 
 export default function BillingReadiness() {
@@ -41,9 +24,25 @@ export default function BillingReadiness() {
     isError,
     refetch,
   } = useQuery<BillingReadinessResponse>({
-    queryKey: ["/api/admin/billing/readiness"],
+    queryKey: ["/api/subscription/plans"],
     retry: false,
   });
+  const validate = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/admin/billing/validate", { method: "POST", credentials: "include" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.code || "POLAR_UNAVAILABLE");
+      return result;
+    },
+    onSuccess: () => { void refetch(); },
+  });
+  const checks = data ? [
+    { id: "sandbox", label: isEnglish ? "Sandbox environment" : "沙盒环境", complete: data.environment === "sandbox" },
+    { id: "configuration", label: isEnglish ? "Checkout configuration complete" : "结账配置完整", complete: data.configured },
+    { id: "webhook", label: isEnglish ? "Webhook secret configured" : "Webhook 密钥已配置", complete: data.webhookConfigured },
+    { id: "validation", label: isEnglish ? "Configuration validated" : "配置已验证", complete: data.validated },
+    { id: "checkout", label: isEnglish ? "Checkout enabled" : "结账已启用", complete: data.checkoutEnabled },
+  ] : [];
 
   return (
     <section aria-labelledby="billing-readiness-title" data-testid="billing-readiness">
@@ -52,7 +51,7 @@ export default function BillingReadiness() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                {isEnglish ? "Administrator · Polar.sh" : "管理员 · Polar.sh"}
+                {isEnglish ? "Administrator · Polar sandbox" : "管理员 · Polar 沙盒"}
               </p>
               <CardTitle id="billing-readiness-title" className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-primary" />
@@ -60,24 +59,46 @@ export default function BillingReadiness() {
               </CardTitle>
               <CardDescription>
                 {isEnglish
-                  ? "A private checklist of setup presence and work still required."
-                  : "仅供管理员查看的配置存在情况与待完成事项。"}
+                  ? "Live operational flags only. Credentials and product identifiers are never displayed."
+                  : "仅显示当前运行状态，不会显示凭据或产品标识。"}
               </CardDescription>
             </div>
             <span className="rounded-full border border-amber-600/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300">
-              {isEnglish ? "Not connected" : "尚未连接"}
+              {data?.checkoutEnabled
+                ? isEnglish ? "Sandbox ready" : "沙盒已就绪"
+                : isEnglish ? "Sandbox unavailable" : "沙盒未就绪"}
             </span>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Button variant="outline" disabled={validate.isPending} onClick={() => validate.mutate()}
+              data-testid="button-validate-polar">
+              {validate.isPending
+                ? isEnglish ? "Checking sandbox…" : "正在检查沙盒…"
+                : isEnglish ? "Check sandbox connection" : "检查沙盒连接"}
+            </Button>
+            {validate.isError && <p role="alert" className="text-sm text-destructive">
+              {validate.error.message === "POLAR_TOKEN_REJECTED"
+                ? isEnglish
+                  ? "Polar rejected the token or its permissions. Check that it belongs to this sandbox organization."
+                  : "Polar 拒绝了令牌或其权限。请确认令牌属于此沙盒组织。"
+                : isEnglish
+                  ? "Could not verify the sandbox products. Check the configuration and try again."
+                  : "无法验证沙盒产品。请检查配置后重试。"}
+            </p>}
+            {validate.isSuccess && <p role="status" className="text-sm text-primary">
+              {isEnglish ? "Both sandbox products were verified." : "两个沙盒产品均已验证。"}
+            </p>}
+          </div>
           <div className="rounded-lg border border-amber-600/20 bg-amber-500/[0.07] px-4 py-3 text-sm">
             <p className="font-semibold">
-              {isEnglish ? "Checkout is disabled. No charges are collected." : "结账功能已禁用，不会收取任何费用。"}
+              {isEnglish ? "Sandbox only. No live payment mode is available from this page." : "仅限沙盒环境。本页面不提供真实付款。"}
             </p>
             <p className="mt-1 text-muted-foreground">
               {isEnglish
-                ? "Settings marked present only indicate that a value exists; they do not confirm that credentials are valid or that Polar.sh is connected."
-                : "标记为“已设置”仅表示存在配置值，不代表凭据有效或已连接 Polar.sh。"}
+                ? "This view reports server-provided readiness flags and does not expose secret values or product IDs."
+                : "此页面显示服务器提供的就绪状态，不会暴露密钥内容或产品标识。"}
             </p>
           </div>
 
@@ -121,30 +142,15 @@ export default function BillingReadiness() {
 
           {!isLoading && !isError && data && (
             <ul className="divide-y rounded-lg border">
-              {data.checks.map((check) => {
-                const copy = checkCopy[check.id];
-                if (!copy) return null;
-                const label = isEnglish ? copy.en : copy.zh;
+              {checks.map((check) => {
                 return (
                   <li key={check.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                    <span className="text-sm font-medium">{label}</span>
+                    <span className="text-sm font-medium">{check.label}</span>
                     <span className="flex shrink-0 items-center gap-2 text-right text-xs text-muted-foreground">
-                      {copy.setting ? (
-                        <>
-                          <CheckCircle2
-                            className={`h-4 w-4 ${check.complete ? "text-primary" : "text-muted-foreground"}`}
-                            aria-hidden="true"
-                          />
-                          {check.complete
-                            ? isEnglish ? "Present" : "已设置"
-                            : isEnglish ? "Missing" : "缺少"}
-                        </>
-                      ) : (
-                        <>
-                          <CircleDashed className="h-4 w-4 text-amber-700 dark:text-amber-300" aria-hidden="true" />
-                          {isEnglish ? "Still required" : "仍需完成"}
-                        </>
-                      )}
+                      {check.complete
+                        ? <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden="true" />
+                        : <CircleDashed className="h-4 w-4 text-amber-700 dark:text-amber-300" aria-hidden="true" />}
+                      {check.complete ? isEnglish ? "Ready" : "就绪" : isEnglish ? "Not ready" : "未就绪"}
                     </span>
                   </li>
                 );
@@ -153,8 +159,8 @@ export default function BillingReadiness() {
           )}
           <p className="text-xs text-muted-foreground">
             {isEnglish
-              ? "Credential values and product identifiers are intentionally not shown here. Checkout remains unavailable until implementation and verification are complete."
-              : "此处不会显示凭据值或产品标识。完成结账实现与验证前，结账功能仍不可用。"}
+              ? "Checkout availability follows the server's development, configuration, product, and webhook requirements. Product IDs and secret values are not returned."
+              : "结账是否可用由服务器的开发环境、配置、产品及 webhook 条件决定。接口不会返回产品标识或密钥内容。"}
           </p>
         </CardContent>
       </Card>

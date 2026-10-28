@@ -12,7 +12,7 @@ test("Polar catalog has exact USD cent amounts and explicit recurring versus one
   ]);
 });
 
-test("Readiness never exposes configuration values or enables unfinished payments", () => {
+test("Readiness never exposes configuration values and distinguishes implementation from verification", () => {
   const env = {
     POLAR_ACCESS_TOKEN: "test-access-value",
     POLAR_WEBHOOK_SECRET: "test-signature-value",
@@ -21,9 +21,11 @@ test("Readiness never exposes configuration values or enables unfinished payment
   };
   const result = billingReadiness(env);
   assert.equal(result.checkoutEnabled, false);
-  assert.equal(result.status, "not_connected");
+  assert.equal(result.status, "sandbox_only");
   assert.ok(result.checks.slice(0, 4).every(check => check.complete));
-  assert.ok(result.checks.slice(4).every(check => !check.complete));
+  assert.equal(result.checks.find(check => check.id === "checkout_implementation")?.complete, true);
+  assert.equal(result.checks.find(check => check.id === "sandbox_payment_test")?.complete, false);
   for (const value of Object.values(env)) assert.equal(JSON.stringify(result).includes(value), false);
-  assert.ok(billingReadiness({ POLAR_ACCESS_TOKEN: "  " }).checks.every(check => !check.complete));
+  assert.ok(billingReadiness({ POLAR_ACCESS_TOKEN: "  " }).checks
+    .filter(check => check.id !== "checkout_implementation").every(check => !check.complete));
 });

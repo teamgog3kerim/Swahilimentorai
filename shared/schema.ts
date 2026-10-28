@@ -100,6 +100,27 @@ export const subscriptions = pgTable("subscriptions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Sandbox bindings are removed with the learner; they are not retained review evidence.
+export const polarCheckouts = pgTable("polar_checkouts", {
+  id: text("id").primaryKey(),
+  reference: text("reference").notNull().unique(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  planId: text("plan_id").notNull(),
+  customerId: text("customer_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const polarPayments = pgTable("polar_payments", {
+  orderId: text("order_id").primaryKey(),
+  checkoutId: text("checkout_id"),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  subscriptionId: text("subscription_id"),
+  customerId: text("customer_id").notNull(),
+  localSubscriptionId: varchar("local_subscription_id").notNull().references(() => subscriptions.id, { onDelete: "cascade" }),
+  baselineEnd: timestamp("baseline_end"),
+  refunded: boolean("refunded").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Deliberately no user/payment foreign keys: permanent account deletion must not
 // erase completed review evidence. Names are snapshots; no credentials are stored.
 export const paymentReviews = pgTable("payment_reviews", {

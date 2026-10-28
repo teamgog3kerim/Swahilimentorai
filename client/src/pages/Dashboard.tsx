@@ -46,7 +46,9 @@ function DashboardContent() {
   const { user } = useAuth() as { user: (User & { googleConnected: boolean }) | null };
   const { language, t } = useLocale();
   const { track, setTrack, setPracticeLessonId } = useTrack();
-  const [currentView, setCurrentView] = useState<View>("learn");
+  const [currentView, setCurrentView] = useState<View>(() =>
+    new URLSearchParams(window.location.search).get("tab") === "subscription" ? "subscription" : "learn"
+  );
   const { setOpenMobile } = useSidebar();
   const hasAccess = useCourseAccess(user);
 

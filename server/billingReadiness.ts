@@ -1,4 +1,5 @@
 import { BILLING_PROVIDER, POLAR_PRODUCT_REQUIREMENTS } from "../shared/subscriptionPlans";
+import { sandboxStatus } from "./polarSandbox";
 
 type BillingEnvironment = Record<string, string | undefined>;
 
@@ -11,14 +12,14 @@ export function billingReadiness(env: BillingEnvironment) {
     { id: "webhook_secret", complete: present("POLAR_WEBHOOK_SECRET") },
     { id: "quarterly_product", complete: present("POLAR_QUARTERLY_PRODUCT_ID") },
     { id: "six_month_product", complete: present("POLAR_SEMIANNUAL_PRODUCT_ID") },
-    { id: "checkout_implementation", complete: false },
-    { id: "verified_webhooks", complete: false },
+    { id: "checkout_implementation", complete: true },
+    { id: "verified_webhooks", complete: present("POLAR_WEBHOOK_SECRET") },
     { id: "sandbox_payment_test", complete: false },
   ];
   return {
     provider: BILLING_PROVIDER,
-    checkoutEnabled: false,
-    status: "not_connected",
+    checkoutEnabled: sandboxStatus().checkoutEnabled,
+    status: "sandbox_only",
     checks,
     products: POLAR_PRODUCT_REQUIREMENTS,
   };

@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { AlertCircle, BookOpen, CheckCircle2, Clock3, Crown, Languages, RefreshCw, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertCircle, BookOpen, CheckCircle2, Clock3, Crown, ExternalLink, Languages, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
 import { differenceInDays } from "date-fns";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -10,18 +11,129 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocale } from "@/lib/i18n";
 import type { Subscription, User } from "@shared/schema";
-import { BILLING_PROVIDER, CHECKOUT_ENABLED, SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
+import { SUBSCRIPTION_PLANS } from "@shared/subscriptionPlans";
+
+type PlansResponse = {
+  provider: string;
+  plans: Array<{ id: string }>;
+  checkoutEnabled: boolean;
+  environment: "sandbox" | string;
+  configured: boolean;
+  webhookConfigured: boolean;
+  validated: boolean;
+};
+
+type PaymentStatus = { paid: boolean; hasCustomer: boolean };
+
+async function postBillingRequest(path: string, body?: Record<string, string>) {
+  const response = await fetch(path, {
+    method: "POST",
+    credentials: "include",
+    headers: body ? { "Content-Type": "application/json", Accept: "application/json" } : { Accept: "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(typeof result.code === "string" ? result.code : "request_failed");
+  return result as { url?: string };
+}
+
+function safeSandboxUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    const allowedHost = host === "sandbox.polar.sh"
+      || host.endsWith(".sandbox.polar.sh")
+      || host === "sandbox-buy.polar.sh";
+    if (url.protocol !== "https:" || !allowedHost || url.username || url.password || url.port) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
 
 export default function SubscriptionPage() {
   const { user } = useAuth() as { user: User | null };
   const { language, t } = useLocale();
   const isEnglish = language === "en";
+  const queryClient = useQueryClient();
+  const [checkoutError, setCheckoutError] = useState(false);
+  const [portalError, setPortalError] = useState(false);
+  const [pollingPayment, setPollingPayment] = useState(false);
+  const [pollingExpired, setPollingExpired] = useState(false);
+  const [confirmedPayment, setConfirmedPayment] = useState(false);
+  const returnPayment = new URLSearchParams(window.location.search).get("payment");
+  const returnReference = new URLSearchParams(window.location.search).get("reference");
+  const isPaymentReturn = returnPayment === "success" && Boolean(returnReference);
+  const {
+    data: billing,
+    isLoading: isBillingLoading,
+    isError: isBillingError,
+    refetch: refetchBilling,
+  } = useQuery<PlansResponse>({ queryKey: ["/api/subscription/plans"] });
+  const {
+    data: paymentStatus,
+    refetch: refetchPaymentStatus,
+  } = useQuery<PaymentStatus>({
+    queryKey: [returnReference
+      ? `/api/subscription/payment-status?reference=${encodeURIComponent(returnReference)}`
+      : "/api/subscription/payment-status"],
+    enabled: Boolean(user),
+    staleTime: 0,
+    refetchInterval: pollingPayment && !pollingExpired ? 3000 : false,
+  });
+  const checkoutMutation = useMutation({
+    mutationFn: (planId: "quarterly" | "semiannual") =>
+      postBillingRequest("/api/subscription/checkout", { planId, locale: isEnglish ? "en" : "zh" }),
+    onSuccess: (result) => {
+      const url = safeSandboxUrl(result.url);
+      if (url) window.location.assign(url);
+      else setCheckoutError(true);
+    },
+    onError: () => setCheckoutError(true),
+  });
+  const portalMutation = useMutation({
+    mutationFn: () => postBillingRequest("/api/subscription/portal"),
+    onSuccess: (result) => {
+      const url = safeSandboxUrl(result.url);
+      if (url) window.location.assign(url);
+      else setPortalError(true);
+    },
+    onError: () => setPortalError(true),
+  });
   const {
     data: subscription,
     isLoading: isSubscriptionLoading,
     isError: isSubscriptionError,
     refetch: refetchSubscription,
   } = useQuery<Subscription>({ queryKey: ["/api/subscription"] });
+
+  useEffect(() => {
+    if (!isPaymentReturn || confirmedPayment || pollingExpired) return;
+    setPollingPayment(true);
+    setPollingExpired(false);
+    const poll = window.setInterval(() => {
+      void refetchPaymentStatus();
+      void refetchSubscription();
+      void queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    }, 3000);
+    const timeout = window.setTimeout(() => {
+      setPollingPayment(false);
+      setPollingExpired(true);
+    }, 36_000);
+    return () => {
+      window.clearInterval(poll);
+      window.clearTimeout(timeout);
+    };
+  }, [isPaymentReturn, confirmedPayment, pollingExpired, queryClient, refetchPaymentStatus, refetchSubscription]);
+
+  useEffect(() => {
+    if (!isPaymentReturn || !paymentStatus?.paid) return;
+    setConfirmedPayment(true);
+    setPollingPayment(false);
+    void queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
+    void queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+  }, [isPaymentReturn, paymentStatus?.paid, queryClient]);
 
   const now = new Date();
   const subscriptionEndsAt = user?.subscriptionEndsAt
@@ -45,6 +157,8 @@ export default function SubscriptionPage() {
     subscriptionEndsAt &&
     subscriptionEndsAt > now
   );
+  const isSandboxReady = billing?.environment === "sandbox" && billing.checkoutEnabled === true;
+  const isPlanAvailable = (id: string) => Boolean(billing?.plans?.some((plan) => plan.id === id));
 
   const quarterlyPlan = SUBSCRIPTION_PLANS.find((plan) => plan.id === "quarterly")!;
   const semiannualPlan = SUBSCRIPTION_PLANS.find((plan) => plan.id === "semiannual")!;
@@ -102,7 +216,83 @@ export default function SubscriptionPage() {
       </header>
 
       <div className="space-y-6">
+        <Alert className="border-amber-600/30 bg-amber-500/[0.08]" data-testid="notice-sandbox-only">
+          <ShieldCheck className="h-4 w-4" />
+          <AlertTitle>{isEnglish ? "Sandbox only — no real charges" : "仅限沙盒环境，不会产生真实扣款"}</AlertTitle>
+          <AlertDescription>
+            {isEnglish
+              ? "Checkout uses Polar sandbox only. No live payments are enabled; choosing a plan does not itself grant or extend learning access."
+              : "结账仅使用 Polar 沙盒环境，不支持真实付款。选择方案本身不会授予或延长学习权限。"}
+          </AlertDescription>
+        </Alert>
+
+        {returnPayment === "canceled" && (
+          <Alert data-testid="notice-checkout-canceled">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{isEnglish ? "Checkout canceled" : "结账已取消"}</AlertTitle>
+            <AlertDescription>
+              {isEnglish ? "No payment was confirmed. Your current learning access is unchanged." : "尚未确认付款，你当前的学习权限保持不变。"}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {isPaymentReturn && (
+          <Alert data-testid="notice-payment-pending">
+            {confirmedPayment ? <CheckCircle2 className="h-4 w-4" /> : <Clock3 className="h-4 w-4" />}
+            <AlertTitle>
+              {confirmedPayment
+                ? isEnglish ? "Payment confirmed by the server" : "服务器已确认付款"
+                : isEnglish ? "Confirming sandbox payment" : "正在确认沙盒付款"}
+            </AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+              <span>
+                {confirmedPayment
+                  ? isEnglish
+                    ? "Your account and subscription are being refreshed. Access changes only after server verification."
+                    : "正在刷新账户和订阅信息。只有服务器验证后才会更新学习权限。"
+                  : pollingExpired
+                    ? isEnglish
+                      ? "Confirmation is still pending. You can check again; access is not granted by this page."
+                      : "仍在等待付款确认。你可以再次检查；本页面不会自行授予权限。"
+                    : isEnglish
+                      ? "Waiting for server confirmation. This can take a short while; access has not been changed locally."
+                      : "正在等待服务器确认，可能需要一点时间；本页面不会自行更改学习权限。"}
+              </span>
+              {(pollingExpired || !pollingPayment) && !confirmedPayment && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setPollingExpired(false);
+                    setPollingPayment(true);
+                    void refetchPaymentStatus();
+                    void refetchSubscription();
+                  }}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  {isEnglish ? "Check again" : "再次检查"}
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {user?.isAdmin && <BillingReadiness />}
+
+        {isBillingError && (
+          <Alert variant="destructive" data-testid="alert-plans-error">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{isEnglish ? "Could not load sandbox checkout availability" : "无法加载沙盒结账状态"}</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+              <span>{isEnglish ? "Checkout stays disabled until availability is confirmed." : "确认结账状态前，结账功能将保持禁用。"}</span>
+              <Button type="button" variant="outline" size="sm" onClick={() => void refetchBilling()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {isEnglish ? "Retry" : "重试"}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {isSubscriptionLoading && (
           <Card aria-label={isEnglish ? "Loading subscription" : "正在加载订阅"}>
@@ -138,8 +328,8 @@ export default function SubscriptionPage() {
             </AlertTitle>
             <AlertDescription>
               {isEnglish
-                ? <>Your learning access ended on {subscriptionEndDate}. Paid checkout is not available yet; no payment or access change has been made.</>
-                : <>你的学习权限已于 {subscriptionEndDate} 到期。付费结账尚未开放；不会进行扣款或权限变更。</>}
+                ? <>Your learning access ended on {subscriptionEndDate}. {isSandboxReady ? "Sandbox checkout is available; access changes only after server verification." : "Sandbox checkout is not ready; no payment or access change has been made."}</>
+                : <>你的学习权限已于 {subscriptionEndDate} 到期。{isSandboxReady ? "沙盒结账已开放；只有服务器验证后才会更新权限。" : "沙盒结账尚未就绪，不会扣款或更改权限。"}</>}
             </AlertDescription>
           </Alert>
         )}
@@ -150,8 +340,8 @@ export default function SubscriptionPage() {
             <AlertTitle>{isTrial ? t("88小时免费试用") : t("订阅即将到期")}</AlertTitle>
             <AlertDescription>
               {isEnglish
-                ? <>Your current learning access expires in {hoursRemaining} hours. USD checkout via {BILLING_PROVIDER} is coming soon and is not available yet.</>
-                : <>你当前的学习权限将在 {hoursRemaining} 小时后到期。USD 结账将通过 {BILLING_PROVIDER} 提供，目前尚未开放。</>}
+                ? <>Your current learning access expires in {hoursRemaining} hours. {isSandboxReady ? "Sandbox checkout is available." : "Sandbox checkout is not ready yet."}</>
+                : <>你当前的学习权限将在 {hoursRemaining} 小时后到期。{isSandboxReady ? "沙盒结账已开放。" : "沙盒结账尚未就绪。"}</>}
             </AlertDescription>
           </Alert>
         )}
@@ -269,23 +459,78 @@ export default function SubscriptionPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button className="w-full" size="lg" disabled={!CHECKOUT_ENABLED} data-testid={`button-subscribe-${plan.id}`}>
-                    {isEnglish ? "Paid checkout coming soon" : "付费结账即将开放"}
+                  <Button
+                    type="button"
+                    className="w-full"
+                    size="lg"
+                    disabled={!isSandboxReady || !isPlanAvailable(plan.id) || checkoutMutation.isPending || isBillingLoading}
+                    onClick={() => {
+                      setCheckoutError(false);
+                      checkoutMutation.mutate(plan.id as "quarterly" | "semiannual");
+                    }}
+                    data-testid={`button-subscribe-${plan.id}`}
+                  >
+                    {checkoutMutation.isPending
+                      ? isEnglish ? "Opening secure checkout…" : "正在打开安全结账…"
+                      : isSandboxReady && isPlanAvailable(plan.id)
+                        ? isEnglish ? "Continue to sandbox checkout" : "前往沙盒结账"
+                        : isEnglish ? "Sandbox checkout not ready" : "沙盒结账尚未就绪"}
                   </Button>
+                  {checkoutError && (
+                    <p role="alert" className="text-sm text-destructive">
+                      {isEnglish ? "Could not start checkout. Please try again." : "无法启动结账，请重试。"}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
+        {isBillingLoading && (
+          <div className="space-y-3 rounded-xl border p-4" aria-label={isEnglish ? "Loading checkout availability" : "正在加载结账状态"} aria-busy="true">
+            <div className="h-4 w-48 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-64 animate-pulse rounded bg-muted" />
+          </div>
+        )}
+
         <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
           <Languages className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="text-muted-foreground">
             {isEnglish
-              ? `USD checkout via ${BILLING_PROVIDER} is coming soon and is not currently available. No payment is being collected and choosing a plan does not grant or extend access.`
-              : `USD 结账将通过 ${BILLING_PROVIDER} 提供，目前尚未开放。现在不会收取费用，选择方案也不会授予或延长权限。`}
+              ? isSandboxReady
+                ? "Checkout runs in sandbox only. No real charges are possible. Choosing a plan does not change access until payment is verified server-side."
+                : "Sandbox checkout is not ready. No payment is collected, and choosing a plan does not grant or extend access."
+              : isSandboxReady
+                ? "结账仅在沙盒环境进行，不会产生真实扣款。付款经服务器验证前，选择方案不会更改学习权限。"
+                : "沙盒结账尚未就绪，不会收取费用；选择方案不会授予或延长学习权限。"}
           </p>
         </div>
+
+        {paymentStatus?.hasCustomer && (
+          <div className="space-y-2 text-center">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={portalMutation.isPending}
+              onClick={() => {
+                setPortalError(false);
+                portalMutation.mutate();
+              }}
+              data-testid="button-subscription-portal"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {portalMutation.isPending
+                ? isEnglish ? "Opening account portal…" : "正在打开账户管理…"
+                : isEnglish ? "Manage subscription" : "管理订阅"}
+            </Button>
+            {portalError && (
+              <p role="alert" className="text-sm text-destructive">
+                {isEnglish ? "Could not open the subscription portal. Please try again." : "无法打开订阅管理页面，请重试。"}
+              </p>
+            )}
+          </div>
+        )}
 
         {hasActivePaidSubscription && (
           <p className="text-center text-xs text-muted-foreground">

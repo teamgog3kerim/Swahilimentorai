@@ -16,7 +16,7 @@ test("Polar readiness is admin-only, bilingual, mobile-safe and retryable", {
   let id: string | undefined;
   let readinessRequests = 0;
   page.on("request", request => {
-    if (request.url().includes("/api/admin/billing/readiness")) readinessRequests++;
+    if (request.url().includes("/api/admin/billing/validate")) readinessRequests++;
   });
   try {
     const signup = await page.request.post(`${base}/api/auth/signup`, { data: {
@@ -39,24 +39,35 @@ test("Polar readiness is admin-only, bilingual, mobile-safe and retryable", {
     await page.getByTestId("button-nav-subscription").click();
     const checklist = page.getByTestId("billing-readiness");
     await expect(checklist).toBeVisible();
-    await expect(checklist).toContainText("Polar.sh");
-    assert.ok(readinessRequests > 0);
+    await expect(checklist).toContainText("Polar");
+    await expect(page.getByTestId("button-validate-polar")).toBeVisible();
     await page.setViewportSize({ width: 402, height: 874 });
     await checklist.scrollIntoViewIfNeeded();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.getByTestId("button-language").click();
-    await expect(checklist).toContainText("Access token");
+    await expect(checklist).toContainText("Configuration validated");
     await expect(checklist).toContainText(/disabled|not connected|unavailable/i);
-    await page.route("**/api/admin/billing/readiness", route => route.fulfill({
+    await page.route("**/api/subscription/plans", route => route.fulfill({
       status: 503, contentType: "application/json", body: JSON.stringify({ message: "Temporary test failure" }),
     }));
     await page.reload();
     await page.getByTestId("button-nav-subscription").click();
     await expect(page.getByTestId("button-retry-billing-readiness")).toBeVisible();
-    await page.unroute("**/api/admin/billing/readiness");
+    await page.unroute("**/api/subscription/plans");
     await page.getByTestId("button-retry-billing-readiness").click();
-    await expect(checklist).toContainText("Access token");
+    await expect(checklist).toContainText("Configuration validated");
+    // Returning from checkout must open the subscription tab, and a URL alone
+    // must leave the learner in pending verification rather than granting access.
+    await page.goto(`${base}/dashboard?tab=subscription&payment=success&reference=${randomUUID()}`);
+    await expect(page.getByTestId("notice-payment-pending")).toContainText("Confirming sandbox payment");
+    await page.goto(`${base}/dashboard?tab=subscription&payment=canceled`);
+    await expect(page.getByTestId("notice-checkout-canceled")).toBeVisible();
+    await page.route("**/api/admin/billing/validate", route => route.fulfill({
+      status: 503, contentType: "application/json", body: JSON.stringify({ code: "POLAR_TOKEN_REJECTED" }),
+    }));
+    await page.getByTestId("button-validate-polar").click();
+    await expect(checklist.getByRole("alert")).toContainText("Polar rejected the token");
     await expect(page.getByTestId("button-retry-billing-readiness")).toHaveCount(0);
     await expect(page.getByTestId("button-subscribe-semiannual")).toBeDisabled();
   } finally {

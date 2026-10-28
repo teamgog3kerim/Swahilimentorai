@@ -1,7 +1,7 @@
 # Afri Panda
 
 ## Overview
-**Afri Panda** is an African language learning platform for Chinese- and English-speaking learners, with Amharic and Swahili courses. Its user-selected slogan is **“the African languages Academy for Chinese people”**. Keep the name and this English slogan consistent in both interfaces. The interface defaults to Simplified Chinese, with optional English saved in the browser. Guided lessons, conversations and self-checks work independently of optional live AI. The platform also supports progress tracking and USD subscription plans; Polar.sh checkout will be integrated later.
+**Afri Panda** is an African language learning platform for Chinese- and English-speaking learners, with Amharic and Swahili courses. Its user-selected slogan is **“the African languages Academy for Chinese people”**. Keep the name and this English slogan consistent in both interfaces. The interface defaults to Simplified Chinese, with optional English saved in the browser. Guided lessons, conversations and self-checks work independently of optional live AI. The platform also supports progress tracking and USD subscription plans; Polar checkout is currently sandbox-only, not live.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -63,7 +63,7 @@ PostgreSQL, hosted on Neon serverless, serves as the primary database. Key table
 ### Recurring Subscription System
 Only two plans are offered: USD 88 every three months (quarterly) and USD 168 paid once for six months (semiannual). Both include full Amharic and Swahili course access. The user confirmed quarterly means one USD 88 payment every three months, not twice per quarter. Six months costs USD 176 on quarterly versus USD 168 upfront, saving USD 8. Polar.sh products and checkout will be integrated later; until then paid checkout is disabled and clearly labeled unavailable. Cryptocurrency instructions and new manual payment submissions are retired. Preserve historical subscription records and issued access; legacy admin review exists only to resolve earlier payments. Future integration must verify provider webhooks and map trusted products to these plans before granting access.
 
-See `docs/polar-integration-readiness.md` before connecting Polar. The admin-only readiness checklist distinguishes settings presence from an implemented/tested connection. Environment values alone must never enable payment collection. Polar's one-time benefit is not an app lifetime grant: the USD 168 product requires an explicit six-month entitlement in this app.
+See `docs/polar-integration-readiness.md` before connecting Polar. The admin readiness view distinguishes settings presence from a validated/tested connection. Sandbox checkout revalidates product terms and requires a signing secret; live checkout remains disabled regardless of configuration. Polar's one-time benefit is not an app lifetime grant: the USD 168 product requires an explicit six-month entitlement in this app.
 
 Historical manual payments were sold as fixed 30-day monthly and 90-day quarterly terms, not the new USD calendar-month plans. Approval grants that full legacy term after approval or the latest remaining trial/paid deadline, whichever is later; never reuse a pending record's provisional dates or change its price. Resolve approval/rejection atomically and serialize by learner to prevent duplicate grants and lost renewal time. Keep unlimited grants intact. Regression checks: `RUN_HTTP_TESTS=1 node --import tsx --test server/tests/subscriptionApproval.test.ts`.
 

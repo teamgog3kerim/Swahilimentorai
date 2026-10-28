@@ -61,12 +61,12 @@ test("Live trial expiry closes lessons, prompts subscription and preserves bilin
     await expect(semiannual).toContainText("168");
     await expect(semiannual).toContainText("Save USD 8");
     await expect(page.locator("body")).not.toContainText(/Binance|USDT|TRC20/);
-    await expect(page.getByText(/USD checkout via Polar.sh is coming soon/)).toBeVisible();
+    await expect(page.getByText(/Sandbox checkout is not ready/).first()).toBeVisible();
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2));
     await page.setViewportSize({ width: 1280, height: 1000 });
     await page.getByTestId("button-language").click();
     await expect(page.getByTestId("alert-expired")).toContainText("免费试用已结束");
-    await expect(page.getByTestId("button-subscribe-semiannual")).toHaveText("付费结账即将开放");
+    await expect(page.getByTestId("button-subscribe-semiannual")).toHaveText("沙盒结账尚未就绪");
     await page.getByTestId("button-nav-learn").click();
     await expect(page.getByTestId("button-course-access-subscribe")).toHaveText("查看订阅方案");
     await storage.updateUserPremiumStatus(user.id, true, new Date(Date.now() + 30 * 86400000));
