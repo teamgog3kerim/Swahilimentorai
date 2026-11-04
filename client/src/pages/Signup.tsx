@@ -57,7 +57,7 @@ export default function Signup() {
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: t("注册成功"),
-        description: t("欢迎加入 Afri Panda！您可以选择阿姆哈拉语或斯瓦希里语。"),
+        description: t("欢迎加入 Ethiopanda！您可以选择阿姆哈拉语或斯瓦希里语。"),
       });
       setLocation("/dashboard");
     } catch (error: any) {

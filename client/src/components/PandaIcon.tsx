@@ -2,7 +2,7 @@ import type { SVGProps } from "react";
 
 type PandaIconProps = SVGProps<SVGSVGElement> & { welcomeArtwork?: boolean };
 
-/** The Afri Panda graduation mascot. Decorative unless a caller supplies an accessible label. */
+/** The Ethiopanda graduation mascot. Decorative unless a caller supplies an accessible label. */
 export function PandaIcon({ className, "aria-label": ariaLabel, welcomeArtwork = false, ...props }: PandaIconProps) {
   return (
     <svg

@@ -249,7 +249,7 @@ export function registerPolarSandbox(app: Express, authenticated: any, admin: an
         external_customer_id: req.user.id,
         customer_email: req.user.email,
         allow_discount_codes: false, allow_trial: false, locale: parsed.data.locale,
-        metadata: { app: "afri-panda", environment: polarConfig().environment },
+        metadata: { app: "ethiopanda", environment: polarConfig().environment },
         success_url: `${origin()}/dashboard?tab=subscription&payment=success&reference=${reference}`,
         return_url: `${origin()}/dashboard?tab=subscription&payment=canceled`,
       });

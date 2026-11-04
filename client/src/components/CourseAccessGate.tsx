@@ -23,7 +23,7 @@ export function CourseAccessGate({ onUpgrade }: CourseAccessGateProps) {
             </div>
             <div className="relative mt-8">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground/70">
-                {english ? "AFRI PANDA · LEARNING ACCESS" : "AFRI PANDA · 学习权限"}
+                {english ? "ETHIOPANDA · LEARNING ACCESS" : "ETHIOPANDA · 学习权限"}
               </p>
               <h1 className="mt-3 text-3xl font-bold leading-tight sm:text-4xl">
                 {english ? "Your next chapter starts here." : "下一段学习，从这里开始。"}

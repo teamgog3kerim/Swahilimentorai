@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { chromium, expect } from "@playwright/test";
 import { APP_NAME, APP_SLOGAN, APP_TITLE } from "../../client/src/lib/brand";
 
-test("Afri Panda name and slogan remain consistent across languages, auth pages and mobile", {
+test("Ethiopanda name and slogan remain consistent across languages, auth pages and mobile", {
   skip: process.env.RUN_BROWSER_TESTS !== "1",
   timeout: 90_000,
 }, async () => {
@@ -50,7 +50,7 @@ test("Afri Panda name and slogan remain consistent across languages, auth pages 
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", APP_NAME);
     await expect(page.locator('meta[property="og:description"]')).toHaveAttribute("content", APP_SLOGAN);
     assert.deepEqual(errors, []);
-    console.log("PASS: Afri Panda branding, exact slogan, Chinese/English pages, browser metadata, installation manifest and 360/402px layouts.");
+    console.log("PASS: Ethiopanda branding, exact slogan, Chinese/English pages, browser metadata, installation manifest and 360/402px layouts.");
   } finally {
     await browser.close();
   }

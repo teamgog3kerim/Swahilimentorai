@@ -1,9 +1,9 @@
 ---
 name: Business communication positioning
-description: Intended audience and business-oriented messaging for Afri Panda.
+description: Intended audience and business-oriented messaging for Ethiopanda.
 ---
 
-Position Afri Panda for Chinese- and English-speaking learners doing business
+Position Ethiopanda for Chinese- and English-speaking learners doing business
 in Africa, highlighting language learning as a way to support communication
 and relationships with customers and partners.
 
