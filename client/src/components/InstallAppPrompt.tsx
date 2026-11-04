@@ -127,7 +127,7 @@ export function InstallAppPrompt() {
       )}
       <button
         type="button"
-        className="install-app__button"
+        className="install-app__button rounded-tl-[888px] rounded-tr-[888px] rounded-br-[888px] rounded-bl-[888px]"
         onClick={handleInstallClick}
         aria-label={t("安装 Ethio Panda 应用")}
         aria-expanded={showInstructions}

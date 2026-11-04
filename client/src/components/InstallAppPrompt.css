@@ -50,6 +50,7 @@
 
 .install-app--collapsed .install-app__button {
   width: 48px;
+  gap: 0;
   padding: 0;
 }
 
