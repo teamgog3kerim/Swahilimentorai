@@ -461,7 +461,13 @@ const translations: Record<string, string> = JSON.parse(String.raw`{
   ,"未收藏": "Not saved"
   ,"切换界面语言为中文": "Switch interface language to Chinese"
   ,"Switch language to English": "Switch language to English"
-    ,"你好，欢迎来到 Ethiopanda！": "Hello, welcome to Ethiopanda!"
+     ,"你好，欢迎来到 Ethiopanda！": "Hello, welcome to Ethiopanda!"
+     ,"将 Ethiopanda 添加到主屏幕": "Add Ethiopanda to your home screen"
+     ,"点按浏览器的分享按钮": "Tap your browser’s Share button"
+     ,"选择“添加到主屏幕”，再点按“添加”": "Choose “Add to Home Screen”, then tap “Add”"
+     ,"在浏览器菜单中选择“安装应用”或“添加到主屏幕”。": "In your browser menu, choose “Install app” or “Add to Home screen”."
+     ,"安装 Ethiopanda 应用": "Install the Ethiopanda app"
+     ,"安装应用": "Install app"
 }`);
 
 interface LocaleContextValue {

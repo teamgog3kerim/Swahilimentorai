@@ -13,6 +13,7 @@ import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { LocaleProvider } from "@/lib/i18n";
+import { InstallAppPrompt } from "@/components/InstallAppPrompt";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -78,6 +79,7 @@ function App() {
           <TooltipProvider>
             <VisitTracker />
             <Router />
+            <InstallAppPrompt />
             <Toaster />
           </TooltipProvider>
         </LocaleProvider>
