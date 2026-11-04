@@ -82,6 +82,7 @@ export interface IStorage {
   getSubscription(id: string): Promise<Subscription | undefined>;
   
   createVisit(visit: InsertVisit): Promise<Visit>;
+  resetVisitAnalytics(): Promise<{ deletedVisits: number; deletedVisitorAlerts: number }>;
   getAnalyticsOverview(): Promise<{ totalVisits: number; uniqueSessions: number; todayVisits: number }>;
   getTopCountries(limit?: number): Promise<{ countryCode: string; countryName: string; count: number }[]>;
   getTopBrowsers(limit?: number): Promise<{ browserName: string; count: number }[]>;
@@ -460,6 +461,19 @@ export class DbStorage implements IStorage {
         metadata: { visitId: created.id },
       });
       return created;
+    });
+  }
+
+  async resetVisitAnalytics(): Promise<{ deletedVisits: number; deletedVisitorAlerts: number }> {
+    return db.transaction(async (tx) => {
+      const deletedVisitorAlerts = await tx.delete(adminNotifications)
+        .where(eq(adminNotifications.type, "new_visitor"))
+        .returning({ id: adminNotifications.id });
+      const deletedVisits = await tx.delete(visits).returning({ id: visits.id });
+      return {
+        deletedVisits: deletedVisits.length,
+        deletedVisitorAlerts: deletedVisitorAlerts.length,
+      };
     });
   }
 

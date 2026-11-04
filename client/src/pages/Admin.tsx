@@ -232,6 +232,38 @@ export default function AdminPage() {
     queryClient.invalidateQueries({ queryKey: ["/api/admin/analytics/visits-by-date"] });
   };
 
+  const resetAnalyticsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("DELETE", "/api/admin/analytics");
+      return await res.json() as { deletedVisits: number; deletedVisitorAlerts: number };
+    },
+    onSuccess: (result) => {
+      refetchAnalytics();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications/unread-count"] });
+      toast({
+        title: language === "en" ? "Visit analytics cleared" : "访问统计已清除",
+        description: language === "en"
+          ? `Removed ${result.deletedVisits} visits and ${result.deletedVisitorAlerts} visitor alerts. New visits will continue recording.`
+          : `已清除 ${result.deletedVisits} 条访问记录和 ${result.deletedVisitorAlerts} 条访客提醒。新访问将继续记录。`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: language === "en" ? "Reset failed" : "清除失败",
+        description: language === "en" ? "Visit analytics could not be cleared." : "无法清除访问统计。",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const confirmAnalyticsReset = () => {
+    const confirmation = language === "en"
+      ? "This permanently deletes all visit analytics and new-visitor alerts. Accounts, course progress, payments, and other alerts are not affected. Continue?"
+      : "此操作将永久删除所有访问统计和新访客提醒，不会影响账户、课程进度、付款或其他提醒。是否继续？";
+    if (window.confirm(confirmation)) resetAnalyticsMutation.mutate();
+  };
+
   const actionMutation = useMutation({
     mutationFn: async (data: { subscriptionId: string; action: 'approve' | 'reject' }) => {
       const res = await apiRequest("POST", "/api/admin/subscription/action", data);
@@ -830,20 +862,32 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
               {t("访问统计")}
             </h2>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={refetchAnalytics}
-              data-testid="button-refresh-analytics"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              {t("刷新")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={confirmAnalyticsReset}
+                disabled={resetAnalyticsMutation.isPending}
+                data-testid="button-clear-analytics"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {language === "en" ? "Clear visit analytics" : "清除访问统计"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={refetchAnalytics}
+                data-testid="button-refresh-analytics"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                {t("刷新")}
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

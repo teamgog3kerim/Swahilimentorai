@@ -816,6 +816,16 @@ Follow these rules:
     }
   });
 
+  app.delete('/api/admin/analytics', isAuthenticated, isAdmin, async (_req: any, res) => {
+    try {
+      const result = await storage.resetVisitAnalytics();
+      res.json({ success: true, ...result });
+    } catch (error) {
+      console.error("Error resetting visit analytics:", error);
+      res.status(500).json({ message: "Failed to reset visit analytics" });
+    }
+  });
+
   // ==================== ADMIN NOTIFICATIONS ROUTES ====================
 
   // GET /api/admin/notifications - Get all notifications (admin only)
