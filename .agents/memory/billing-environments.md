@@ -23,11 +23,3 @@ in English and equivalent Chinese wording; provider names may remain in admin di
 
 **How to apply:** Preserve the provider integration and hosted checkout; change
 the app's learner-facing copy rather than renaming technical configuration.
-
-The published primary domain is `https://ethiopanda.com`; the development
-preview remains on its separate Replit hostname.
-
-**Why:** The user designated this custom domain for the public Afri Panda app.
-
-**How to apply:** Keep production OAuth and Polar return/webhook URLs on the
-custom domain. Preserve Replit preview callbacks and sandbox configuration.
