@@ -4,12 +4,12 @@ import { APP_NAME, APP_SLOGAN, APP_TITLE } from "./brand";
 export type Language = "zh" | "en";
 
 const translations: Record<string, string> = JSON.parse(String.raw`{
-  "Ethiopanda": "Ethiopanda",
+  "Ethio Panda": "Ethio Panda",
   "创建账户": "Create your account",
   "返回上一页": "Go back",
   "学习阿姆哈拉语与斯瓦希里语，按自己的节奏开启语言之旅。": "Learn Amharic and Swahili at your own pace, one step at a time.",
   "四步开始您的语言学习之旅": "Start your language learning journey in four steps",
-  "欢迎加入 Ethiopanda！您可以选择阿姆哈拉语或斯瓦希里语。": "Welcome to Ethiopanda! Choose Amharic or Swahili to get started.",
+  "欢迎加入 Ethio Panda！您可以选择阿姆哈拉语或斯瓦希里语。": "Welcome to Ethio Panda! Choose Amharic or Swahili to get started.",
   "阿姆哈拉语与斯瓦希里语": "Amharic & Swahili",
   "多语言学习账户": "Language learning account",
   "登录您的语言学习账户": "Log in to your language learning account",
@@ -247,7 +247,7 @@ const translations: Record<string, string> = JSON.parse(String.raw`{
   "专为中文母语者打造的AI驱动斯瓦希里语学习平台": "An AI-powered Swahili learning platform for Chinese and English speakers.",
   "每周获取免费斯瓦希里语学习资料": "Get free Swahili learning resources every week.",
   "四步开启你的斯瓦希里语学习之旅": "Start your Swahili learning journey in four steps.",
-  "欢迎加入斯瓦希里语学习平台！您已获得88小时免费试用。": "Welcome to Ethiopanda! Your 88-hour free trial is ready.",
+  "欢迎加入斯瓦希里语学习平台！您已获得88小时免费试用。": "Welcome to Ethio Panda! Your 88-hour free trial is ready.",
   "注册即享88小时免费试用，到期后需付费订阅以继续课程和练习。不会自动扣款。": "Get an 88-hour free trial when you create an account. A paid subscription is required to continue courses and practice afterward. No automatic charges.",
   "我正在": "I am",
   "选择你的学习级别": "Choose your learning level",
@@ -461,12 +461,12 @@ const translations: Record<string, string> = JSON.parse(String.raw`{
   ,"未收藏": "Not saved"
   ,"切换界面语言为中文": "Switch interface language to Chinese"
   ,"Switch language to English": "Switch language to English"
-     ,"你好，欢迎来到 Ethiopanda！": "Hello, welcome to Ethiopanda!"
-     ,"将 Ethiopanda 添加到主屏幕": "Add Ethiopanda to your home screen"
+     ,"你好，欢迎来到 Ethio Panda！": "Hello, welcome to Ethio Panda!"
+     ,"将 Ethio Panda 添加到主屏幕": "Add Ethio Panda to your home screen"
      ,"点按浏览器的分享按钮": "Tap your browser’s Share button"
      ,"选择“添加到主屏幕”，再点按“添加”": "Choose “Add to Home Screen”, then tap “Add”"
      ,"在浏览器菜单中选择“安装应用”或“添加到主屏幕”。": "In your browser menu, choose “Install app” or “Add to Home screen”."
-     ,"安装 Ethiopanda 应用": "Install the Ethiopanda app"
+     ,"安装 Ethio Panda 应用": "Install the Ethio Panda app"
      ,"安装应用": "Install app"
 }`);
 

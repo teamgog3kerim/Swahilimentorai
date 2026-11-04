@@ -1,7 +1,7 @@
-# Ethiopanda
+# Ethio Panda
 
 ## Overview
-**Ethiopanda** is an African language learning platform for Chinese- and English-speaking learners, with Amharic and Swahili courses. Its user-selected slogan is **“the African languages Academy for Chinese people”**. Keep the name and this English slogan consistent in both interfaces. The interface defaults to Simplified Chinese, with optional English saved in the browser. Guided lessons, conversations and self-checks work independently of optional live AI. The platform also supports progress tracking and USD subscription plans; Polar checkout is currently sandbox-only, not live.
+**Ethio Panda** is an African language learning platform for Chinese- and English-speaking learners, with Amharic and Swahili courses. Its user-selected slogan is **“the African languages Academy for Chinese people”**. Keep the name and this English slogan consistent in both interfaces. The interface defaults to Simplified Chinese, with optional English saved in the browser. Guided lessons, conversations and self-checks work independently of optional live AI. The platform also supports progress tracking and USD subscription plans; Polar checkout is currently sandbox-only, not live.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

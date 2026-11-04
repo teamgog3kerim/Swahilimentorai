@@ -40,7 +40,7 @@ export function PandaWelcome() {
         <PandaIcon className="panda-welcome__panda" welcomeArtwork />
       </div>
       <p className={`panda-welcome__greeting${visible ? " is-visible" : ""}`} data-testid="panda-greeting" data-visible={visible ? "true" : "false"} aria-live="polite">
-        {t("你好，欢迎来到 Ethiopanda！")}
+        {t("你好，欢迎来到 Ethio Panda！")}
       </p>
     </div>
   );

@@ -32,13 +32,13 @@ test("Footer is responsive and its panda welcomes scrolling users in both interf
     }
     await expect(greeting).toBeVisible();
     assert.match(await greeting.innerText(), /欢迎/);
-    await expect(footer).toContainText("Afri Panda");
+    await expect(footer).toContainText("Ethio Panda");
     await expect(footer).toContainText("the African languages Academy for Chinese people");
     await expect(footer).toContainText("阿姆哈拉语");
     await expect(footer).toContainText("斯瓦希里语");
     await expect(footer.getByTestId("link-登录")).toHaveAttribute("href", "/login");
     await expect(footer.getByTestId("link-定价")).toHaveAttribute("href", "/#pricing");
-    await page.screenshot({ path: "/tmp/afri-panda-footer-zh-desktop.png", animations: "disabled" });
+    await page.screenshot({ path: "/tmp/ethio-panda-footer-zh-desktop.png", animations: "disabled" });
     await page.getByTestId("button-language").click();
     await panda.scrollIntoViewIfNeeded();
     await expect(greeting).toContainText(/welcome/i);
@@ -52,12 +52,12 @@ test("Footer is responsive and its panda welcomes scrolling users in both interf
     }
     await page.setViewportSize({ width: 402, height: 874 });
     await panda.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: "/tmp/afri-panda-footer-en-mobile.png", animations: "disabled" });
+    await page.screenshot({ path: "/tmp/ethio-panda-footer-en-mobile.png", animations: "disabled" });
     await page.emulateMedia({ reducedMotion: "reduce" });
     const lightSurface = await footer.evaluate(node => getComputedStyle(node).backgroundColor);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     assert.notEqual(await footer.evaluate(node => getComputedStyle(node).backgroundColor), lightSurface, "Footer follows the app's dark theme");
-    await page.screenshot({ path: "/tmp/afri-panda-footer-dark-mobile.png", animations: "disabled" });
+    await page.screenshot({ path: "/tmp/ethio-panda-footer-dark-mobile.png", animations: "disabled" });
     await page.evaluate(() => document.documentElement.classList.remove("dark"));
     assert.equal(await panda.evaluate(node =>
       [node, ...node.querySelectorAll("*")].some(element => {

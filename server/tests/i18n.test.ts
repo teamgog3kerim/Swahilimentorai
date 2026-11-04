@@ -28,7 +28,7 @@ test("conditional keys, empty values and Chinese English values cannot silently 
 
 test("dynamic calls must become checkable literals; native teaching phrases are not missing interface keys", () => {
   assert.match(inspectTranslationCalls("t(story.label)", "Story.tsx", {}).join("\n"), /unchecked dynamic translation/);
-  assert.deepEqual(inspectTranslationCalls('t("Habari!"); t("ሰላም"); t("Ethiopanda");', "Lesson.tsx", {}), []);
+  assert.deepEqual(inspectTranslationCalls('t("Habari!"); t("ሰላም"); t("Ethio Panda");', "Lesson.tsx", {}), []);
 });
 
 test("malformed dictionaries fail explicitly", () => {

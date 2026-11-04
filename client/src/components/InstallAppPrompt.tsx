@@ -81,7 +81,7 @@ export function InstallAppPrompt() {
       {showInstructions && (
         <section className="install-app__instructions" data-testid="install-app-instructions" aria-live="polite">
           <div className="install-app__instructions-heading">
-            <strong>{t("将 Ethiopanda 添加到主屏幕")}</strong>
+            <strong>{t("将 Ethio Panda 添加到主屏幕")}</strong>
             <button
               type="button"
               className="install-app__close"
@@ -105,7 +105,7 @@ export function InstallAppPrompt() {
         type="button"
         className="install-app__button"
         onClick={handleInstallClick}
-        aria-label={t("安装 Ethiopanda 应用")}
+        aria-label={t("安装 Ethio Panda 应用")}
         aria-expanded={showInstructions}
         data-testid="install-app-floating-button"
       >
