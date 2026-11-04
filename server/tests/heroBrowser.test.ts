@@ -22,7 +22,7 @@ test("Hero explains both courses bilingually and preserves image, signup, pricin
     await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
     await expect(hero.getByRole("heading", { level: 1 })).toContainText("阿姆哈拉语");
     await expect(hero).toContainText("斯瓦希里语");
-    await expect(hero).toContainText("探索两种重要的非洲语言");
+    await expect(hero).toContainText("为非洲商务沟通而学");
     await expect(hero.getByRole("group", { name: "阿姆哈拉语与斯瓦希里语" })).toContainText("አማርኛ");
     await expect(hero.getByRole("group", { name: "阿姆哈拉语与斯瓦希里语" })).toContainText("Kiswahili");
     assert.ok((await hero.boundingBox())!.height < 950, "Desktop hero should not retain the previous oversized text column");
@@ -37,12 +37,13 @@ test("Hero explains both courses bilingually and preserves image, signup, pricin
     await expect.poll(() => page.locator("#pricing").evaluate(node => node.getBoundingClientRect().top)).toBeLessThan(400);
     await hero.getByRole("button", { name: "邀请好友", exact: true }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page.getByTestId("dialog-share")).toContainText("https://ethiopanda.com");
     await page.keyboard.press("Escape");
     await page.getByTestId("button-language").click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect(hero).toContainText("Amharic");
     await expect(hero).toContainText("Swahili");
-    await expect(hero).toContainText("Explore two major African languages");
+    await expect(hero).toContainText("Learn for business in Africa");
     assert.equal(new RegExp("\\p{Script=Han}", "u").test(await hero.innerText()), false);
     await page.setViewportSize({ width: 402, height: 874 });
     await page.evaluate(() => window.scrollTo(0, 0));

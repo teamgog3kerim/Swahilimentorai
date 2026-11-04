@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { chromium, expect } from "@playwright/test";
-import { APP_NAME, APP_SLOGAN, APP_TITLE } from "../../client/src/lib/brand";
+import { APP_ICON_URL, APP_NAME, APP_SLOGAN, APP_TITLE, APP_URL } from "../../client/src/lib/brand";
 
 test("Ethio Panda name and slogan remain consistent across languages, auth pages and mobile", {
   skip: process.env.RUN_BROWSER_TESTS !== "1",
@@ -46,9 +46,16 @@ test("Ethio Panda name and slogan remain consistent across languages, auth pages
     assert.equal(manifest.name, APP_NAME);
     assert.equal(manifest.short_name, APP_NAME);
     assert.equal(manifest.description, APP_SLOGAN);
+    const iconResponse = await page.request.get(`${base}/icon-512.png`);
+    assert.equal(iconResponse.status(), 200);
+    assert.match(iconResponse.headers()["content-type"] ?? "", /image\/png/);
     await page.goto(base);
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", APP_NAME);
-    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute("content", APP_SLOGAN);
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute("content", `${APP_URL}/`);
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", APP_ICON_URL);
+    await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", /Ethio Panda/);
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute("content", APP_ICON_URL);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `${APP_URL}/`);
     assert.deepEqual(errors, []);
     console.log("PASS: Ethio Panda branding, exact slogan, Chinese/English pages, browser metadata, installation manifest and 360/402px layouts.");
   } finally {

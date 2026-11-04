@@ -13,7 +13,7 @@ import { SiWechat, SiWhatsapp, SiX, SiTelegram, SiFacebook } from "react-icons/s
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useLocale } from "@/lib/i18n";
-import { APP_NAME } from "@/lib/brand";
+import { APP_NAME, APP_URL } from "@/lib/brand";
 
 interface LearningProgress {
   completedLessons: number;
@@ -36,7 +36,7 @@ export function ShareButton({ variant = "default", size = "default", className =
   const { toast } = useToast();
   const { language, t } = useLocale();
 
-  const appUrl = window.location.origin;
+  const appUrl = APP_URL;
   
   const completionRate = progress && progress.totalLessons > 0 
     ? Math.round((progress.completedLessons / progress.totalLessons) * 100) 
