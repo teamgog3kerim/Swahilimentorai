@@ -90,8 +90,8 @@ POLAR_QUARTERLY_PRODUCT_ID = "4bd41aa7-e4e6-4ef7-abe1-5880d3dc9b79"
 POLAR_SEMIANNUAL_PRODUCT_ID = "3937794a-70b5-4d8c-a760-855dda4df760"
 
 [userenv.production]
-GOOGLE_CALLBACK_URL = "https://swahilimentorai-1.replit.app/api/auth/google/callback"
+GOOGLE_CALLBACK_URL = "https://ethiopanda.com/api/auth/google/callback"
 POLAR_QUARTERLY_PRODUCT_ID = "5c44e4fa-917d-4756-b9b4-b3d3bc458333"
 POLAR_SEMIANNUAL_PRODUCT_ID = "f217f76a-88c7-4c0b-b8b2-8ff89820f712"
-POLAR_APP_URL = "https://swahilimentorai-1.replit.app"
+POLAR_APP_URL = "https://ethiopanda.com"
 POLAR_LIVE_ENABLED = "true"

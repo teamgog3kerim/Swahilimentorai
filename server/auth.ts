@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { signupSchema, loginSchema } from "@shared/schema";
 import { registerGoogleAuth } from "./googleAuth";
 import { isOwnerEmail, normalizedEmail } from "./accountPolicy";
+import { createCanonicalDomainRedirect } from "./canonicalDomain";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
@@ -34,6 +35,7 @@ export function getSession() {
 
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
+  app.use(createCanonicalDomainRedirect());
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
