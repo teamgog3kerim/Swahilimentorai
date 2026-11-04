@@ -48,10 +48,11 @@ function DashboardContent() {
   const { user } = useAuth() as { user: (User & { googleConnected: boolean }) | null };
   const { language, t } = useLocale();
   const { track, setTrack, setPracticeLessonId } = useTrack();
-  const [currentView, setCurrentView] = useState<View>(() =>
-    new URLSearchParams(window.location.search).get("tab") === "subscription" || hasSubscriptionIntent()
-      ? "subscription" : "learn"
-  );
+  const [currentView, setCurrentView] = useState<View>(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (requestedTab === "learn") return "learn";
+    return requestedTab === "subscription" || hasSubscriptionIntent() ? "subscription" : "learn";
+  });
   useEffect(() => { clearSubscriptionIntent(); }, []);
   const { setOpenMobile } = useSidebar();
   const hasAccess = useCourseAccess(user);

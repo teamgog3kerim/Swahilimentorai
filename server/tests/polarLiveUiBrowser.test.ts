@@ -20,6 +20,7 @@ test("Signed-in Chinese and English checkout screens support isolated live and s
   });
   let userId: string | undefined;
   let environment = "sandbox";
+  let paymentVerified = false;
   try {
     const signup = await context.request.post(`${base}/api/auth/signup`, {
       data: { name: "Temporary billing UI check", email: `billing-ui-${randomUUID()}@example.com`,
@@ -37,7 +38,7 @@ test("Signed-in Chinese and English checkout screens support isolated live and s
       ...baseline, environment, checkoutEnabled: true, configured: true, webhookConfigured: true,
     } }));
     await context.route("**/api/subscription/payment-status*", route =>
-      route.fulfill({ json: { paid: false, hasCustomer: true } }));
+      route.fulfill({ json: { paid: paymentVerified, hasCustomer: true } }));
     await context.route("**/api/subscription/checkout", route => route.fulfill({ json: {
       url: environment === "live" ? "https://buy.polar.sh/checkout/local-ui-test"
         : "https://sandbox.polar.sh/checkout/local-ui-test",
@@ -82,6 +83,18 @@ test("Signed-in Chinese and English checkout screens support isolated live and s
         await page.waitForURL(`https://${mode === "live" ? "polar.sh" : "sandbox.polar.sh"}/portal/local-ui-test`);
       }
     }
+
+    paymentVerified = false;
+    await page.goto(`${base}/dashboard?tab=subscription&payment=success&reference=verified-test`);
+    await expect(page.getByTestId("notice-payment-pending")).toContainText("Confirming payment");
+    await page.waitForTimeout(1800);
+    assert.match(page.url(), /tab=subscription/, "Unconfirmed returns must remain on the payment status page");
+    assert.equal(await page.getByTestId("track-chooser").count(), 0,
+      "Learning selection must not appear before payment verification");
+
+    paymentVerified = true;
+    await page.waitForURL(url => url.searchParams.get("tab") === "learn", { timeout: 10_000 });
+    await expect(page.getByTestId("track-chooser")).toBeVisible();
   } finally {
     await context.close();
     await browser.close();

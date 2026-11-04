@@ -8,3 +8,4 @@
 - [Webhook preview protection](webhook-preview-protection.md) — provider redirects to Replshield can occur despite successful agent connectivity checks.
 - [Billing environment boundaries](billing-environments.md) — preview stays sandbox; verify live setup without charging the owner or crediting fabricated orders.
 - [Business communication positioning](product-positioning.md) — hero and invitations target Chinese- and English-speaking learners doing business in Africa.
+- [Verified payment return flow](payment-return-flow.md) — after checkout, send learners to language selection only after server confirmation.

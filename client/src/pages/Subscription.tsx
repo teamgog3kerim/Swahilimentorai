@@ -119,6 +119,10 @@ export default function SubscriptionPage() {
     setPollingPayment(false);
     void queryClient.invalidateQueries({ queryKey: ["/api/subscription"] });
     void queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    const redirectTimer = window.setTimeout(() => {
+      window.location.replace("/dashboard?tab=learn");
+    }, 1500);
+    return () => window.clearTimeout(redirectTimer);
   }, [isPaymentReturn, paymentStatus?.paid, queryClient]);
 
   const now = new Date();
@@ -241,8 +245,8 @@ export default function SubscriptionPage() {
               <span>
                 {confirmedPayment
                   ? isEnglish
-                    ? "Your account and subscription are being refreshed. Access changes only after server verification."
-                    : "正在刷新账户和订阅信息。只有服务器验证后才会更新学习权限。"
+                    ? "Payment is verified. Taking you to language selection now."
+                    : "付款已验证，正在前往语言选择页面。"
                   : pollingExpired
                     ? isEnglish
                       ? "Confirmation is still pending. You can check again; access is not granted by this page."
