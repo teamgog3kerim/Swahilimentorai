@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,8 +8,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Share2, Copy, Check, MessageCircle, Users, BookOpen, Trophy, Flame } from "lucide-react";
+import { Share2, Copy, Check, MessageCircle, Users, BookOpen, Trophy, Flame, Download } from "lucide-react";
 import { SiWechat, SiWhatsapp, SiX, SiTelegram, SiFacebook } from "react-icons/si";
+import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useLocale } from "@/lib/i18n";
@@ -33,6 +34,7 @@ interface ShareButtonProps {
 export function ShareButton({ variant = "default", size = "default", className = "", showProgress = false, progress }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
   const { language, t } = useLocale();
 
@@ -90,6 +92,23 @@ ${appUrl}
 
   const shareMessageEncoded = encodeURIComponent(shareMessage);
   const urlEncoded = encodeURIComponent(appUrl);
+
+  const handleDownloadQr = () => {
+    const canvas = qrCanvasRef.current;
+    if (!canvas) {
+      toast({
+        title: language === "en" ? "QR code is not ready" : "二维码尚未准备好",
+        description: language === "en" ? "Please try again in a moment." : "请稍后重试。",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const downloadLink = document.createElement("a");
+    downloadLink.href = canvas.toDataURL("image/png");
+    downloadLink.download = "ethio-panda-qr-code.png";
+    downloadLink.click();
+  };
 
   const handleCopy = async () => {
     try {
@@ -164,7 +183,7 @@ ${appUrl}
           {t("邀请好友")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md" data-testid="dialog-share">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md" data-testid="dialog-share">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
@@ -176,6 +195,45 @@ ${appUrl}
         </DialogHeader>
 
         <div className="space-y-4">
+          <section
+            className="flex items-center gap-3 rounded-lg border bg-card p-3"
+            aria-label={language === "en" ? "Scan to open the Ethio Panda landing page" : "扫码打开 Ethio Panda 首页"}
+            data-testid="section-share-qr"
+            data-qr-url={appUrl}
+          >
+            <div className="shrink-0 rounded-md bg-white p-2">
+              <QRCodeCanvas
+                ref={qrCanvasRef}
+                value={appUrl}
+                size={512}
+                level="H"
+                includeMargin
+                className="block h-[120px] w-[120px]"
+                title={language === "en" ? "QR code for ethiopanda.com" : "ethiopanda.com 二维码"}
+                data-testid="canvas-share-qr"
+              />
+            </div>
+            <div className="min-w-0 flex-1 space-y-2">
+              <div>
+                <p className="text-sm font-semibold">
+                  {language === "en" ? "Scan to open the landing page" : "扫码打开首页"}
+                </p>
+                <p className="mt-1 break-all text-xs text-muted-foreground">{appUrl}</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="max-w-full gap-1.5 px-2"
+                onClick={handleDownloadQr}
+                data-testid="button-download-qr"
+              >
+                <Download className="h-4 w-4" />
+                <span>{language === "en" ? "Download QR code" : "下载二维码"}</span>
+              </Button>
+            </div>
+          </section>
+
           {showProgress && progress && (
             <div className="p-4 bg-primary/10 rounded-lg space-y-3" data-testid="section-progress-stats">
               <div className="flex items-center gap-2 mb-2">
