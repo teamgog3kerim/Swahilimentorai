@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useLocale } from "@/lib/i18n";
-import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
+import { APP_NAME, APP_SLOGAN, SUBSCRIPTION_PITCH_EN, SUBSCRIPTION_PITCH_ZH } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { PandaIcon } from "@/components/PandaIcon";
@@ -22,7 +22,7 @@ type SignupFormData = { name: string; email: string; password: string; confirmPa
 export default function Signup() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useLocale();
+  const { t, language } = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -99,6 +99,9 @@ export default function Signup() {
                 <span className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{APP_NAME}</span>
                 <span className="text-xs leading-5 text-muted-foreground">{APP_SLOGAN}</span>
               </span>
+            </span>
+            <span className="block text-xs leading-5 text-muted-foreground" data-testid="auth-subscription-message">
+              {language === "en" ? SUBSCRIPTION_PITCH_EN : SUBSCRIPTION_PITCH_ZH}
             </span>
             <span className="block max-w-sm text-sm leading-6 text-foreground/80">
               {t("学习阿姆哈拉语与斯瓦希里语，按自己的节奏开启语言之旅。")}

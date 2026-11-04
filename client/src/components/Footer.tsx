@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Coins, ArrowUpRight } from "lucide-react";
 import { useLocale } from "@/lib/i18n";
-import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
+import { APP_NAME, APP_SLOGAN, SUBSCRIPTION_PITCH_EN, SUBSCRIPTION_PITCH_ZH } from "@/lib/brand";
 import { PandaWelcome } from "./PandaWelcome";
 import { PandaIcon } from "./PandaIcon";
 import "./Footer.css";
@@ -73,9 +73,7 @@ export function Footer() {
           <div className="afri-footer__payment">
             <Coins aria-hidden="true" />
             <span data-testid="footer-subscription-message">
-              {language === "en"
-                ? "Subscribe quarterly or full package - Enjoy your learning African Languages and Excell in your Business in Africa."
-                : "订阅季度套餐或全套课程套餐——尽情学习非洲语言，并在非洲商务中取得卓越成就。"}
+              {language === "en" ? SUBSCRIPTION_PITCH_EN : SUBSCRIPTION_PITCH_ZH}
             </span>
           </div>
           <p className="afri-footer__copyright">

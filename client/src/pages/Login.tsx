@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { useLocale } from "@/lib/i18n";
-import { APP_NAME, APP_SLOGAN } from "@/lib/brand";
+import { APP_NAME, APP_SLOGAN, SUBSCRIPTION_PITCH_EN, SUBSCRIPTION_PITCH_ZH } from "@/lib/brand";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { PandaIcon } from "@/components/PandaIcon";
@@ -23,7 +23,7 @@ type LoginFormData = { email: string; password: string; rememberMe: boolean };
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useLocale();
+  const { t, language } = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const loginSchema = z.object({
@@ -89,6 +89,9 @@ export default function Login() {
               <span>{APP_NAME}</span>
             </span>
             <span className="mb-3 block text-xs">{APP_SLOGAN}</span>
+            <span className="mb-3 block text-xs leading-relaxed text-muted-foreground" data-testid="auth-subscription-message">
+              {language === "en" ? SUBSCRIPTION_PITCH_EN : SUBSCRIPTION_PITCH_ZH}
+            </span>
             {t("登录您的语言学习账户")}
           </CardDescription>
         </CardHeader>

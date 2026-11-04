@@ -1,7 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { chromium, expect } from "@playwright/test";
-import { APP_ICON_URL, APP_NAME, APP_SLOGAN, APP_TITLE, APP_URL } from "../../client/src/lib/brand";
+import {
+  APP_ICON_URL,
+  APP_NAME,
+  APP_SLOGAN,
+  APP_TITLE,
+  APP_URL,
+  SUBSCRIPTION_PITCH_EN,
+  SUBSCRIPTION_PITCH_ZH,
+} from "../../client/src/lib/brand";
 
 test("Ethio Panda name and slogan remain consistent across languages, auth pages and mobile", {
   skip: process.env.RUN_BROWSER_TESTS !== "1",
@@ -34,7 +42,12 @@ test("Ethio Panda name and slogan remain consistent across languages, auth pages
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         await expect(page.getByText(APP_NAME, { exact: true }).first()).toBeVisible();
         if (route === "/") await expect(page.getByTestId("brand-slogan")).toHaveText(APP_SLOGAN);
-        else await expect(page.getByText(APP_SLOGAN, { exact: true })).toBeVisible();
+        else {
+          await expect(page.getByText(APP_SLOGAN, { exact: true })).toBeVisible();
+          await expect(page.getByTestId("auth-subscription-message")).toHaveText(
+            locale === "en" ? SUBSCRIPTION_PITCH_EN : SUBSCRIPTION_PITCH_ZH,
+          );
+        }
         for (const width of [360, 402]) {
           await page.setViewportSize({ width, height: 874 });
           assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 2), `${route}: ${locale}, ${width}px`);
