@@ -72,7 +72,11 @@ export function Footer() {
         <div className="afri-footer__bottom">
           <div className="afri-footer__payment">
             <Coins aria-hidden="true" />
-            <span>{language === "en" ? "Pay and subscribe" : "付款并订阅"}</span>
+            <span data-testid="footer-subscription-message">
+              {language === "en"
+                ? "Subscribe quarterly or full package - Enjoy your learning African Languages and Excell in your Business in Africa."
+                : "订阅季度套餐或全套课程套餐——尽情学习非洲语言，并在非洲商务中取得卓越成就。"}
+            </span>
           </div>
           <p className="afri-footer__copyright">
             © {new Date().getFullYear()} {APP_NAME}. {t("保留所有权利。")}

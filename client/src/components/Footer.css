@@ -223,8 +223,14 @@
   align-items: center;
   justify-content: center;
   gap: .55rem;
+  max-width: 100%;
   color: var(--footer-muted);
   font-size: .78rem;
+}
+
+.afri-footer__payment span {
+  min-width: 0;
+  text-align: center;
 }
 
 .afri-footer__payment svg {

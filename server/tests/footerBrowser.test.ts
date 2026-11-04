@@ -44,7 +44,15 @@ test("Footer is responsive and its panda welcomes scrolling users in both interf
     await expect(greeting).toContainText(/welcome/i);
     await expect(footer).toContainText("Amharic");
     await expect(footer).toContainText("Swahili");
+    await expect(footer.getByTestId("footer-subscription-message")).toHaveText(
+      "Subscribe quarterly or full package - Enjoy your learning African Languages and Excell in your Business in Africa.",
+    );
     assert.equal(/\p{Script=Han}/u.test(await footer.innerText()), false);
+    await page.getByTestId("button-language").click();
+    await expect(footer.getByTestId("footer-subscription-message")).toHaveText(
+      "订阅季度套餐或全套课程套餐——尽情学习非洲语言，并在非洲商务中取得卓越成就。",
+    );
+    await page.getByTestId("button-language").click();
     for (const width of [320, 402, 768, 1440]) {
       await page.setViewportSize({ width, height: 874 });
       await panda.scrollIntoViewIfNeeded();
