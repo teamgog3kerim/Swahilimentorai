@@ -12,6 +12,8 @@ export function InstallAppPrompt() {
   const { language, t } = useLocale();
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTelegramCardVisible, setIsTelegramCardVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [showInstructions, setShowInstructions] = useState(false);
   const [isIos, setIsIos] = useState(false);
@@ -39,22 +41,44 @@ export function InstallAppPrompt() {
     const onScroll = () => {
       setIsExpanded(false);
       setShowInstructions(false);
+      updateTelegramCardVisibility();
     };
+    const mobileQuery = window.matchMedia("(max-width: 640px)");
+    const updateMobile = () => setIsMobile(mobileQuery.matches);
+    const updateTelegramCardVisibility = () => {
+      const isVisible = Array.from(document.querySelectorAll<HTMLElement>("[data-telegram-channel-card]"))
+        .some((card) => {
+          const bounds = card.getBoundingClientRect();
+          return bounds.top < window.innerHeight && bounds.bottom > 0;
+        });
+      setIsTelegramCardVisible(isVisible);
+    };
+    const onResize = () => {
+      updateMobile();
+      updateTelegramCardVisibility();
+    };
+    const cardMountObserver = new MutationObserver(updateTelegramCardVisibility);
 
     checkInstalled();
     checkIos();
+    updateMobile();
+    updateTelegramCardVisibility();
+    cardMountObserver.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onInstalled);
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onInstalled);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      cardMountObserver.disconnect();
     };
   }, []);
 
-  if (isInstalled) return null;
+  if (isInstalled || (isMobile && isTelegramCardVisible)) return null;
 
   const handleInstallClick = async () => {
     setIsExpanded(true);

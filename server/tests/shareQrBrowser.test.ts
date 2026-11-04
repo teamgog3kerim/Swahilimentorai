@@ -23,6 +23,15 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
   try {
     await page.goto(base);
     await page.addStyleTag({ content: "#replit-dev-banner { display: none !important; pointer-events: none !important; }" });
+    const telegramLink = page.getByRole("link", { name: "加入频道" });
+    await expect(telegramLink).toHaveAttribute("href", "https://t.me/ethiopandalanguages");
+    await expect(telegramLink).toHaveAttribute("target", "_blank");
+    await expect(page.getByText("获取版本说明、帮助和团队答复。")).toBeVisible();
+    await expect(page.getByTestId("install-app-floating-button")).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(page.getByTestId("install-app-floating-button")).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(page.getByTestId("install-app-floating-button")).toHaveCount(0);
     await page.getByTestId("button-share").click();
 
     const qrSection = page.getByTestId("section-share-qr");
@@ -81,6 +90,9 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
 
     await page.keyboard.press("Escape");
     await page.getByTestId("button-language").click();
+    const englishTelegramLink = page.getByRole("link", { name: "Join channel" });
+    await expect(englishTelegramLink).toHaveAttribute("href", "https://t.me/ethiopandalanguages");
+    await expect(page.getByText("Get release notes, help, and answers from our team.")).toBeVisible();
     await page.getByTestId("button-share").click();
     const englishPreview = page.getByTestId("preview-share-message");
     await expect(englishPreview).toContainText(`${APP_NAME} — Stronger Business connections start with a better conversation.`);

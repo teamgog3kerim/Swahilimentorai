@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Home, MessageSquare, BarChart, CreditCard, LogOut, User as UserIcon, Menu, Shield, Bell } from "lucide-react";
 import { ShareButton } from "@/components/ShareButton";
+import { TelegramChannelCard } from "@/components/TelegramChannelCard";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { SubscriptionReminder } from "@/components/SubscriptionReminder";
 import {
@@ -164,6 +165,7 @@ function DashboardContent() {
           <div className="mt-auto px-4 py-4">
             <Separator className="mb-4" />
             <div className="mb-4">
+              <TelegramChannelCard className="mb-3" />
               <ShareButton 
                 variant="outline" 
                 className="w-full justify-start" 

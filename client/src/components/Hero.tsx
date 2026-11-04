@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import heroImage from "@assets/generated_images/Chinese_learners_using_Swahili_app_148614f4.png";
 import { ShareButton } from "@/components/ShareButton";
+import { TelegramChannelCard } from "@/components/TelegramChannelCard";
 import { Link } from "wouter";
 import { useLocale } from "@/lib/i18n";
 import { APP_SLOGAN } from "@/lib/brand";
@@ -77,7 +78,10 @@ export function Hero() {
               >
                 {t("查看定价")}
               </Button>
-              <ShareButton variant="ghost" size="lg" className="text-base font-semibold" />
+              <div className="flex w-full flex-col gap-2 sm:w-72">
+                <TelegramChannelCard />
+                <ShareButton variant="ghost" size="lg" className="w-full text-base font-semibold" />
+              </div>
             </div>
           </div>
 
