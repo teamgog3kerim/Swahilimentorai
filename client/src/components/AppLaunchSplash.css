@@ -1,0 +1,151 @@
+.app-launch-splash {
+  --panda-ink: hsl(var(--foreground));
+  --panda-fur: hsl(var(--card));
+  --panda-accent: hsl(var(--primary));
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+  color: hsl(var(--foreground));
+  background:
+    radial-gradient(ellipse at 50% 35%, hsl(var(--primary) / .12), transparent 52%),
+    hsl(var(--background));
+  opacity: 1;
+  transition: opacity 360ms ease;
+}
+
+.app-launch-splash--leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-launch-splash__content {
+  width: min(100%, 420px);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.app-launch-splash__mascot {
+  width: clamp(138px, 38vw, 188px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 12px 14px hsl(var(--primary) / .14));
+  animation: app-launch-panda-float 1.8s ease-in-out infinite;
+}
+
+.app-launch-splash__mascot .panda-welcome__cap {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: app-launch-cap-bob 2s ease-in-out infinite;
+}
+
+.app-launch-splash__mascot .panda-welcome__tassel {
+  transform-box: fill-box;
+  transform-origin: 0 0;
+  animation: app-launch-tassel-sway 1.4s ease-in-out infinite;
+}
+
+.app-launch-splash__welcome {
+  margin-top: 22px;
+  animation: app-launch-copy-enter 520ms ease-out both;
+}
+
+.app-launch-splash__welcome h1,
+.app-launch-splash__welcome h2 {
+  margin: 0;
+  font-weight: 750;
+  letter-spacing: -.025em;
+}
+
+.app-launch-splash__welcome h1 {
+  font-size: clamp(1.45rem, 6vw, 2rem);
+}
+
+.app-launch-splash__chinese {
+  margin: 7px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: clamp(1rem, 4vw, 1.2rem);
+}
+
+.app-launch-splash__divider {
+  width: 42px;
+  height: 3px;
+  margin: 19px auto;
+  border-radius: 999px;
+  background: hsl(var(--primary) / .55);
+}
+
+.app-launch-splash__welcome h2 {
+  font-size: clamp(1.15rem, 5vw, 1.55rem);
+}
+
+.app-launch-splash__english {
+  margin: 6px 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: clamp(.95rem, 3.8vw, 1.1rem);
+}
+
+.app-launch-splash__progress {
+  width: 132px;
+  height: 4px;
+  margin-top: 31px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: hsl(var(--primary) / .14);
+}
+
+.app-launch-splash__progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: hsl(var(--primary));
+  animation: app-launch-progress 2.4s ease-in-out forwards;
+}
+
+@keyframes app-launch-panda-float {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes app-launch-cap-bob {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50% { transform: rotate(-2deg) translateY(-2px); }
+}
+
+@keyframes app-launch-tassel-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(9deg); }
+}
+
+@keyframes app-launch-copy-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes app-launch-progress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-launch-splash,
+  .app-launch-splash__mascot,
+  .app-launch-splash__mascot .panda-welcome__cap,
+  .app-launch-splash__mascot .panda-welcome__tassel,
+  .app-launch-splash__welcome,
+  .app-launch-splash__progress span {
+    animation: none;
+    transition: none;
+  }
+
+  .app-launch-splash__welcome {
+    opacity: 1;
+    transform: none;
+  }
+}

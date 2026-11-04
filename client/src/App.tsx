@@ -14,6 +14,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { LocaleProvider } from "@/lib/i18n";
 import { InstallAppPrompt } from "@/components/InstallAppPrompt";
+import { AppLaunchSplash } from "@/components/AppLaunchSplash";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -80,6 +81,7 @@ function App() {
             <VisitTracker />
             <Router />
             <InstallAppPrompt />
+            <AppLaunchSplash />
             <Toaster />
           </TooltipProvider>
         </LocaleProvider>
