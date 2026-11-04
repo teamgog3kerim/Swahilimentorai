@@ -46,6 +46,12 @@ test("Ethio Panda name and slogan remain consistent across languages, auth pages
     assert.equal(manifest.name, APP_NAME);
     assert.equal(manifest.short_name, APP_NAME);
     assert.equal(manifest.description, APP_SLOGAN);
+    assert.equal(manifest.display, "standalone");
+    assert.ok(manifest.display_override.includes("standalone"));
+    assert.equal(manifest.orientation, "portrait-primary");
+    const viewport = await page.locator('meta[name="viewport"]').getAttribute("content");
+    assert.match(viewport ?? "", /width=device-width/);
+    assert.match(viewport ?? "", /viewport-fit=cover/);
     const iconResponse = await page.request.get(`${base}/icon-512.png`);
     assert.equal(iconResponse.status(), 200);
     assert.match(iconResponse.headers()["content-type"] ?? "", /image\/png/);

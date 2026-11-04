@@ -1,4 +1,4 @@
-const CACHE_NAME = 'afri-panda-v8';
+const CACHE_NAME = 'afri-panda-v9';
 const STATIC_CACHE = `${CACHE_NAME}-static`;
 const DYNAMIC_CACHE = `${CACHE_NAME}-dynamic`;
 const LESSONS_CACHE = `${CACHE_NAME}-lessons`;
