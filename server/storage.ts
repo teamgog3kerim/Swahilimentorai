@@ -184,6 +184,17 @@ export class DbStorage implements IStorage {
         ...profile, authProvider: "google", isAdmin: owner,
         isPremium: true, subscriptionEndsAt: owner ? null : trialEndsAt,
       }).returning();
+      await tx.insert(adminNotifications).values({
+        type: "new_user",
+        title: "新用户注册",
+        message: `${created.username} (${created.email}) 刚刚注册了账户`,
+        metadata: {
+          userId: created.id,
+          email: created.email,
+          username: created.username,
+          authProvider: "google",
+        },
+      });
       return created;
     });
   }
@@ -440,8 +451,16 @@ export class DbStorage implements IStorage {
   }
 
   async createVisit(visit: InsertVisit): Promise<Visit> {
-    const result = await db.insert(visits).values(visit).returning();
-    return result[0];
+    return db.transaction(async (tx) => {
+      const [created] = await tx.insert(visits).values(visit).returning();
+      await tx.insert(adminNotifications).values({
+        type: "new_visitor",
+        title: "新访客访问",
+        message: "有一位访客开始访问应用。",
+        metadata: { visitId: created.id },
+      });
+      return created;
+    });
   }
 
   async getAnalyticsOverview(): Promise<{ totalVisits: number; uniqueSessions: number; todayVisits: number }> {

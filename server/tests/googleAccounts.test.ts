@@ -16,7 +16,13 @@ test("Google accounts preserve existing data, enforce linking, and support manag
     ids.add(created.id);
     assert.equal(created.isAdmin, false);
     assert.equal(created.authProvider, "google");
+    const signupAlerts = (await storage.getAllNotifications(1000))
+      .filter(notification => notification.metadata?.userId === created.id);
+    assert.equal(signupAlerts.length, 1);
+    assert.equal(signupAlerts[0].type, "new_user");
     assert.equal((await storage.signInWithGoogle(profile)).id, created.id);
+    assert.equal((await storage.getAllNotifications(1000))
+      .filter(notification => notification.metadata?.userId === created.id).length, 1);
     const emailUser = await storage.createUserWithPassword(`email-${suffix}@gmail.com`, "Existing learner", "not-a-real-password-hash");
     ids.add(emailUser.id);
     const linking = { ...profile, googleId: `linked-${suffix}`, email: emailUser.email };
@@ -45,6 +51,9 @@ test("Google accounts preserve existing data, enforce linking, and support manag
   } finally {
     if (previousOwner === undefined) delete process.env.APP_OWNER_EMAIL;
     else process.env.APP_OWNER_EMAIL = previousOwner;
+    for (const notification of await storage.getAllNotifications(1000)) {
+      if (ids.has(notification.metadata?.userId)) await storage.deleteNotification(notification.id);
+    }
     for (const id of ids) await storage.deleteManagedUser(id);
     await pool.end();
   }

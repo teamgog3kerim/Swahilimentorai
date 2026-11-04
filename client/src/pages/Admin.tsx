@@ -301,11 +301,31 @@ export default function AdminPage() {
     switch (type) {
       case 'new_user':
         return <UserPlus className="h-4 w-4 text-blue-500" />;
+      case 'new_visitor':
+        return <Eye className="h-4 w-4 text-teal-500" />;
       case 'new_subscription':
         return <CreditCard className="h-4 w-4 text-green-500" />;
       default:
         return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
+  };
+
+  const getNotificationTitle = (notification: AdminNotification) => {
+    if (notification.type === "new_visitor") return t("新访客访问");
+    if (notification.type === "new_user") return t("新用户注册");
+    return notification.title;
+  };
+
+  const getNotificationMessage = (notification: AdminNotification) => {
+    if (notification.type === "new_visitor") return t("有一位访客开始访问应用。");
+    if (notification.type === "new_user") {
+      const identity = [notification.metadata?.username, notification.metadata?.email]
+        .filter((value) => typeof value === "string" && value.trim())
+        .join(" · ");
+      if (language === "en") return identity ? `${identity} just created an account.` : "A new account was created.";
+      return identity ? `${identity} 刚刚注册了账户。` : "有新账户注册。";
+    }
+    return notification.message;
   };
 
   const getStatusBadge = (status: string) => {
@@ -434,7 +454,7 @@ export default function AdminPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-sm font-medium truncate">{notification.title}</p>
+                              <p className="text-sm font-medium truncate">{getNotificationTitle(notification)}</p>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -448,7 +468,7 @@ export default function AdminPage() {
                                 <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2">{notification.message}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{getNotificationMessage(notification)}</p>
                             <p className="text-xs text-muted-foreground mt-1">{formatNotificationTime(notification.createdAt)}</p>
                           </div>
                           {!notification.isRead && (
