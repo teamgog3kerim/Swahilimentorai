@@ -9,7 +9,7 @@ export function Hero() {
   const { t } = useLocale();
 
   return (
-    <section className="relative isolate overflow-hidden bg-background pt-16">
+    <section className="relative isolate overflow-hidden bg-background pt-24 sm:pt-16">
       <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-background to-accent/[0.08]" />
         <div className="absolute -right-32 top-4 h-80 w-80 rounded-full bg-primary/[0.07] blur-3xl md:h-[28rem] md:w-[28rem]" />
