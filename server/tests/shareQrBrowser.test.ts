@@ -32,6 +32,27 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
 
     const canvas = page.getByTestId("canvas-share-qr");
     await expect(canvas).toBeVisible();
+    const dialog = page.getByTestId("dialog-share");
+    for (const [width, height] of [[320, 568], [360, 740], [390, 844]] as const) {
+      await page.setViewportSize({ width, height });
+      const bounds = await dialog.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return {
+          x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom, height: rect.height,
+          width: style.width, maxWidth: style.maxWidth, maxHeight: style.maxHeight,
+          className: element.className,
+        };
+      });
+      console.log(`Dialog bounds at ${width}x${height}:`, bounds);
+      assert.ok(bounds.x >= 7 && bounds.right <= width - 7, `dialog fits horizontally at ${width}px`);
+      assert.ok(bounds.y >= 7 && bounds.bottom <= height - 7, `dialog fits vertically at ${height}px`);
+      assert.ok(bounds.height <= height - 14, `dialog height is capped at ${height}px`);
+      const qrBounds = await canvas.boundingBox();
+      assert.ok(qrBounds && qrBounds.width <= 96 && qrBounds.height <= 96, "visible QR scales down on mobile");
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
+
     const renderedQr = await canvas.evaluate((element: HTMLCanvasElement) => ({
       width: element.width,
       height: element.height,

@@ -183,8 +183,8 @@ ${appUrl}
           {t("邀请好友")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md" data-testid="dialog-share">
-        <DialogHeader>
+      <DialogContent className="w-[90vw] min-w-0 max-h-[90vh] gap-3 overflow-x-hidden overflow-y-auto p-4 sm:w-full sm:max-w-md sm:gap-4 sm:p-6" data-testid="dialog-share">
+        <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             {t("邀请好友一起学习")}
@@ -196,19 +196,19 @@ ${appUrl}
 
         <div className="space-y-4">
           <section
-            className="flex items-center gap-3 rounded-lg border bg-card p-3"
+            className="flex items-center gap-2 rounded-lg border bg-card p-2 sm:gap-3 sm:p-3"
             aria-label={language === "en" ? "Scan to open the Ethio Panda landing page" : "扫码打开 Ethio Panda 首页"}
             data-testid="section-share-qr"
             data-qr-url={appUrl}
           >
-            <div className="shrink-0 rounded-md bg-white p-2">
+            <div className="shrink-0 rounded-md bg-white p-1 sm:p-2">
               <QRCodeCanvas
                 ref={qrCanvasRef}
                 value={appUrl}
                 size={512}
                 level="H"
                 includeMargin
-                className="block h-[120px] w-[120px]"
+                className="block h-20 w-20 sm:h-24 sm:w-24"
                 title={language === "en" ? "QR code for ethiopanda.com" : "ethiopanda.com 二维码"}
                 data-testid="canvas-share-qr"
               />
@@ -270,12 +270,12 @@ ${appUrl}
             </div>
           )}
 
-          <div className="p-4 bg-muted rounded-lg">
+          <div className="rounded-lg bg-muted p-3 sm:p-4">
             <div className="flex items-start gap-3 mb-3">
               <MessageCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <p className="text-sm font-medium">{t("分享内容预览：")}</p>
             </div>
-            <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+            <p className="max-h-24 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
               {shareMessage}
             </p>
           </div>
