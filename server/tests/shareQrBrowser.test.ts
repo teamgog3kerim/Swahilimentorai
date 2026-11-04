@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { chromium, expect } from "@playwright/test";
-import { APP_URL } from "../../client/src/lib/brand";
+import { APP_NAME, APP_URL } from "../../client/src/lib/brand";
 
 test("invite QR code opens the canonical landing page and downloads as PNG", {
   skip: process.env.RUN_BROWSER_TESTS !== "1",
@@ -34,6 +34,9 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
     await expect(canvas).toBeVisible();
     const dialog = page.getByTestId("dialog-share");
     const messagePreview = page.getByTestId("preview-share-message");
+    await expect(messagePreview).toContainText(`${APP_NAME} — 更好的对话，开启更紧密的商业联系。`);
+    await expect(messagePreview).toContainText("开始88小时免费试学");
+    await expect(messagePreview).toContainText(APP_URL);
     await page.waitForTimeout(250);
     for (const [width, height] of [[320, 568], [360, 740], [390, 844]] as const) {
       await page.setViewportSize({ width, height });
@@ -75,6 +78,15 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
     const png = await readFile(downloadedPath);
     assert.ok(png.length > 1000, "download contains a rendered QR image");
     assert.deepEqual([...png.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
+
+    await page.keyboard.press("Escape");
+    await page.getByTestId("button-language").click();
+    await page.getByTestId("button-share").click();
+    const englishPreview = page.getByTestId("preview-share-message");
+    await expect(englishPreview).toContainText(`${APP_NAME} — Stronger Business connections start with a better conversation.`);
+    await expect(englishPreview).toContainText("Start your 88-hour free trial learning, then subscribe quarterly or full package");
+    await expect(englishPreview).toContainText("Excell in your Business in Africa.:");
+    await expect(englishPreview).toContainText(APP_URL);
 
     console.log("PASS: invitation QR encodes the public Ethio Panda URL and downloads as a valid PNG.");
   } finally {

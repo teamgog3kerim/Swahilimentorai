@@ -44,19 +44,24 @@ export function ShareButton({ variant = "default", size = "default", className =
     ? Math.round((progress.completedLessons / progress.totalLessons) * 100) 
     : 0;
 
-  const baseMessage = language === "en" ? `${APP_NAME} — Stronger connections start with a conversation.
+  const inviteHeadline = language === "en"
+    ? `${APP_NAME} — Stronger Business connections start with a better conversation.`
+    : `${APP_NAME} — 更好的对话，开启更紧密的商业联系。`;
+  const inviteBody = language === "en"
+    ? "Doing business in Africa? Join me to learn Amharic and Swahili online, with a Chinese or English interface. Build confidence with customers and partners in Ethiopia and East Africa."
+    : "在非洲做生意？加入我，在线学习阿姆哈拉语和斯瓦希里语，界面可选中文或英文。增强与埃塞俄比亚和东非客户及合作伙伴交流的信心。";
+  const trialInvitation = language === "en"
+    ? "Start your 88-hour free trial learning, then subscribe quarterly or full package - Enjoy your learning African Languages and Excell in your Business in Africa.:"
+    : "开始88小时免费试学，然后订阅季度套餐或全套课程套餐——尽情学习非洲语言，并在非洲业务中取得卓越成就：";
 
-Doing business in Africa? Join me to learn Amharic and Swahili online, with a Chinese or English interface. Build confidence with customers and partners in Ethiopia and East Africa.
+  const baseMessage = `${inviteHeadline}
 
-Start your 88-hour free trial, then subscribe to keep learning:
-${appUrl}` : `${APP_NAME} — 一句问候，拉近合作的距离。
+${inviteBody}
 
-在非洲做生意？和我一起用中文或英语界面，在线学习阿姆哈拉语与斯瓦希里语。为在埃塞俄比亚及东非与客户和合作伙伴交流增添信心。
-
-先体验88小时免费试用，再订阅继续学习：
+${trialInvitation}
 ${appUrl}`;
 
-  const progressMessage = progress ? (language === "en" ? `${APP_NAME} — Stronger connections start with a conversation.
+  const progressMessage = progress ? (language === "en" ? `${inviteHeadline}
 
 My language learning progress
 
@@ -66,12 +71,12 @@ My learning progress:
 - Practice sessions: ${progress.practiceCount}
 ${progress.learningDays ? `- Learning streak: ${progress.learningDays} days` : ""}
 
-Join me to learn Amharic and Swahili online, with a Chinese or English interface. Build confidence for everyday business communication in Ethiopia and East Africa.
+${inviteBody}
 
-Start your 88-hour free trial, then subscribe to keep learning:
+${trialInvitation}
 ${appUrl}
 
-#Amharic #Swahili #LanguageLearning #MyProgress` : `${APP_NAME} — 一句问候，拉近合作的距离。
+#Amharic #Swahili #LanguageLearning #MyProgress` : `${inviteHeadline}
 
 【分享语言学习成果】
 
@@ -81,9 +86,9 @@ ${appUrl}
 - 练习次数 ${progress.practiceCount} 次
 ${progress.learningDays ? `- 连续学习 ${progress.learningDays} 天` : ""}
 
-和我一起用中文或英语界面，在线学习阿姆哈拉语与斯瓦希里语，为在埃塞俄比亚及东非的日常商务交流增添信心。
+${inviteBody}
 
-先体验88小时免费试用，再订阅继续学习：
+${trialInvitation}
 ${appUrl}
 
 #阿姆哈拉语 #斯瓦希里语 #语言学习 #我的学习成果`) : baseMessage;
