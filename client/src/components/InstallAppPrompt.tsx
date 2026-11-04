@@ -22,7 +22,11 @@ export function InstallAppPrompt() {
       const iosStandalone = "standalone" in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
       setIsInstalled(standaloneQuery.matches || iosStandalone);
     };
-    const checkIos = () => setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent));
+    const checkIos = () => {
+      const isAppleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isIpadDesktopMode = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+      setIsIos(isAppleMobile || isIpadDesktopMode);
+    };
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as InstallPromptEvent);
