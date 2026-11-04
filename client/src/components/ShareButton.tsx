@@ -183,7 +183,11 @@ ${appUrl}
           {t("邀请好友")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[90vw] min-w-0 max-h-[90vh] gap-3 overflow-x-hidden overflow-y-auto p-4 sm:w-full sm:max-w-md sm:gap-4 sm:p-6" data-testid="dialog-share">
+      <DialogContent
+        className="w-full min-w-0 max-h-[90vh] gap-3 overflow-x-hidden overflow-y-auto p-4 sm:gap-4 sm:p-6"
+        style={{ boxSizing: "border-box", maxWidth: "min(90vw, 28rem)", maxHeight: "90vh", minWidth: 0 }}
+        data-testid="dialog-share"
+      >
         <DialogHeader className="pr-8">
           <DialogTitle className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
@@ -208,7 +212,8 @@ ${appUrl}
                 size={512}
                 level="H"
                 includeMargin
-                className="block h-20 w-20 sm:h-24 sm:w-24"
+                className="block"
+                style={{ width: "clamp(4rem, 22vw, 6rem)", height: "clamp(4rem, 22vw, 6rem)" }}
                 title={language === "en" ? "QR code for ethiopanda.com" : "ethiopanda.com 二维码"}
                 data-testid="canvas-share-qr"
               />

@@ -33,18 +33,14 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
     const canvas = page.getByTestId("canvas-share-qr");
     await expect(canvas).toBeVisible();
     const dialog = page.getByTestId("dialog-share");
+    await page.waitForTimeout(250);
     for (const [width, height] of [[320, 568], [360, 740], [390, 844]] as const) {
       await page.setViewportSize({ width, height });
+      await page.waitForTimeout(250);
       const bounds = await dialog.evaluate((element) => {
         const rect = element.getBoundingClientRect();
-        const style = getComputedStyle(element);
-        return {
-          x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom, height: rect.height,
-          width: style.width, maxWidth: style.maxWidth, maxHeight: style.maxHeight,
-          className: element.className,
-        };
+        return { x: rect.x, y: rect.y, right: rect.right, bottom: rect.bottom, height: rect.height };
       });
-      console.log(`Dialog bounds at ${width}x${height}:`, bounds);
       assert.ok(bounds.x >= 7 && bounds.right <= width - 7, `dialog fits horizontally at ${width}px`);
       assert.ok(bounds.y >= 7 && bounds.bottom <= height - 7, `dialog fits vertically at ${height}px`);
       assert.ok(bounds.height <= height - 14, `dialog height is capped at ${height}px`);
