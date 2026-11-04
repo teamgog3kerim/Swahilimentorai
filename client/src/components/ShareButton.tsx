@@ -184,8 +184,13 @@ ${appUrl}
         </Button>
       </DialogTrigger>
       <DialogContent
-        className="w-full min-w-0 max-h-[90vh] gap-3 overflow-x-hidden overflow-y-auto p-4 sm:gap-4 sm:p-6"
-        style={{ boxSizing: "border-box", maxWidth: "min(90vw, 28rem)", maxHeight: "90vh", minWidth: 0 }}
+        className="w-full min-w-0 gap-3 overflow-x-hidden overflow-y-auto p-4 sm:gap-4 sm:p-6"
+        style={{
+          boxSizing: "border-box",
+          maxWidth: "min(90vw, 28rem)",
+          maxHeight: "min(96vh, calc(100dvh - 0.5rem))",
+          minWidth: 0,
+        }}
         data-testid="dialog-share"
       >
         <DialogHeader className="pr-8">
@@ -280,7 +285,7 @@ ${appUrl}
               <MessageCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <p className="text-sm font-medium">{t("分享内容预览：")}</p>
             </div>
-            <p className="max-h-24 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground" data-testid="preview-share-message">
               {shareMessage}
             </p>
           </div>

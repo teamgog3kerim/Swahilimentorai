@@ -33,6 +33,7 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
     const canvas = page.getByTestId("canvas-share-qr");
     await expect(canvas).toBeVisible();
     const dialog = page.getByTestId("dialog-share");
+    const messagePreview = page.getByTestId("preview-share-message");
     await page.waitForTimeout(250);
     for (const [width, height] of [[320, 568], [360, 740], [390, 844]] as const) {
       await page.setViewportSize({ width, height });
@@ -44,6 +45,13 @@ test("invite QR code opens the canonical landing page and downloads as PNG", {
       assert.ok(bounds.x >= 7 && bounds.right <= width - 7, `dialog fits horizontally at ${width}px`);
       assert.ok(bounds.y >= 7 && bounds.bottom <= height - 7, `dialog fits vertically at ${height}px`);
       assert.ok(bounds.height <= height - 14, `dialog height is capped at ${height}px`);
+      const previewLayout = await messagePreview.evaluate((element) => ({
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+        overflowY: getComputedStyle(element).overflowY,
+      }));
+      assert.ok(previewLayout.scrollHeight <= previewLayout.clientHeight + 1, "full message preview is visible without nested scrolling");
+      assert.notEqual(previewLayout.overflowY, "auto");
       const qrBounds = await canvas.boundingBox();
       assert.ok(qrBounds && qrBounds.width <= 96 && qrBounds.height <= 96, "visible QR scales down on mobile");
     }
